@@ -1,0 +1,36 @@
+# Raiz: nunca commitar segredos, builds ou dependências.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Node
+node_modules/
+.next/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+
+# OS / editores
+.DS_Store
+.idea/
+.vscode/
+
+# Logs e temporários
+*.log
+*.tgz
+tmp/
+temp/
+.cache/

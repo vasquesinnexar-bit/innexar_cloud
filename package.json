@@ -1,0 +1,14 @@
+{
+  "name": "@innexar/cloud",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Monorepo da plataforma Innexar (apps independentes, sem workspaces compartilhados)",
+  "scripts": {
+    "workspace:dev": "npm run dev --prefix apps/workspace",
+    "portal:dev": "npm run dev --prefix apps/portal",
+    "website-us:dev": "npm run dev --prefix apps/website-us",
+    "website-br:dev": "npm run dev --prefix apps/website-br",
+    "build": "npm run build --prefix apps/workspace && npm run build --prefix apps/portal && npm run build --prefix apps/website-us && npm run build --prefix apps/website-br",
+    "test": "npm test --prefix apps/portal && npm test --prefix apps/website-us"
+  }
+}

@@ -1,0 +1,10 @@
+# Gitleaks: só segredos reais barram o push. Fingerprints abaixo são
+# placeholders/fakes auditados em 2026-09-14 (ver docs/CONSOLIDACAO_MONOREPO.md).
+[allowlist]
+description = "fakes auditados"
+regexes = [
+  '''sk_live_abc1''',
+  '''sk_live_abcdefghijklmnop''',
+  '''AKrt1TBiKPrvuNXZGvwUa4Dv''',
+  '''HeoBP9Ma63TE3Q8Qtv19XyCZ''',
+]
