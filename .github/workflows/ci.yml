@@ -1,0 +1,151 @@
+name: CI
+
+on:
+  push:
+    branches: [main, migration/monorepo-consolidation]
+  pull_request:
+    branches: [main]
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      portal: ${{ steps.filter.outputs.portal }}
+      website-us: ${{ steps.filter.outputs.website-us }}
+      website-br: ${{ steps.filter.outputs.website-br }}
+      workspace: ${{ steps.filter.outputs.workspace }}
+      api: ${{ steps.filter.outputs.api }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            portal: ['apps/portal/**', 'packages/**']
+            website-us: ['apps/website-us/**', 'packages/**']
+            website-br: ['apps/website-br/**', 'packages/**']
+            workspace: ['apps/workspace/**', 'packages/**']
+            api: ['services/api/**']
+
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+
+  portal:
+    needs: [changes, gitleaks]
+    if: needs.changes.outputs.portal == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/portal
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: apps/portal/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_USE_WORKSPACE_API: "true"
+          NEXT_PUBLIC_WORKSPACE_API_URL: "https://api.example.com"
+          NEXT_PUBLIC_SITE_URL: "https://example.com"
+
+  website-us:
+    needs: [changes, gitleaks]
+    if: needs.changes.outputs.website-us == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/website-us
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: apps/website-us/package-lock.json
+      - run: npm ci
+      - run: npx eslint src --max-warnings 999
+      - run: npm run check-types
+      - run: npm test
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+
+  website-br:
+    needs: [changes, gitleaks]
+    if: needs.changes.outputs.website-br == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/website-br
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: apps/website-br/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run check-types
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+
+  workspace:
+    needs: [changes, gitleaks]
+    if: needs.changes.outputs.workspace == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/workspace
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: apps/workspace/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run check-types
+      - run: npm run build
+
+  api:
+    needs: [changes, gitleaks]
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio aiosqlite ruff black
+      - run: ruff check app tests
+      - run: black --check app tests
+      - run: alembic heads
+      - run: alembic check
+        env:
+          DATABASE_URL: "sqlite+aiosqlite:///:memory:"
+      - run: PYTHONPATH=. pytest tests/unit -q --tb=short
+        env:
+          DATABASE_URL: "sqlite+aiosqlite:///:memory:"
+          STRIPE_WEBHOOK_SECRET: "test"
+          MP_ACCESS_TOKEN: "test"
