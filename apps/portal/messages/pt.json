@@ -1,0 +1,790 @@
+{
+  "dashboard": {
+    "header": {
+      "logout": "Sair"
+    },
+    "welcome": {
+      "greeting": "Olá",
+      "subtitle": "Acompanhe o progresso do seu projeto abaixo."
+    },
+    "status": {
+      "label": "Status Atual",
+      "requested": "Solicitação Enviada",
+      "paid": "Pagamento Confirmado",
+      "onboarding": "Aguardando Onboarding",
+      "building": "Em Desenvolvimento",
+      "review": "Pronto para Revisão",
+      "delivered": "Entregue",
+      "delivery": "Entrega prevista"
+    },
+    "business": {
+      "title": "Seu Negócio",
+      "name": "Nome",
+      "location": "Localização",
+      "pending": "Preencha o onboarding para ver as informações"
+    },
+    "order": {
+      "title": "Detalhes do Pedido",
+      "number": "Pedido #",
+      "total": "Valor Total",
+      "revisions": "Revisões Utilizadas"
+    },
+    "success": {
+      "title": "Seu Site Está no Ar! 🎉",
+      "message": "Parabéns! Seu site foi publicado e está pronto para o mundo. Você pode acessá-lo pelo botão abaixo.",
+      "button": "Visitar Meu Site"
+    },
+    "actions": {
+      "title": "Ações Rápidas",
+      "viewPreview": "Ver Prévia",
+      "requestChanges": "Solicitar Alterações",
+      "approveDesign": "Aprovar Design",
+      "contactSupport": "Contatar Suporte"
+    },
+    "support": {
+      "title": "Precisa de Ajuda?",
+      "message": "Nossa equipe está aqui para ajudar.",
+      "email": "Enviar E-mail",
+      "whatsapp": "WhatsApp"
+    },
+    "error": {
+      "title": "Erro ao carregar",
+      "fetch": "Falha ao carregar projeto",
+      "generic": "Erro ao carregar",
+      "notFound": "Projeto não encontrado",
+      "retry": "Fazer login novamente"
+    },
+    "stats": {
+      "activeProjects": "Projetos Ativos",
+      "completed": "Concluídos",
+      "totalProjects": "Total de Projetos"
+    },
+    "pipeline": {
+      "payment": "Pagamento",
+      "development": "Desenvolvimento",
+      "review": "Revisão",
+      "launch": "Lançamento",
+      "eta": "Previsão"
+    },
+    "documents": {
+      "title": "Documentos do Projeto",
+      "subtitle": "Revise documentos de planejamento e rascunhos compartilhados."
+    },
+    "empty": {
+      "title": "Nenhum projeto ainda",
+      "subtitle": "Comece sua jornada digital solicitando seu primeiro projeto.",
+      "cta": "Iniciar Primeiro Projeto"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Bem-vindo de volta",
+      "subtitle": "Acesse seu portal de cliente para acompanhar o desenvolvimento do seu site.",
+      "emailLabel": "Endereço de E-mail",
+      "emailPlaceholder": "Digite seu e-mail",
+      "passwordLabel": "Senha",
+      "passwordPlaceholder": "Digite sua senha",
+      "forgotPassword": "Esqueceu sua senha?",
+      "submit": "Entrar",
+      "noAccount": "Não tem uma conta?",
+      "getStarted": "Começar agora",
+      "error": {
+        "invalid": "E-mail ou senha inválidos",
+        "generic": "Algo deu errado. Por favor, tente novamente."
+      },
+      "checkingSession": "Verificando sessão...",
+      "workspaceRequired": "Portal configurado para Workspace. Configure NEXT_PUBLIC_USE_WORKSPACE_API e NEXT_PUBLIC_WORKSPACE_API_URL.",
+      "needHelp": "Precisa de ajuda? Fale com "
+    },
+    "nav": {
+      "dashboard": "Dashboard",
+      "projects": "Projetos",
+      "support": "Suporte",
+      "newProject": "Novo Projeto",
+      "faq": "FAQ",
+      "panelBrand": "Painel",
+      "siteBriefing": "Dados do site",
+      "billing": "Faturamento",
+      "hosting": "Hospedagem",
+      "email": "E-mail",
+      "notifications": "Notificações",
+      "profile": "Perfil",
+      "logout": "Sair"
+    },
+    "forgotPassword": {
+      "title": "Recuperar Senha",
+      "subtitle": "Digite seu e-mail e enviaremos um link para você redefinir sua senha.",
+      "emailLabel": "Endereço de E-mail",
+      "emailPlaceholder": "Digite seu e-mail",
+      "submit": "Enviar Link de Recuperação",
+      "backToLogin": "Voltar para o login",
+      "success": "Verifique seu e-mail para o link de recuperação.",
+      "successHint": "Se não encontrar, verifique a pasta de spam.",
+      "error": "Não conseguimos encontrar uma conta com esse e-mail."
+    },
+    "resetPassword": {
+      "title": "Nova Senha",
+      "subtitle": "Crie uma nova senha para sua conta.",
+      "passwordLabel": "Nova Senha",
+      "passwordPlaceholder": "Pelo menos 8 caracteres",
+      "confirmPasswordLabel": "Confirmar Nova Senha",
+      "confirmPasswordPlaceholder": "Repita sua nova senha",
+      "submit": "Atualizar Senha",
+      "success": "Senha atualizada com sucesso!",
+      "error": "Falha ao redefinir a senha. O link pode estar expirado.",
+      "mismatch": "As senhas não coincidem",
+      "requestNewLink": "Solicitar novo link",
+      "goToLogin": "Ir para o login"
+    },
+    "verifyEmail": {
+      "title": "Verifique sua Caixa de Entrada",
+      "subtitle": "Enviamos um link de verificação para o seu endereço de e-mail.",
+      "resend": "Não recebeu o e-mail?",
+      "resendButton": "Reenviar e-mail de verificação",
+      "success": "E-mail de verificação enviado!",
+      "verified": {
+        "title": "E-mail Verificado!",
+        "subtitle": "Sua conta agora está ativa. Você pode acessar seu portal.",
+        "cta": "Ir para o Portal"
+      }
+    }
+  },
+  "siteBriefing": {
+    "title": "Dados do meu site",
+    "subtitle": "Preencha as informações do seu negócio para criarmos seu site.",
+    "companyName": "Nome da empresa *",
+    "services": "Serviços (o que sua empresa faz)",
+    "city": "Cidade",
+    "whatsapp": "WhatsApp",
+    "domain": "Domínio (se já tiver)",
+    "logoUrl": "URL da logo (se já tiver)",
+    "colors": "Cores preferidas",
+    "photos": "Fotos ou referências (links ou descrição)",
+    "fullDescription": "Briefing completo / detalhes adicionais",
+    "fullDescriptionPlaceholder": "Descreva seu negócio, público-alvo, referências ou qualquer outra informação que queira que saibamos.",
+    "projectFiles": "Arquivos do projeto",
+    "projectFilesHint": "Você pode enviar logo, fotos ou outros arquivos para o projeto \"{name}\".",
+    "selectFiles": "Selecionar arquivos",
+    "uploading": "Enviando...",
+    "filesCount": "{count} arquivo(s) enviado(s)",
+    "noProjectYet": "Após o pagamento você poderá enviar arquivos (logo, fotos) na página do projeto.",
+    "briefingAttach": "Anexar arquivos ao envio do briefing",
+    "briefingAttachHint": "Estes arquivos serão enviados junto com o formulário em um único envio (logo, referências, etc.).",
+    "briefingFilesCount": "{count} arquivo(s) anexado(s)",
+    "briefingSelectFiles": "Selecionar arquivos para anexar",
+    "remove": "Remover",
+    "submit": "Enviar dados do site",
+    "successTitle": "Dados enviados!",
+    "successMessage": "Nossa equipe recebeu as informações do seu site e entrará em contato em breve.",
+    "backToDashboard": "Voltar ao Painel",
+    "errorLogin": "Faça login para enviar.",
+    "errorCompany": "Preencha o nome da empresa.",
+    "errorSend": "Erro ao enviar.",
+    "errorConnection": "Erro de conexão.",
+    "errorNoApi": "Recurso disponível apenas com a API do workspace.",
+    "placeholders": {
+      "company": "Minha Empresa",
+      "services": "Ex.: Advocacia trabalhista, consultoria empresarial...",
+      "city": "Miami, FL",
+      "whatsapp": "(305) 555-0199",
+      "domain": "meusite.com",
+      "logoUrl": "https://...",
+      "colors": "Ex.: Azul e branco",
+      "photos": "URLs de fotos ou descrição do que precisa"
+    },
+    "wizard": {
+      "step1": "Dados do Negócio",
+      "step2": "Identidade Visual",
+      "step3": "Conteúdo",
+      "step1Desc": "Conte sobre sua empresa para personalizarmos seu site.",
+      "step2Desc": "Compartilhe suas cores, logo e domínio.",
+      "step3Desc": "Descreva o conteúdo e envie seus arquivos.",
+      "back": "Voltar",
+      "next": "Continuar",
+      "stepOf": "Etapa {current} de {total}",
+      "companyHelp": "Este será o nome exibido no seu site.",
+      "servicesHelp": "Liste os principais serviços ou produtos do seu negócio.",
+      "brandColors": "Cores da Marca",
+      "primary": "Primária",
+      "secondary": "Secundária",
+      "colorsHelp": "Escolha suas cores ou descreva. Vamos combinar com sua marca.",
+      "domainHelp": "Deixe em branco se ainda não tem um domínio — podemos ajudar.",
+      "logoUpload": "Enviar Logo",
+      "logoUploadHint": "Envie sua logo (PNG, SVG ou JPG recomendado).",
+      "uploadLogo": "Escolher arquivo",
+      "descriptionHelp": "Quanto mais detalhes, melhor ficará seu site.",
+      "nextStepsTitle": "Próximos passos:",
+      "nextStep1": "Nossa equipe analisa seu briefing em até 24 horas.",
+      "nextStep2": "Enviaremos um rascunho para sua aprovação.",
+      "nextStep3": "Seu site entra no ar após sua aprovação!"
+    }
+  },
+  "dashboardWorkspace": {
+    "loadingDashboard": "Carregando painel…",
+    "welcome": "Olá",
+    "summaryActive": "Resumo do seu plano, site e fatura.",
+    "summaryInactive": "Suas faturas, projetos e suporte.",
+    "paymentConfirmed": "Pagamento confirmado! 🎉",
+    "projectsAwaiting": "Você tem {count} projeto(s) aguardando briefing",
+    "nextStep": "Próximo passo",
+    "briefingPrompt": "Preencha os dados do seu site (nome, serviços, fotos) para começarmos a construção.",
+    "fillSiteDetails": "Preencher dados do site",
+    "uploadFiles": "Enviar arquivos",
+    "yourProjects": "Seus projetos",
+    "files": "arquivo(s)",
+    "plan": "Plano",
+    "status": "Status",
+    "since": "Desde",
+    "nextDue": "Próximo venc.",
+    "noActivePlan": "Nenhum plano ativo",
+    "site": "Site",
+    "noSite": "Nenhum site provisionado",
+    "invoice": "Fatura",
+    "due": "Venc.",
+    "redirecting": "Redirecionando...",
+    "payInvoice": "Pagar fatura",
+    "noInvoice": "Nenhuma fatura",
+    "couponCode": "Cupom (opcional)",
+    "couponPlaceholder": "ex. DESCONTO10",
+    "panel": "Painel",
+    "openPanel": "Abrir painel",
+    "support": "Suporte",
+    "openTickets": "tickets abertos",
+    "messages": "Mensagens",
+    "unread": "não lidas",
+    "invoices": "Faturas",
+    "invoicesDesc": "Ver histórico e pagar",
+    "projects": "Projetos",
+    "projectsDesc": "Acompanhar projetos",
+    "supportDesc": "Tickets e ajuda"
+  },
+  "projectDetails": {
+    "backToProjects": "Voltar para Projetos",
+    "notFound": "Projeto não encontrado",
+    "createdOn": "Criado em",
+    "files": {
+      "title": "Arquivos do Projeto",
+      "dropHere": "Solte o arquivo aqui",
+      "uploadFile": "Enviar arquivo",
+      "uploading": "Enviando arquivo...",
+      "dragHint": "Arraste um arquivo aqui ou clique para selecionar.",
+      "noFilesYet": "Nenhum arquivo enviado ainda.",
+      "noFilesHint": "Envie logos, imagens de referência, conteúdo, etc."
+    },
+    "messages": {
+      "title": "Mensagens do Projeto",
+      "subtitle": "Converse com a equipe sobre o andamento do projeto.",
+      "noMessages": "Nenhuma mensagem ainda. Inicie a conversa!",
+      "you": "Você",
+      "team": "Equipe",
+      "placeholder": "Digite sua mensagem...",
+      "attachTitle": "Anexar arquivo"
+    },
+    "pipeline": {
+      "title": "Status do Projeto",
+      "briefing": "Briefing recebido",
+      "design": "Design em criação",
+      "development": "Desenvolvimento",
+      "review": "Revisão",
+      "delivery": "Entrega final",
+      "expectedDelivery": "Entrega prevista:"
+    },
+    "errors": {
+      "uploadFailed": "Falha no envio do arquivo.",
+      "connectionError": "Erro de conexão. Tente novamente.",
+      "modSendError": "Erro ao enviar solicitação.",
+      "modSentRefreshFailed": "Solicitação enviada, mas não foi possível atualizar a lista."
+    },
+    "modifications": {
+      "requestsThisMonth": "Solicitações este mês",
+      "remaining": "restante(s)",
+      "limitReached": "Limite atingido",
+      "newRequest": "Nova Solicitação de Modificação",
+      "title": "Título",
+      "description": "Descrição",
+      "attachment": "Anexos (opcional)",
+      "selectFiles": "Selecionar arquivos",
+      "remove": "Remover",
+      "submit": "Enviar Solicitação",
+      "history": "Histórico de Solicitações",
+      "none": "Nenhuma solicitação ainda.",
+      "staffReply": "Resposta da equipe:",
+      "titlePlaceholder": "Ex: Alterar cor do header",
+      "descPlaceholder": "Descreva em detalhes o que precisa ser modificado..."
+    }
+  },
+  "projectStatus": {
+    "aguardando_briefing": "Aguardando Briefing",
+    "briefing_recebido": "Briefing Recebido",
+    "em_producao": "Em Produção",
+    "design": "Design",
+    "desenvolvimento": "Desenvolvimento",
+    "revisao": "Revisão",
+    "entrega": "Entrega",
+    "ativo": "Ativo",
+    "entregue": "Entregue",
+    "active": "Em Andamento",
+    "requested": "Solicitação Enviada",
+    "pending_payment": "Aguardando Pagamento",
+    "paid": "Pagamento Confirmado",
+    "onboarding_pending": "Onboarding",
+    "building": "Em Desenvolvimento",
+    "review": "Pronto para Revisão",
+    "delivered": "Entregue",
+    "lead": "Lead",
+    "qualificacao": "Qualificação",
+    "proposta": "Proposta",
+    "aprovado": "Aprovado",
+    "em_planejamento": "Em Planejamento",
+    "planejamento_concluido": "Planejamento Concluído",
+    "em_desenvolvimento": "Em Desenvolvimento",
+    "em_revisao": "Em Revisão",
+    "concluido": "Concluído",
+    "cancelado": "Cancelado",
+    "completed": "Concluído"
+  },
+  "projectsPage": {
+    "title": "Meus Projetos",
+    "subtitle": "Veja e gerencie todos os seus projetos de site.",
+    "newProject": "Novo Projeto",
+    "card": {
+      "progress": "Progresso",
+      "details": "Detalhes",
+      "filesLabel": "{count, plural, one {arquivo} other {arquivos}}"
+    },
+    "empty": {
+      "title": "Nenhum Projeto Ainda",
+      "subtitle": "Comece sua jornada digital hoje mesmo.",
+      "cta": "Iniciar Meu Primeiro Projeto"
+    }
+  },
+  "newProjectPage": {
+    "title": "Solicitar Novo Projeto",
+    "subtitle": "Conte-nos sobre seu projeto e vamos começar.",
+    "step1": {
+      "title": "Qual o tipo de projeto?",
+      "continue": "Continuar",
+      "types": {
+        "website": {
+          "label": "Site Institucional",
+          "description": "Site profissional para o seu negócio"
+        },
+        "landing": {
+          "label": "Landing Page",
+          "description": "Página de alta conversão"
+        },
+        "ecommerce": {
+          "label": "E-Commerce",
+          "description": "Loja online com pagamentos"
+        },
+        "webapp": {
+          "label": "Aplicação Web",
+          "description": "Aplicação web personalizada"
+        },
+        "mobile": {
+          "label": "App Mobile",
+          "description": "App para iOS e Android"
+        },
+        "custom": {
+          "label": "Projeto Customizado",
+          "description": "Algo único"
+        }
+      }
+    },
+    "step2": {
+      "title": "Detalhes do Projeto",
+      "projectName": "Nome do Projeto",
+      "projectNamePlaceholder": "Meu Projeto Incrível",
+      "description": "Descrição",
+      "descriptionPlaceholder": "Conte-nos sobre seu projeto, objetivos e requisitos específicos...",
+      "back": "Voltar",
+      "continue": "Continuar"
+    },
+    "step3": {
+      "title": "Orçamento e Prazo",
+      "budgetLabel": "Faixa de Orçamento",
+      "budgetPlaceholder": "Selecione uma faixa",
+      "budgetSmall": "R$ 1.500 - R$ 5.000",
+      "budgetMedium": "R$ 5.000 - R$ 15.000",
+      "budgetLarge": "R$ 15.000 - R$ 50.000",
+      "budgetEnterprise": "R$ 50.000+",
+      "timelineLabel": "Prazo Desejado",
+      "timelinePlaceholder": "Selecione o prazo",
+      "timelineAsap": "O quanto antes",
+      "timeline2weeks": "Em até 2 semanas",
+      "timeline1month": "Em até 1 mês",
+      "timelineFlexible": "Flexível",
+      "back": "Voltar",
+      "sending": "Enviando...",
+      "submit": "Enviar Solicitação"
+    }
+  },
+  "billingPage": {
+    "pageTitle": "Faturamento e Faturas",
+    "pageSubtitle": "Veja seu histórico de pagamentos e faturas.",
+    "paymentMethodsTitle": "Métodos de Pagamento",
+    "stripePayments": "Pagamentos Stripe",
+    "secureProcessing": "Processamento de pagamento seguro",
+    "emptyTitle": "Nenhuma Fatura Ainda",
+    "emptySubtitle": "Seu histórico de faturas aparecerá aqui.",
+    "statTotalPaid": "Total Pago",
+    "statPending": "Pendente",
+    "statTotalInvoices": "Total de Faturas",
+    "invoiceHistory": "Histórico de Faturas",
+    "invoice": "Fatura",
+    "project": "Projeto",
+    "date": "Data",
+    "amount": "Valor",
+    "actions": "Ações",
+    "status": "Status",
+    "paid": "Pago",
+    "pending": "Pendente",
+    "requested": "Solicitação Enviada",
+    "overdue": "Atrasado",
+    "all": "Todos",
+    "pendingPlural": "Pendentes",
+    "paidPlural": "Pagos",
+    "noInvoicesFilter": "Nenhuma fatura com esse filtro.",
+    "pay": "Pagar",
+    "paymentNotConfigured": "Pagamento não configurado",
+    "downloadPrintInvoice": "Baixar / Imprimir fatura",
+    "cardTitle": "Cartão de Crédito/Débito",
+    "cardSubtitle": "Gerencie seus cartões salvos",
+    "addCard": "Adicionar Cartão",
+    "removeCard": "Remover",
+    "defaultCard": "Padrão",
+    "cardNumber": "Número do cartão",
+    "cardName": "Nome no cartão",
+    "cardExpiry": "Validade",
+    "cardCvv": "CVV",
+    "cardSaved": "Cartão registrado com sucesso",
+    "cardRemoved": "Cartão removido",
+    "noCards": "Nenhum cartão salvo ainda",
+    "cardLastFour": "final {lastFour}",
+    "cardBrand": "Cartão {brand}",
+    "setAsDefault": "Definir como padrão",
+    "cardPlaceholder": "ex. Visa final 4242",
+    "paymentMethodInfo": "Seus pagamentos são processados com segurança através do nosso parceiro de pagamento. Adicione um cartão para pagamentos mais rápidos.",
+    "paymentMethodLink": "Gerenciar métodos de pagamento",
+    "mpConfigTitle": "Mercado Pago",
+    "saving": "Salvando...",
+    "saved": "Salvo!",
+    "payInvoice": "Pagar fatura",
+    "payWithPix": "Pagar com PIX",
+    "payWithBoleto": "Pagar com boleto",
+    "pixCopyPaste": "Pix copia e cola",
+    "copyCode": "Copiar código",
+    "expiresAt": "Vence em",
+    "pixWaiting": "Aguardando pagamento. A confirmação é automática via webhook.",
+    "boletoCode": "Código do boleto",
+    "openBoleto": "Abrir boleto",
+    "newCharge": "Gerar nova cobrança",
+    "nextCharge": "Próxima cobrança",
+    "dueDate": "Vencimento",
+    "openInvoices": "{count} faturas em aberto",
+    "loading": "Carregando"
+  },
+  "supportPage": {
+    "title": "Suporte",
+    "subtitle": "Obtenha ajuda com seus projetos e sua conta.",
+    "newTicket": "Novo Ticket",
+    "cancel": "Cancelar",
+    "ticketStatus": {
+      "open": "Aberto",
+      "pending": "Aguardando Resposta",
+      "resolved": "Resolvido",
+      "closed": "Fechado"
+    },
+    "messageCount": "{count, plural, one {mensagem} other {mensagens}}",
+    "updated": "Atualizado em",
+    "emptyTitle": "Nenhum ticket de suporte",
+    "emptySubtitle": "Você ainda não criou nenhum ticket de suporte.",
+    "createFirstTicket": "Criar seu primeiro ticket",
+    "formTitle": "Criar ticket de suporte",
+    "subject": "Assunto",
+    "message": "Mensagem",
+    "subjectPlaceholder": "Breve descrição do seu problema",
+    "messagePlaceholder": "Descreva seu problema em detalhes...",
+    "sending": "Enviando...",
+    "submitTicket": "Enviar ticket",
+    "quickContact": "Contato rápido",
+    "emailSupport": "Suporte por e-mail",
+    "whatsApp": "WhatsApp",
+    "quickResponse": "Resposta rápida",
+    "detail": {
+      "backToSupport": "Voltar ao suporte",
+      "unavailable": "Detalhe do ticket disponível quando o portal está conectado ao Workspace.",
+      "ticketNotFound": "Ticket não encontrado.",
+      "errorLoadTicket": "Erro ao carregar ticket.",
+      "errorConnection": "Erro de conexão.",
+      "errorSendMessage": "Erro ao enviar mensagem.",
+      "createdOn": "Criado em",
+      "updatedOn": "Atualizado em",
+      "messages": "Mensagens",
+      "noMessages": "Nenhuma mensagem ainda.",
+      "you": "Você",
+      "support": "Suporte",
+      "reply": "Responder",
+      "replyPlaceholder": "Digite sua mensagem...",
+      "send": "Enviar"
+    }
+  },
+  "notificationsPage": {
+    "title": "Notificações",
+    "subtitle": "Suas notificações e mensagens.",
+    "unavailable": "Notificações disponíveis quando o portal está conectado ao Workspace.",
+    "errorLoad": "Erro ao carregar notificações.",
+    "emptyTitle": "Nenhuma notificação",
+    "emptySubtitle": "Suas notificações aparecerão aqui.",
+    "markAsRead": "Marcar como lida"
+  },
+  "profilePage": {
+    "title": "Configurações do Perfil",
+    "subtitle": "Gerencie as informações da sua conta.",
+    "user": "Usuário",
+    "personalInfo": "Informações pessoais",
+    "name": "Nome",
+    "namePlaceholder": "Seu nome",
+    "email": "E-mail",
+    "emailCannotChange": "E-mail não pode ser alterado",
+    "phone": "Telefone",
+    "phonePlaceholder": "+55 (11) 99999-9999",
+    "address": "Endereço",
+    "street": "Rua",
+    "number": "Número",
+    "postalCode": "CEP",
+    "complement": "Complemento",
+    "city": "Cidade",
+    "state": "Estado",
+    "country": "País",
+    "documentLabel": "CPF/CNPJ",
+    "documentPlaceholder": "Digite seu CPF/CNPJ",
+    "company": "Empresa",
+    "companyPlaceholder": "Nome da empresa",
+    "accountInfo": "Sua conta",
+    "notInformed": "Não informado"
+  },
+  "faqPage": {
+    "title": "FAQ do Portal",
+    "subtitle": "Guia completo do portal do cliente: login, briefing, projetos, faturamento, suporte e conta.",
+    "sections": {
+      "gettingStarted": {
+        "title": "Primeiros passos",
+        "items": [
+          {
+            "id": "1",
+            "question": "Como acesso o portal?",
+            "answer": "Use o link enviado por e-mail e faça login com seu e-mail de cliente. Se for seu primeiro acesso, você será orientado a definir sua senha."
+          },
+          {
+            "id": "2",
+            "question": "Esqueci minha senha. O que fazer?",
+            "answer": "Na tela de login, clique em 'Esqueceu sua senha?'. Você receberá um link de redefinição válido por 24 horas."
+          },
+          {
+            "id": "3",
+            "question": "Quais idiomas o portal suporta?",
+            "answer": "O portal está disponível em Português, Inglês e Espanhol. Você pode trocar o idioma no seletor no topo da interface."
+          }
+        ]
+      },
+      "dashboard": {
+        "title": "Dashboard",
+        "items": [
+          {
+            "id": "1",
+            "question": "Quando o alerta de briefing aparece?",
+            "answer": "O alerta aparece apenas enquanto houver projeto em status 'aguardando briefing'. Após o envio do briefing, ele desaparece automaticamente."
+          },
+          {
+            "id": "2",
+            "question": "O que vejo no card de fatura?",
+            "answer": "Você verá número/status da fatura, valor e vencimento. Se houver pagamento pendente, o botão para pagar ficará disponível."
+          },
+          {
+            "id": "3",
+            "question": "Como abrir o painel do meu site?",
+            "answer": "No card 'Painel', clique em 'Abrir painel'. Se ainda não houver site provisionado, o card mostrará essa informação."
+          }
+        ]
+      },
+      "briefing": {
+        "title": "Briefing do site",
+        "items": [
+          {
+            "id": "1",
+            "question": "Quais dados devo preencher no briefing?",
+            "answer": "Informe nome da empresa, serviços, cidade, WhatsApp, domínio (se tiver), logo, cores e detalhes adicionais do projeto."
+          },
+          {
+            "id": "2",
+            "question": "Posso anexar arquivos no briefing?",
+            "answer": "Sim. Você pode anexar logo, fotos, referências e materiais complementares no próprio formulário."
+          },
+          {
+            "id": "3",
+            "question": "O que acontece após enviar o briefing?",
+            "answer": "Seu projeto avança para análise da equipe. Você pode acompanhar o status e trocar mensagens na área de projetos."
+          }
+        ]
+      },
+      "projects": {
+        "title": "Projetos e modificações",
+        "items": [
+          {
+            "id": "1",
+            "question": "Como acompanhar o andamento do projeto?",
+            "answer": "Acesse 'Projetos', abra o projeto e acompanhe o pipeline, arquivos, mensagens e solicitações de modificação."
+          },
+          {
+            "id": "2",
+            "question": "Como enviar arquivos para um projeto?",
+            "answer": "Dentro do projeto, use a seção de arquivos para upload. Você pode enviar logos, textos, imagens e materiais de apoio."
+          },
+          {
+            "id": "3",
+            "question": "Como funciona o limite de modificações?",
+            "answer": "Cada plano possui limite de revisões. O portal mostra o total usado no mês e o saldo restante no histórico de solicitações."
+          }
+        ]
+      },
+      "billing": {
+        "title": "Faturamento e pagamentos",
+        "items": [
+          {
+            "id": "1",
+            "question": "Onde vejo minhas faturas?",
+            "answer": "Vá em 'Faturamento' para visualizar histórico completo, filtrar por status e abrir detalhes de cada fatura."
+          },
+          {
+            "id": "2",
+            "question": "Como pagar uma fatura pendente?",
+            "answer": "Clique em 'Pagar' na fatura desejada. Você será direcionado para o fluxo de pagamento configurado."
+          },
+          {
+            "id": "3",
+            "question": "Posso baixar a fatura?",
+            "answer": "Sim. Use a ação 'Baixar / Imprimir fatura' para gerar o documento e salvar em PDF."
+          }
+        ]
+      },
+      "support": {
+        "title": "Suporte e notificações",
+        "items": [
+          {
+            "id": "1",
+            "question": "Como abro um ticket de suporte?",
+            "answer": "Na página 'Suporte', clique em 'Novo Ticket', preencha assunto e mensagem, e envie."
+          },
+          {
+            "id": "2",
+            "question": "Como responder um ticket existente?",
+            "answer": "Abra o ticket na lista de suporte e envie sua resposta no campo de mensagens."
+          },
+          {
+            "id": "3",
+            "question": "Onde vejo notificações novas?",
+            "answer": "Acesse 'Notificações'. Você também verá badge no menu lateral quando houver itens não lidos."
+          }
+        ]
+      },
+      "account": {
+        "title": "Conta e segurança",
+        "items": [
+          {
+            "id": "1",
+            "question": "Como atualizo meus dados de perfil?",
+            "answer": "Na página 'Perfil', edite nome, telefone e endereço e clique em salvar."
+          },
+          {
+            "id": "2",
+            "question": "Posso alterar meu e-mail de login?",
+            "answer": "Não pelo portal. O e-mail é protegido por segurança. Se precisar alterar, abra um ticket de suporte."
+          },
+          {
+            "id": "3",
+            "question": "Como altero minha senha?",
+            "answer": "Em 'Perfil' > 'Segurança', informe senha atual e nova senha. Para senha esquecida, use recuperação no login."
+          }
+        ]
+      }
+    }
+  },
+  "portal": {
+    "welcomeSetup": "Bem-vindo à Innexar!",
+    "setupPasswordPrompt": "Como acabamos de criar seu acesso, por favor crie sua senha definitiva agora para mais segurança.",
+    "newPassword": "Nova Senha",
+    "min6chars": "Mínimo 6 caracteres",
+    "saveAndContinue": "Salvar e Continuar",
+    "passwordSaved": "Senha salva com sucesso!",
+    "redirecting": "Redirecionando",
+    "errorPasswordLength": "A senha deve ter no mínimo 6 caracteres.",
+    "errorGeneric": "Aconteceu um erro. Tente novamente."
+  },
+  "emailPage": {
+    "pageTitle": "E-mail Profissional",
+    "noService": "Nenhum domínio de e-mail configurado. Fale com a Innexar.",
+    "retry": "Tentar de novo",
+    "perMonth": "/mês",
+    "accounts": "contas",
+    "inUse": "Em uso",
+    "available": "Disponíveis",
+    "plan": "Plano",
+    "billing": "Cobrança",
+    "perAccount": "por conta",
+    "openWebmail": "Acessar Webmail",
+    "newAccount": "Nova conta",
+    "requestAccount": "Adicionar conta",
+    "limitReached": "Plano cheio: {contracted} contratadas, {used} em uso. Solicite uma conta adicional.",
+    "active": "Ativa",
+    "disabled": "Desativada",
+    "webmail": "Webmail",
+    "changePassword": "Trocar senha",
+    "disable": "Desativar",
+    "enable": "Ativar",
+    "newPassword": "Nova senha (mín. 8)",
+    "confirmPassword": "Confirmar senha",
+    "pwMismatch": "Senhas não conferem",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "create": "Criar conta",
+    "confirmRequest": "Confirmar contratação",
+    "requestHint": "Conta adicional será cobrada conforme seu plano. A criação ocorre após a confirmação do pagamento.",
+    "upgradeCreated": "Solicitação registrada! Cobrança de {total} gerada — pague na área de Faturamento para ativar.",
+    "addressPlaceholder": "nome (ex: contato)",
+    "namePlaceholder": "Nome de exibição (opcional)",
+    "howTo": "Como usar meu e-mail",
+    "or": "ou",
+    "username": "Usuário",
+    "fullAddress": "seu e-mail completo",
+    "apps": "Apps"
+  },
+  "hostingPage": {
+    "pageTitle": "Hospedagem",
+    "pageSubtitle": "Seus sites e aplicações",
+    "empty": "Nenhum serviço de hospedagem vinculado. Fale com a Innexar.",
+    "openSite": "Abrir site",
+    "restart": "Reiniciar",
+    "confirmRestart": "Confirmar restart",
+    "cancel": "Cancelar",
+    "uptime": "Uptime",
+    "network": "Rede",
+    "validUntil": "Válido até",
+    "sslUnavailable": "SSL indisponível",
+    "deploy": "Deploy",
+    "up": "Subir",
+    "unsaved": "não salvo",
+    "save": "Salvar",
+    "searchLogs": "Buscar nos logs…",
+    "refresh": "Atualizar",
+    "copy": "Copiar",
+    "noLogs": "Sem logs.",
+    "createBackup": "Criar backup",
+    "noBackups": "Sem backups. Crie o primeiro para proteger sua aplicação.",
+    "tab_overview": "Visão geral",
+    "tab_files": "Arquivos",
+    "tab_logs": "Logs",
+    "tab_backups": "Backups",
+    "tab_domains": "Domínios & SSL"
+  }
+}
