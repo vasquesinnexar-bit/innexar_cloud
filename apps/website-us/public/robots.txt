@@ -1,0 +1,28 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://innexar.app/sitemap.xml
+
+# Disallow admin, private areas, and internal tools
+Disallow: /api/
+Disallow: /_next/
+Disallow: /admin/
+Disallow: /*/portal/
+Disallow: /*/dashboard/
+Disallow: /*/launch/login
+Disallow: /*/launch/dashboard
+Disallow: /*/launch/checkout
+Disallow: /*/launch/onboarding
+Disallow: /*/launch/verify-email
+Disallow: /*/launch/forgot-password
+Disallow: /*/launch/reset-password
+Disallow: /*/launch/success
+Disallow: /*/paid-traffic/checkout
+Disallow: /*/paid-traffic/success
+Disallow: /*/waas/
+Disallow: /*/templates/preview/
+
+# Block crawling of non-canonical hosts
+Host: https://innexar.app
