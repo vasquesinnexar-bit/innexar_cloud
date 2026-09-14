@@ -1,0 +1,25 @@
+# novo-site – dev.innexar.com.br (Traefik)
+# Uso: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+
+services:
+  web:
+    build:
+      args:
+        - NEXT_PUBLIC_SITE_URL=https://dev.innexar.com.br
+    environment:
+      - NEXT_PUBLIC_SITE_URL=https://dev.innexar.com.br
+    networks:
+      - fixelo_fixelo-network
+    labels:
+      - "innexar.scope=br"
+      - "traefik.enable=true"
+      - "traefik.http.routers.innexar-websitebr-dev.rule=Host(`dev.innexar.com.br`)"
+      - "traefik.http.routers.innexar-websitebr-dev.entrypoints=websecure"
+      - "traefik.http.routers.innexar-websitebr-dev.tls=true"
+      - "traefik.http.routers.innexar-websitebr-dev.service=innexar-websitebr-dev-service"
+      - "traefik.http.services.innexar-websitebr-dev-service.loadbalancer.server.port=3000"
+      - "traefik.http.services.innexar-websitebr-dev-service.loadbalancer.passHostHeader=true"
+
+networks:
+  fixelo_fixelo-network:
+    external: true

@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /checkout/
+Disallow: /checklist
+Disallow: /api/
+
+Sitemap: https://innexar.com.br/sitemap.xml
+Host: innexar.com.br

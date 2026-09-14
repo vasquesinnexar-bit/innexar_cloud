@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Innexar icon">
+  <defs>
+    <linearGradient id="bg" x1="24" y1="24" x2="232" y2="232" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1A2A5A"/>
+      <stop offset="0.55" stop-color="#1A4A7C"/>
+      <stop offset="1" stop-color="#18B6A6"/>
+    </linearGradient>
+    <linearGradient id="bird" x1="54" y1="54" x2="202" y2="206" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#BDF8FF"/>
+      <stop offset="0.45" stop-color="#59D3D1"/>
+      <stop offset="1" stop-color="#2F3F97"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="18" y="18" width="220" height="220" rx="52" fill="url(#bg)"/>
+
+  <path d="M198 86L155 71L131 87L111 117L91 130L70 162L101 151L118 168L145 161L169 173L160 146L180 132Z" fill="url(#bird)"/>
+  <path d="M150 96L138 101L146 112L162 105Z" fill="#DFFFFF" opacity="0.9"/>
+  <path d="M93 188L111 172L126 183L107 198Z" fill="#8CECF2" opacity="0.85"/>
+  <path d="M128 194L145 180L161 192L143 208Z" fill="#74D2E8" opacity="0.85"/>
+
+  <circle cx="170" cy="96" r="4" fill="#E8FFFF"/>
+</svg>

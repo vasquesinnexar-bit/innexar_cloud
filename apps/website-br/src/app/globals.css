@@ -1,0 +1,156 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-source-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-family-display: var(--font-syne);
+  --color-cream: #fafaf9;
+  --color-ink: #0c0a09;
+}
+
+:root {
+  --background: #050b16;
+  --foreground: #f7fbff;
+  --accent: #16d8c3;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+::selection { background: rgba(22, 216, 195, 0.28); color: #fff; }
+
+:focus-visible {
+  outline: 2px solid #2dd4bf;
+  outline-offset: 3px;
+}
+
+select {
+  color-scheme: dark;
+}
+
+select option {
+  background: #0d1b2a;
+  color: #f8fafc;
+}
+
+html.dark {
+  --background: #050b16;
+  --foreground: #f7fbff;
+  --accent: #16d8c3;
+}
+
+.tech-grid {
+  background-image: linear-gradient(rgba(88, 215, 244, .055) 1px, transparent 1px), linear-gradient(90deg, rgba(88, 215, 244, .055) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: linear-gradient(to bottom, black, transparent);
+}
+
+.title-fx {
+  text-wrap: balance;
+  text-shadow: 0 0 24px rgba(94, 234, 212, 0.18);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .title-fx {
+    animation: titleGlowPulse 5s ease-in-out infinite;
+  }
+}
+
+@keyframes titleGlowPulse {
+  0%,
+  100% {
+    text-shadow: 0 0 18px rgba(94, 234, 212, 0.14);
+  }
+  50% {
+    text-shadow: 0 0 32px rgba(94, 234, 212, 0.26);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .orb-float {
+    animation: orbFloat 14s ease-in-out infinite;
+    will-change: transform, opacity;
+  }
+
+  .orb-slow {
+    animation-duration: 20s;
+  }
+
+  .orb-delay {
+    animation-delay: -5s;
+  }
+}
+
+@keyframes orbFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.75;
+  }
+  35% {
+    transform: translate3d(16px, -14px, 0) scale(1.04);
+    opacity: 0.95;
+  }
+  70% {
+    transform: translate3d(-12px, 10px, 0) scale(0.98);
+    opacity: 0.8;
+  }
+}
+
+/* ── Tech Logos Marquee ── */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+@keyframes marqueeReverse {
+  from { transform: translateX(-50%); }
+  to   { transform: translateX(0); }
+}
+
+/* ── Cursor blink ── */
+@keyframes blinkCursor {
+  from, to { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+.cursor-blink {
+  animation: blinkCursor 1s step-end infinite;
+}
+
+/* ── Shimmer loading ── */
+@keyframes shimmer {
+  from { background-position: -200% center; }
+  to   { background-position:  200% center; }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.04) 25%,
+    rgba(255,255,255,0.10) 50%,
+    rgba(255,255,255,0.04) 75%
+  );
+  background-size: 200% auto;
+  animation: shimmer 2.2s linear infinite;
+}
+
+/* ── Dot grid background ── */
+.dot-grid {
+  background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* ── Gradient border glow ── */
+@keyframes borderGlow {
+  0%, 100% { box-shadow: 0 0 12px rgba(0,201,177,0.15), inset 0 0 8px rgba(0,201,177,0.05); }
+  50%       { box-shadow: 0 0 24px rgba(0,201,177,0.30), inset 0 0 12px rgba(0,201,177,0.08); }
+}
+
+.glow-ring {
+  animation: borderGlow 4s ease-in-out infinite;
+}

@@ -1,0 +1,5 @@
+import Link from "next/link";
+
+export function NationalCoverage() {
+  return <section className="bg-[#050b16] py-20"><div className="mx-auto grid max-w-[1180px] gap-8 px-6 xl:px-8 md:grid-cols-[1.1fr_.9fr] md:items-center"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-cyan-300">Atendimento nacional</p><h2 className="mt-4 font-[family-name:var(--font-syne)] text-3xl font-bold tracking-[-.03em] text-white md:text-4xl">Tecnologia para empresas em todo o Brasil.</h2></div><div><p className="leading-relaxed text-slate-300">A Innexar desenvolve sites, plataformas, sistemas personalizados, SaaS, automações e soluções com inteligência artificial para empresas em diferentes regiões do país.</p><p className="mt-4 text-sm leading-relaxed text-slate-400">Começamos a presença regional por <Link className="text-cyan-200 underline decoration-cyan-300/40 underline-offset-4 hover:text-cyan-300" href="/atendimento/sao-paulo">São Paulo</Link>, com uma página de atendimento completa e útil para quem procura tecnologia para empresas.</p></div></div></section>;
+}
