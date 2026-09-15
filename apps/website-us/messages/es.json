@@ -2034,7 +2034,8 @@
         "step3Desc": "Mira la vista previa de tu sitio",
         "step4": "Lanzamiento",
         "step4Desc": "¡Publícalo!"
-      }
+      },
+      "confirmed": "Confirmado"
     },
     "dashboard": {
       "title": "Project Dashboard",

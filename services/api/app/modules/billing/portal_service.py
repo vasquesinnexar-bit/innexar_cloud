@@ -13,7 +13,6 @@ from app.models.customer_user import CustomerUser
 from app.modules.billing.enums import InvoiceStatus
 from app.modules.billing.models import Invoice
 from app.modules.billing.overdue import reactivate_subscription_after_payment
-from app.modules.billing.provisioning import trigger_provisioning_if_needed
 from app.modules.billing.schemas import InvoiceResponse, PayRequest, PayResponse
 from app.modules.billing.service import _get_payment_provider, create_payment_attempt
 from app.modules.notifications.service import create_notification_and_maybe_send_email
@@ -215,17 +214,11 @@ class BillingPortalService:
                     )
             await self._db.flush()
 
-            from app.core.database import AsyncSessionLocal
+            from app.modules.fulfillment.tasks import (
+                fulfillment_after_payment as _fulfillment_after_payment,
+            )
 
-            async def _run_provisioning(invoice_id: int) -> None:
-                async with AsyncSessionLocal() as session:
-                    try:
-                        await trigger_provisioning_if_needed(session, invoice_id)
-                        await session.commit()
-                    except Exception:
-                        await session.rollback()
-
-            background_tasks.add_task(_run_provisioning, inv.id)
+            background_tasks.add_task(_fulfillment_after_payment, inv.id)
 
             await create_notification_and_maybe_send_email(
                 self._db,

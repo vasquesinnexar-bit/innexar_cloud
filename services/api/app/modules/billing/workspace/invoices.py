@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.database import AsyncSessionLocal, get_db
+from app.core.database import get_db
 from app.core.router_org import router_org_list_filter
 from app.core.rbac import RequirePermission
 from app.models.customer import Customer
@@ -24,7 +24,6 @@ from app.modules.billing.overdue import (
     process_overdue_invoices,
     reactivate_subscription_after_payment,
 )
-from app.modules.billing.provisioning import trigger_provisioning_if_needed
 from app.modules.billing.schemas import (
     GenerateRecurringResponse,
     InvoiceCreate,
@@ -51,14 +50,12 @@ router = APIRouter()
 
 
 async def _run_provisioning_after_payment(invoice_id: int) -> None:
-    """Background: run provisioning with a new DB session."""
-    async with AsyncSessionLocal() as db:
-        try:
-            await trigger_provisioning_if_needed(db, invoice_id)
-            await db.commit()
-        except Exception:
-            await db.rollback()
-            raise
+    """Background: P0 — contratação formal + fulfillment (cobre mail+hestia)."""
+    from app.modules.fulfillment.tasks import (
+        fulfillment_after_payment as _fulfillment_after_payment,
+    )
+
+    await _fulfillment_after_payment(invoice_id)
 
 
 def _invoice_to_response(

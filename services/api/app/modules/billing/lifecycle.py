@@ -261,6 +261,13 @@ async def suspend_overdue(db: AsyncSession, *, background_tasks=None) -> int:
                 action="service_suspended", actor_type="system",
                 actor_id="lifecycle", payload={"invoice_id": inv.id},
             )
+            from app.modules.fulfillment.facade import (
+                sync_service_event as _sync_fulfillment,
+            )
+
+            await _sync_fulfillment(db, contract_item_id=None,
+                                    service_id=svc.id, suspended=True,
+                                    actor_type="system", actor_id="lifecycle")
         contracts = (
             await db.execute(
                 select(Contract).where(
@@ -303,6 +310,14 @@ async def suspend_overdue(db: AsyncSession, *, background_tasks=None) -> int:
                     action="hosting_suspended", actor_type="system",
                     actor_id="lifecycle", payload={"invoice_id": inv.id},
                 )
+                from app.modules.fulfillment.facade import (
+                    sync_service_event as _sync_fulfillment,
+                )
+
+                await _sync_fulfillment(
+                    db, contract_item_id=hsvc.contract_item_id,
+                    service_id=None, suspended=True,
+                    actor_type="system", actor_id="lifecycle")
                 await notify_customer(
                     db, cust, "hosting_suspended",
                     background_tasks=background_tasks, org_id=cust.org_id,
@@ -366,6 +381,13 @@ async def reactivate_customer(
             action="service_reactivated", actor_type="system",
             actor_id="lifecycle",
         )
+        from app.modules.fulfillment.facade import (
+            sync_service_event as _sync_fulfillment,
+        )
+
+        await _sync_fulfillment(db, contract_item_id=None,
+                                service_id=svc.id, suspended=False,
+                                actor_type="system", actor_id="lifecycle")
         reactivated += 1
     contracts = (
         await db.execute(
@@ -405,6 +427,14 @@ async def reactivate_customer(
             action="hosting_reactivated", actor_type="system",
             actor_id="lifecycle",
         )
+        from app.modules.fulfillment.facade import (
+            sync_service_event as _sync_fulfillment,
+        )
+
+        await _sync_fulfillment(
+            db, contract_item_id=hsvc.contract_item_id,
+            service_id=None, suspended=False,
+            actor_type="system", actor_id="lifecycle")
         reactivated += 1
         await notify_customer(
             db, cust, "hosting_reactivated", background_tasks=background_tasks,

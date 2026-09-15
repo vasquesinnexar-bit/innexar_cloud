@@ -129,10 +129,14 @@ async def test_trigger_provisioning_non_hestia_product(
 
 
 @pytest.mark.asyncio
-async def test_trigger_provisioning_no_domain_fails_job(
+async def test_trigger_provisioning_no_domain_waiting_input(
     db_session: AsyncSession,
 ) -> None:
-    """When hestia_hosting but no domain in line_items, job and record created with failed status."""
+    """P0: hestia sem domain NÃO falha silenciosamente — vira WAITING_INPUT.
+
+    run_hestia_for_invoice retorna waiting_input sem criar job failed;
+    a facade cria o Fulfillment correspondente (ver test_facade caso 6).
+    """
     customer = Customer(org_id="innexar", name="C", email="c@test.com")
     db_session.add(customer)
     await db_session.flush()
@@ -173,24 +177,22 @@ async def test_trigger_provisioning_no_domain_fails_job(
         new_callable=AsyncMock,
         return_value=MagicMock(),
     ):
-        await trigger_provisioning_if_needed(db_session, inv.id)
+        from app.modules.billing.provisioning import run_hestia_for_invoice
+
+        result = await run_hestia_for_invoice(db_session, inv.id)
+    assert result["status"] == "waiting_input"
+    assert result["reason"] == "domain_required"
 
     r = await db_session.execute(
         select(ProvisioningJob).where(ProvisioningJob.invoice_id == inv.id)
     )
     job = r.scalar_one_or_none()
-    assert job is not None
-    assert job.status == "failed"
-    assert (
-        "no domain" in (job.last_error or "").lower()
-        or "line_items" in (job.last_error or "").lower()
-    )
+    assert job is None
     rec_r = await db_session.execute(
         select(ProvisioningRecord).where(ProvisioningRecord.invoice_id == inv.id)
     )
     rec = rec_r.scalar_one_or_none()
-    assert rec is not None
-    assert rec.status == "failed"
+    assert rec is None
 
 
 @pytest.mark.asyncio

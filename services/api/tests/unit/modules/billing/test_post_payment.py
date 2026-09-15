@@ -24,8 +24,9 @@ class TestIsSiteProduct:
         assert _is_site_product(product) is True
 
     def test_name_contains_site(self) -> None:
+        # P0: fuzzy por nome REMOVIDO — nome sozinho nunca qualifica.
         product = Product(provisioning_type=None, name="Site Package")
-        assert _is_site_product(product) is True
+        assert _is_site_product(product) is False
 
     def test_non_site_product(self) -> None:
         product = Product(provisioning_type="hestia_hosting", name="Hosting")

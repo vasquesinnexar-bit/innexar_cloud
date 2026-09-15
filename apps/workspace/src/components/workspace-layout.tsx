@@ -95,6 +95,7 @@ export default function WorkspaceLayout({
           href: "/billing/price-plans",
         },
         { key: "policies", label: "Políticas", href: "/billing/policies" },
+        { key: "provisioning", label: "Provisionamento", href: "/provisioning" },
       ],
     },
     {

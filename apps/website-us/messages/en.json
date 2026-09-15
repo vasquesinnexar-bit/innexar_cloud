@@ -2038,7 +2038,8 @@
         "step3Desc": "Preview your site",
         "step4": "Launch",
         "step4Desc": "Go live!"
-      }
+      },
+      "confirmed": "Confirmed"
     },
     "dashboard": {
       "title": "Project Dashboard",

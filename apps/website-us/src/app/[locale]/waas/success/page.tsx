@@ -9,11 +9,12 @@ import {
     CheckCircle2, ArrowRight, Mail, Clock, Palette, Eye,
     Rocket, LayoutDashboard, Sparkles, RefreshCw
 } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { MetaPixel } from '@/lib/meta-pixel'
 
 function SuccessContent() {
     const t = useTranslations('waas')
+    const locale = useLocale()
     const searchParams = useSearchParams()
     const router = useRouter()
     const sessionId = searchParams.get('session_id')
@@ -99,16 +100,18 @@ function SuccessContent() {
     }, [sessionId])  // Remove router and orderDetails from deps
 
     // Separate effect for redirect when countdown reaches 0
+    // P0: usa o locale atual (fluxo canônico devolve ?token=, sem session_id legada).
+    const portalLocale = locale?.startsWith('pt') ? 'pt' : locale?.startsWith('es') ? 'es' : 'en'
+    const portalLoginBase = `${process.env.NEXT_PUBLIC_PORTAL_URL || 'https://panel.innexar.app'}/${portalLocale}/login?checkout=success`
     useEffect(() => {
         if (countdown === 0) {
-            const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || 'https://panel.innexar.app'
             const targetUrl = token
-                ? `${portalUrl}/pt/login?checkout=success&token=${token}`
-                : `${portalUrl}/pt/login?checkout=success`
+                ? `${portalLoginBase}&token=${token}`
+                : portalLoginBase
 
             window.location.href = targetUrl
         }
-    }, [countdown, token])
+    }, [countdown, token, portalLoginBase])
 
     const steps = [
         { icon: CheckCircle2, title: t('success.timeline.step1'), desc: t('success.timeline.step1Desc'), done: true },
@@ -209,7 +212,7 @@ function SuccessContent() {
                     >
                         <div className="flex justify-between text-sm mb-2">
                             <span className="text-slate-400">{t('success.orderId')}</span>
-                            <span className="text-white font-mono">{orderDetails?.orderId || 'Processing...'}</span>
+                            <span className="text-white font-mono">{orderDetails?.orderId || (token ? t('success.confirmed') : 'Processing...')}</span>
                         </div>
                         <div className="flex justify-between text-sm mb-2">
                             <span className="text-slate-400">Email</span>
@@ -259,7 +262,7 @@ function SuccessContent() {
                         className="space-y-3"
                     >
                         <a
-                            href={token ? `${process.env.NEXT_PUBLIC_PORTAL_URL || 'https://panel.innexar.app'}/pt/login?checkout=success&token=${token}` : `${process.env.NEXT_PUBLIC_PORTAL_URL || 'https://panel.innexar.app'}/pt/login?checkout=success`}
+                            href={token ? `${portalLoginBase}&token=${token}` : portalLoginBase}
                             className="flex items-center justify-center gap-2 w-full py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 rounded-xl font-bold text-white shadow-lg shadow-blue-500/25 transition-all"
                         >
                             {t('success.goToPortal')}

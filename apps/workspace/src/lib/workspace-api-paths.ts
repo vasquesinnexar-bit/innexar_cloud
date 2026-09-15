@@ -102,6 +102,22 @@ export const WORKSPACE_API_PATHS = {
   SEARCH: `${PREFIX}/search`,
   AUDIT: `${PREFIX}/audit`,
   NOTIFICATIONS: `${PREFIX}/notifications`,
+  FULFILLMENT: {
+    LIST: (query?: string) =>
+      query ? `${PREFIX}/fulfillments?${query}` : `${PREFIX}/fulfillments`,
+    DETAIL: (id: string | number) =>
+      `${PREFIX}/fulfillments/${encodeURIComponent(String(id))}`,
+    RETRY: (id: string | number) =>
+      `${PREFIX}/fulfillments/${encodeURIComponent(String(id))}/retry`,
+    RESOLVE: (id: string | number) =>
+      `${PREFIX}/fulfillments/${encodeURIComponent(String(id))}/resolve`,
+    CANCEL: (id: string | number) =>
+      `${PREFIX}/fulfillments/${encodeURIComponent(String(id))}/cancel`,
+    AUDIT: (id: string | number) =>
+      `${PREFIX}/fulfillments/${encodeURIComponent(String(id))}/audit`,
+    CUSTOMER: (customerId: string | number) =>
+      `${PREFIX}/customers/${encodeURIComponent(String(customerId))}/fulfillments`,
+  },
   HOSTING: {
     SERVERS: `${PREFIX}/hosting/servers`,
     SERVERS_OVERVIEW: `${PREFIX}/hosting/servers/overview`,

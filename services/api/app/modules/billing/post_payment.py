@@ -17,11 +17,21 @@ STATUS_AGUARDANDO_BRIEFING = "aguardando_briefing"
 
 
 def _is_site_product(product: Product) -> bool:
-    """True if product is a site delivery (creates a project)."""
-    pt = (product.provisioning_type or "").lower()
-    if pt == SITE_DELIVERY_PROVISIONING_TYPE:
-        return True
-    return "site" in (product.name or "").lower()
+    """True se o produto resolve para o handler project (explícito, sem fuzzy).
+
+    Compat: durante a transição aceita provisioning_type legado; NUNCA substring
+    de nome ("site" no nome foi removido — P0).
+    """
+    try:
+        from app.modules.fulfillment.registry import (
+            resolve_handler as _resolve,
+        )
+        from app.modules.fulfillment.enums import (
+            FulfillmentHandler as _H,
+        )
+        return _resolve(product)[1] == _H.PROJECT.value
+    except Exception:  # noqa: BLE001 (fallback legado se registry indisponível)
+        return (product.provisioning_type or "").lower() == SITE_DELIVERY_PROVISIONING_TYPE
 
 
 async def create_project_and_notify_after_payment(

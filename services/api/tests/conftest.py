@@ -184,6 +184,9 @@ RBAC_PERMISSION_SLUGS = [
     "hosting.backups.restore",
     "hosting.domains.view",
     "hosting.admin",
+    "provisioning.read",
+    "provisioning.retry",
+    "provisioning.manage",
 ]
 
 

@@ -14,7 +14,9 @@ from app.core.email_templates import invoice_paid_email, normalize_locale
 from app.core.config import settings
 from app.core.ops_notifications import send_ops_alert
 from app.modules.billing.post_payment import create_project_and_notify_after_payment
-from app.modules.billing.provisioning import trigger_provisioning_if_needed
+from app.modules.fulfillment.tasks import (
+    fulfillment_after_payment as _fulfillment_after_payment,
+)
 from app.modules.billing.service import process_webhook
 from app.repositories.billing_repository import BillingRepository
 from app.repositories.customer_repository import CustomerRepository
@@ -97,14 +99,8 @@ def _is_mercadopago_test_notification(body: bytes) -> bool:
 
 
 async def _run_provisioning(invoice_id: int) -> None:
-    """Background: run provisioning with a new DB session."""
-    async with AsyncSessionLocal() as db:
-        try:
-            await trigger_provisioning_if_needed(db, invoice_id)
-            await db.commit()
-        except Exception:
-            await db.rollback()
-            raise
+    """Background: P0 — contratação formal + fulfillment (cobre mail+hestia)."""
+    await _fulfillment_after_payment(invoice_id)
 
 
 async def _run_create_project_and_notify(invoice_id: int) -> None:

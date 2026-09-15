@@ -167,6 +167,13 @@ async def process_bricks_payment(
                     raise
 
         background_tasks.add_task(_run_create_project, inv.id)
+
+        from app.modules.fulfillment.tasks import (
+            fulfillment_after_payment as _fulfillment_after_payment,
+        )
+
+        # P0: contratação formal + Hestia/mail via fulfillment (antes só projeto).
+        background_tasks.add_task(_fulfillment_after_payment, inv.id)
     elif payment_status in ("pending", "in_process"):
         inv.status = InvoiceStatus.PENDING.value
     else:

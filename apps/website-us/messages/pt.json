@@ -2050,7 +2050,8 @@
         "step3Desc": "Veja o preview do site",
         "step4": "Lançamento",
         "step4Desc": "Vá ao ar!"
-      }
+      },
+      "confirmed": "Confirmado"
     },
     "dashboard": {
       "title": "Painel do Projeto",

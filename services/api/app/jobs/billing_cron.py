@@ -88,12 +88,22 @@ async def cmd_contracts() -> dict:
         return await _with_lock(db, "contracts", run)
 
 
+async def cmd_fulfillments() -> dict:
+    from app.modules.fulfillment.facade import process_due_fulfillments
+
+    async with AsyncSessionLocal() as db:
+        async def run():
+            return await process_due_fulfillments(db)
+        return await _with_lock(db, "fulfillments", run)
+
+
 COMMANDS = {
     "generate": cmd_generate,      # faturas recorrentes (subscriptions)
     "contracts": cmd_contracts,    # faturas por contrato (Fase 3)
     "remind": cmd_remind,          # lembretes antes/depois
     "overdue": cmd_overdue,        # past_due + suspensão
     "reconcile": cmd_reconcile,    # provider x Innexar
+    "fulfillments": cmd_fulfillments,  # P0: QUEUED + retries vencidos
 }
 
 

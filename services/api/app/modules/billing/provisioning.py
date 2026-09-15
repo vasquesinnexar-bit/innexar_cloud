@@ -38,15 +38,25 @@ def _append_log(job: ProvisioningJob, message: str) -> None:
 
 
 def _domain_from_line_items(line_items: Any) -> str | None:
-    """Extract domain from invoice line_items (first item with 'domain' key or first list item)."""
+    """Extract domain from invoice line_items.
+
+    Aceita lista [{domain}] (checkout), dict {domain} e dict {items: [...]}
+    (fluxo mailbox adicional). Primeira ocorrência vence.
+    """
     if not line_items:
         return None
     if isinstance(line_items, list):
         for item in line_items:
             if isinstance(item, dict) and item.get("domain"):
                 return str(item["domain"]).strip()
-    if isinstance(line_items, dict) and line_items.get("domain"):
-        return str(line_items["domain"]).strip()
+    if isinstance(line_items, dict):
+        if line_items.get("domain"):
+            return str(line_items["domain"]).strip()
+        nested = line_items.get("items")
+        if isinstance(nested, list):
+            for item in nested:
+                if isinstance(item, dict) and item.get("domain"):
+                    return str(item["domain"]).strip()
     return None
 
 
@@ -57,7 +67,7 @@ def _sanitize_hestia_user(customer_id: int, domain: str) -> str:
 
 
 async def trigger_provisioning_if_needed(db: AsyncSession, invoice_id: int) -> None:
-    """If invoice is for a hestia_hosting product, provision user+domain on Hestia and create ProvisioningRecord."""
+    """Compat: mail trigger + hestia. Novos fluxos usam fulfillment facade."""
     # Fase 2: mail jobs vinculados à invoice (nunca quebra o fluxo Hestia).
     try:
         from app.modules.mail.provisioning import (
@@ -67,16 +77,44 @@ async def trigger_provisioning_if_needed(db: AsyncSession, invoice_id: int) -> N
         await trigger_mail_provisioning_if_needed(db, invoice_id)
     except Exception:  # noqa: BLE001
         logger.exception("mail provisioning trigger failed for invoice %s", invoice_id)
+    await run_hestia_for_invoice(db, invoice_id)
+
+
+def _is_transient_hestia_error(exc: Exception) -> bool:
+    text = f"{type(exc).__name__}: {exc}".lower()
+    if isinstance(exc, (TimeoutError, ConnectionError)):
+        return True
+    return any(k in text for k in (
+        "timeout", "timed out", "connection", "temporarily",
+        "502", "503", "504", "unavailable", "try again",
+    ))
+
+
+async def run_hestia_for_invoice(db: AsyncSession, invoice_id: int) -> dict:
+    """Executa o branch Hestia com resultado máquina (P0).
+
+    success | skipped (não-hestia) | waiting_input (sem domain) | failed.
+    Sem domain NÃO cria job failed: vira WAITING_INPUT (nunca falha silenciosa).
+    """
     billing_repo = BillingRepository(db)
     customer_repo = CustomerRepository(db)
     hestia_repo = HestiaSettingsRepository(db)
 
     row = await billing_repo.get_invoice_subscription_product(invoice_id)
     if not row:
-        return
+        return {"status": "skipped", "reason": "no_subscription_product"}
     inv, sub, product = row
     if (product.provisioning_type or "").lower() != HOSTING_PROVISIONING_TYPE:
-        return
+        return {"status": "skipped", "reason": "not_hestia_product"}
+
+    domain = _domain_from_line_items(inv.line_items)
+    if not domain:
+        logger.warning(
+            "Provisioning waiting input: no domain in invoice %s line_items", invoice_id
+        )
+        return {"status": "waiting_input", "reason": "domain_required",
+                "step": "domain",
+                "message": "Domínio necessário para continuar provisionamento."}
 
     job = ProvisioningJob(
         subscription_id=sub.id,
@@ -88,35 +126,12 @@ async def trigger_provisioning_if_needed(db: AsyncSession, invoice_id: int) -> N
     billing_repo.add_provisioning_job(job)
     await db.flush()
 
-    domain = _domain_from_line_items(inv.line_items)
-    if not domain:
-        logger.warning(
-            "Provisioning skipped: no domain in invoice %s line_items", invoice_id
-        )
-        job.status = "failed"
-        job.step = "create_user"
-        job.last_error = "no domain in line_items"
-        job.completed_at = datetime.now(UTC)
-        _append_log(job, "Skipped: no domain in line_items")
-        rec = ProvisioningRecord(
-            subscription_id=sub.id,
-            invoice_id=inv.id,
-            provider="hestia",
-            external_user="",
-            domain="",
-            status="failed",
-            meta={"error": "no domain in line_items"},
-        )
-        billing_repo.add_provisioning_record(rec)
-        await db.flush()
-        return
-
     customer = await customer_repo.get_by_id_with_users(inv.customer_id)
     customer_email = customer.email if customer else ""
     org_id = (customer.org_id if customer else None) or "innexar"
     client = await get_hestia_client(db, org_id=org_id)
     if not client:
-        logger.warning("Provisioning skipped: no Hestia client for org %s", org_id)
+        logger.warning("Provisioning needs review: no Hestia client for org %s", org_id)
         job.status = "failed"
         job.step = "create_user"
         job.last_error = "Hestia not configured"
@@ -133,7 +148,9 @@ async def trigger_provisioning_if_needed(db: AsyncSession, invoice_id: int) -> N
         )
         billing_repo.add_provisioning_record(rec)
         await db.flush()
-        return
+        return {"status": "failed", "retryable": False,
+                "error": "Hestia not configured",
+                "step": "create_user", "job_id": job.id}
 
     hestia_user = _sanitize_hestia_user(inv.customer_id, domain)
     password = secrets.token_urlsafe(16)
@@ -214,7 +231,10 @@ async def trigger_provisioning_if_needed(db: AsyncSession, invoice_id: int) -> N
         )
         billing_repo.add_provisioning_record(rec)
         await db.flush()
-        return
+        return {"status": "failed",
+                "retryable": _is_transient_hestia_error(e),
+                "error": str(e)[:500], "step": job.step,
+                "job_id": job.id}
 
     site_url = f"https://{domain}"
     panel_url = getattr(client, "base_url", "") or ""
@@ -243,3 +263,6 @@ async def trigger_provisioning_if_needed(db: AsyncSession, invoice_id: int) -> N
         hestia_user,
         domain,
     )
+    return {"status": "success", "step": "finalize", "progress": 100,
+            "job_id": job.id, "external_user": hestia_user,
+            "meta": {"domain": domain, "site_url": site_url}}

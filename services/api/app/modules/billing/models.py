@@ -48,6 +48,13 @@ class Product(Base):
     provisioning_type: Mapped[str | None] = mapped_column(
         String(64), nullable=True, index=True
     )
+    # P0 — fulfillment explícito (elimina fuzzy por slug/nome).
+    fulfillment_strategy: Mapped[str | None] = mapped_column(
+        String(32), nullable=True
+    )
+    fulfillment_handler: Mapped[str | None] = mapped_column(
+        String(32), nullable=True, index=True
+    )
     hestia_package: Mapped[str | None] = mapped_column(String(128), nullable=True)
     # Fase 1 — catálogo (Website, Hosting, Professional Email, Domain…).
     category: Mapped[str | None] = mapped_column(
