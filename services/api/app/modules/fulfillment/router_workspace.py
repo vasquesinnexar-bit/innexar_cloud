@@ -29,19 +29,30 @@ async def _to_response(db: AsyncSession, f: Fulfillment) -> dict:
     cust = await db.get(Customer, f.customer_id)
     product = await db.get(Product, f.product_id) if f.product_id else None
     return {
-        "id": f.id, "org_id": f.org_id, "customer_id": f.customer_id,
+        "id": f.id,
+        "org_id": f.org_id,
+        "customer_id": f.customer_id,
         "customer_name": cust.name if cust else None,
-        "contract_id": f.contract_id, "contract_item_id": f.contract_item_id,
+        "contract_id": f.contract_id,
+        "contract_item_id": f.contract_item_id,
         "product_id": f.product_id,
         "product_name": product.name if product else None,
-        "invoice_id": f.invoice_id, "subscription_id": f.subscription_id,
-        "service_id": f.service_id, "project_id": f.project_id,
-        "strategy": f.strategy, "handler_key": f.handler_key,
-        "status": f.status, "current_step": f.current_step,
-        "progress": f.progress, "last_error": f.last_error,
-        "retryable": f.retryable, "retry_count": f.retry_count,
-        "next_retry_at": f.next_retry_at, "started_at": f.started_at,
-        "completed_at": f.completed_at, "created_at": f.created_at,
+        "invoice_id": f.invoice_id,
+        "subscription_id": f.subscription_id,
+        "service_id": f.service_id,
+        "project_id": f.project_id,
+        "strategy": f.strategy,
+        "handler_key": f.handler_key,
+        "status": f.status,
+        "current_step": f.current_step,
+        "progress": f.progress,
+        "last_error": f.last_error,
+        "retryable": f.retryable,
+        "retry_count": f.retry_count,
+        "next_retry_at": f.next_retry_at,
+        "started_at": f.started_at,
+        "completed_at": f.completed_at,
+        "created_at": f.created_at,
         "updated_at": f.updated_at,
     }
 
@@ -100,16 +111,24 @@ async def get_fulfillment(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Fulfillment não encontrado")
     out = await _to_response(db, f)
     item = await db.get(ContractItem, f.contract_item_id)
-    out["contract_item"] = {
-        "id": item.id, "description": item.description,
-        "quantity": item.quantity,
-        "unit_amount": float(item.unit_amount) if item.unit_amount is not None else None,
-    } if item else None
+    out["contract_item"] = (
+        {
+            "id": item.id,
+            "description": item.description,
+            "quantity": item.quantity,
+            "unit_amount": (
+                float(item.unit_amount) if item.unit_amount is not None else None
+            ),
+        }
+        if item
+        else None
+    )
     return out
 
 
-@router.get("/customers/{customer_id}/fulfillments",
-            response_model=list[FulfillmentResponse])
+@router.get(
+    "/customers/{customer_id}/fulfillments", response_model=list[FulfillmentResponse]
+)
 async def customer_fulfillments(
     customer_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -123,13 +142,13 @@ async def customer_fulfillments(
     q = select(Fulfillment).where(Fulfillment.customer_id == customer_id)
     if of is not None:
         q = q.where(Fulfillment.org_id == of)
-    rows = (await db.execute(
-        q.order_by(Fulfillment.id.desc()).limit(100))).scalars().all()
+    rows = (
+        (await db.execute(q.order_by(Fulfillment.id.desc()).limit(100))).scalars().all()
+    )
     return [await _to_response(db, f) for f in rows]
 
 
-@router.post("/fulfillments/{fulfillment_id}/retry",
-             response_model=FulfillmentResponse)
+@router.post("/fulfillments/{fulfillment_id}/retry", response_model=FulfillmentResponse)
 async def retry_fulfillment(
     fulfillment_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -144,15 +163,17 @@ async def retry_fulfillment(
     if not f or f.org_id != org:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Fulfillment não encontrado")
     out = await facade.retry_fulfillment(
-        db, fulfillment_id, actor_type="staff", actor_id=str(current.id))
+        db, fulfillment_id, actor_type="staff", actor_id=str(current.id)
+    )
     await db.commit()
     if not out:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Fulfillment não encontrado")
     return await _to_response(db, out)
 
 
-@router.post("/fulfillments/{fulfillment_id}/resolve",
-             response_model=FulfillmentResponse)
+@router.post(
+    "/fulfillments/{fulfillment_id}/resolve", response_model=FulfillmentResponse
+)
 async def resolve_fulfillment(
     fulfillment_id: int,
     body: FulfillmentAction,
@@ -168,14 +189,15 @@ async def resolve_fulfillment(
     if not f or f.org_id != org:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Fulfillment não encontrado")
     out = await facade.resolve_fulfillment(
-        db, fulfillment_id, note=body.note,
-        actor_type="staff", actor_id=str(current.id))
+        db, fulfillment_id, note=body.note, actor_type="staff", actor_id=str(current.id)
+    )
     await db.commit()
     return await _to_response(db, out)
 
 
-@router.post("/fulfillments/{fulfillment_id}/cancel",
-             response_model=FulfillmentResponse)
+@router.post(
+    "/fulfillments/{fulfillment_id}/cancel", response_model=FulfillmentResponse
+)
 async def cancel_fulfillment(
     fulfillment_id: int,
     body: FulfillmentAction,
@@ -191,8 +213,8 @@ async def cancel_fulfillment(
     if not f or f.org_id != org:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Fulfillment não encontrado")
     out = await facade.cancel_fulfillment(
-        db, fulfillment_id, note=body.note,
-        actor_type="staff", actor_id=str(current.id))
+        db, fulfillment_id, note=body.note, actor_type="staff", actor_id=str(current.id)
+    )
     await db.commit()
     return await _to_response(db, out)
 
@@ -210,16 +232,28 @@ async def fulfillment_audit(
 
     of = router_org_list_filter(org_id)
     q = select(AuditLog).where(
-        AuditLog.entity == "fulfillment",
-        AuditLog.entity_id == str(fulfillment_id))
+        AuditLog.entity == "fulfillment", AuditLog.entity_id == str(fulfillment_id)
+    )
     if of is not None:
         q = q.where(AuditLog.org_id == of)
-    rows = (await db.execute(
-        q.order_by(AuditLog.id.desc()).limit(100))).scalars().all()
-    await log_audit(db, entity="fulfillment", entity_id=str(fulfillment_id),
-                    action="fulfillment_audit_viewed",
-                    actor_type="staff", actor_id=str(current.id),
-                    org_id=of or "innexar")
-    return [{"id": r.id, "action": r.action, "actor_type": r.actor_type,
-             "actor_id": r.actor_id, "created_at": r.created_at,
-             "payload": r.payload} for r in rows]
+    rows = (await db.execute(q.order_by(AuditLog.id.desc()).limit(100))).scalars().all()
+    await log_audit(
+        db,
+        entity="fulfillment",
+        entity_id=str(fulfillment_id),
+        action="fulfillment_audit_viewed",
+        actor_type="staff",
+        actor_id=str(current.id),
+        org_id=of or "innexar",
+    )
+    return [
+        {
+            "id": r.id,
+            "action": r.action,
+            "actor_type": r.actor_type,
+            "actor_id": r.actor_id,
+            "created_at": r.created_at,
+            "payload": r.payload,
+        }
+        for r in rows
+    ]

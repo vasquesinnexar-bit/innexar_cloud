@@ -32,11 +32,14 @@ def _zone_ok() -> dict:
     return {
         ("cliente.com.br", "MX"): [_MX("mail.cliente.com.br.")],
         ("cliente.com.br", "TXT"): [
-            _RData(b"v=spf1 mx a:mail.cliente.com.br ip4:173.212.248.236 -all")],
+            _RData(b"v=spf1 mx a:mail.cliente.com.br ip4:173.212.248.236 -all")
+        ],
         ("mail._domainkey.cliente.com.br", "TXT"): [
-            _RData(b"v=DKIM1; h=sha256; k=rsa; p=ABC")],
+            _RData(b"v=DKIM1; h=sha256; k=rsa; p=ABC")
+        ],
         ("_dmarc.cliente.com.br", "TXT"): [
-            _RData(b"v=DMARC1; p=quarantine; rua=mailto:postmaster@cliente.com.br")],
+            _RData(b"v=DMARC1; p=quarantine; rua=mailto:postmaster@cliente.com.br")
+        ],
     }
 
 

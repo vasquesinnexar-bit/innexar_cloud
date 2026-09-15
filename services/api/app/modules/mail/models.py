@@ -19,7 +19,7 @@ from app.modules.mail.enums import (
 )
 
 if TYPE_CHECKING:
-    from app.models.customer import Customer
+    pass
 
 
 class Service(Base):

@@ -41,9 +41,7 @@ class Fulfillment(Base):
     )
     project_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     strategy: Mapped[str] = mapped_column(String(32), default="manual")
-    handler_key: Mapped[str] = mapped_column(
-        String(32), default="manual", index=True
-    )
+    handler_key: Mapped[str] = mapped_column(String(32), default="manual", index=True)
     status: Mapped[str] = mapped_column(
         String(32), default=FulfillmentStatus.PENDING.value, index=True
     )

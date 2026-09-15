@@ -6,7 +6,7 @@ import json
 import logging
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Header, Request
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -64,7 +64,9 @@ def _build_message(payload: dict[str, Any], event: str) -> str:
         return str(content)[:4000]
     if event == "webwidget_triggered":
         info = payload.get("event_info") or {}
-        return str(info.get("referer") or info.get("initiated_at") or "Chat widget aberto")[:4000]
+        return str(
+            info.get("referer") or info.get("initiated_at") or "Chat widget aberto"
+        )[:4000]
     if event.startswith("pipeline_item"):
         item = payload.get("pipeline_item") or payload
         title = item.get("title") or item.get("name") or "Pipeline item"
@@ -94,9 +96,12 @@ async def crm_webhook(
     body = await request.body()
     secret = settings.CRM_WEBHOOK_SECRET or ""
 
-    if secret and x_crm_signature:
-        if not _verify_signature(body, x_crm_signature, secret):
-            raise HTTPException(status_code=401, detail="Invalid CRM webhook signature")
+    if (
+        secret
+        and x_crm_signature
+        and not _verify_signature(body, x_crm_signature, secret)
+    ):
+        raise HTTPException(status_code=401, detail="Invalid CRM webhook signature")
 
     try:
         payload = json.loads(body) if body else {}
@@ -124,7 +129,9 @@ async def crm_webhook(
                     extra_data={
                         "crm_event": event,
                         "crm_contact_id": (payload.get("contact") or {}).get("id"),
-                        "crm_conversation_id": (payload.get("conversation") or {}).get("id"),
+                        "crm_conversation_id": (payload.get("conversation") or {}).get(
+                            "id"
+                        ),
                     },
                     org_id=org_id,
                 )

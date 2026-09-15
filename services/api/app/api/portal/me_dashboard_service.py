@@ -63,10 +63,12 @@ class PortalDashboardService:
 
             row = (
                 await db.execute(
-                    select(HostingService.id).where(
+                    select(HostingService.id)
+                    .where(
                         HostingService.customer_id == customer_id,
                         HostingService.status == "active",
-                    ).limit(1)
+                    )
+                    .limit(1)
                 )
             ).scalar_one_or_none()
             hosting = row is not None

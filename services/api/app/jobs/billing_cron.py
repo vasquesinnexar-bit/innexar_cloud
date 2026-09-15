@@ -51,31 +51,39 @@ async def _with_lock(db: AsyncSession, coro_name: str, fn):
 
 async def cmd_generate() -> dict:
     async with AsyncSessionLocal() as db:
+
         async def run():
             return {"invoices": await generate_recurring_invoices(db)}
+
         return await _with_lock(db, "generate", run)
 
 
 async def cmd_remind() -> dict:
     async with AsyncSessionLocal() as db:
+
         async def run():
             return {"sent": await send_reminders(db)}
+
         return await _with_lock(db, "remind", run)
 
 
 async def cmd_overdue() -> dict:
     async with AsyncSessionLocal() as db:
+
         async def run():
             past = await mark_past_due(db)
             susp = await suspend_overdue(db)
             return {"past_due": past, "suspended": susp}
+
         return await _with_lock(db, "overdue", run)
 
 
 async def cmd_reconcile() -> dict:
     async with AsyncSessionLocal() as db:
+
         async def run():
             return await reconcile(db)
+
         return await _with_lock(db, "reconcile", run)
 
 
@@ -83,8 +91,10 @@ async def cmd_contracts() -> dict:
     from app.jobs import contract_billing
 
     async with AsyncSessionLocal() as db:
+
         async def run():
             return await contract_billing.generate(db)
+
         return await _with_lock(db, "contracts", run)
 
 
@@ -92,17 +102,19 @@ async def cmd_fulfillments() -> dict:
     from app.modules.fulfillment.facade import process_due_fulfillments
 
     async with AsyncSessionLocal() as db:
+
         async def run():
             return await process_due_fulfillments(db)
+
         return await _with_lock(db, "fulfillments", run)
 
 
 COMMANDS = {
-    "generate": cmd_generate,      # faturas recorrentes (subscriptions)
-    "contracts": cmd_contracts,    # faturas por contrato (Fase 3)
-    "remind": cmd_remind,          # lembretes antes/depois
-    "overdue": cmd_overdue,        # past_due + suspensão
-    "reconcile": cmd_reconcile,    # provider x Innexar
+    "generate": cmd_generate,  # faturas recorrentes (subscriptions)
+    "contracts": cmd_contracts,  # faturas por contrato (Fase 3)
+    "remind": cmd_remind,  # lembretes antes/depois
+    "overdue": cmd_overdue,  # past_due + suspensão
+    "reconcile": cmd_reconcile,  # provider x Innexar
     "fulfillments": cmd_fulfillments,  # P0: QUEUED + retries vencidos
 }
 

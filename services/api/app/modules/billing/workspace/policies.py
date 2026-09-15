@@ -2,7 +2,7 @@
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -52,8 +52,10 @@ async def list_policies(
     __: Annotated[None, Depends(require_billing_enabled)],
 ):
     rows = (
-        await db.execute(select(BillingPolicy).order_by(BillingPolicy.id))
-    ).scalars().all()
+        (await db.execute(select(BillingPolicy).order_by(BillingPolicy.id)))
+        .scalars()
+        .all()
+    )
     return list(rows)
 
 
@@ -88,8 +90,11 @@ async def upsert_policy(
         await db.execute(
             select(BillingPolicy).where(
                 BillingPolicy.scope == scope,
-                BillingPolicy.scope_ref.is_(None) if ref is None
-                else BillingPolicy.scope_ref == ref,
+                (
+                    BillingPolicy.scope_ref.is_(None)
+                    if ref is None
+                    else BillingPolicy.scope_ref == ref
+                ),
             )
         )
     ).scalar_one_or_none()
@@ -104,9 +109,13 @@ async def upsert_policy(
         db.add(pol)
     await db.flush()
     await log_audit(
-        db, entity="billing_policy", entity_id=str(pol.id),
-        action="billing_policy_changed", actor_type="staff",
-        actor_id=str(current.id), payload={"scope": scope, "ref": ref},
+        db,
+        entity="billing_policy",
+        entity_id=str(pol.id),
+        action="billing_policy_changed",
+        actor_type="staff",
+        actor_id=str(current.id),
+        payload={"scope": scope, "ref": ref},
     )
     await db.flush()
     return pol

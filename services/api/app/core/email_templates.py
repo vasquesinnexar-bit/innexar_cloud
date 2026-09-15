@@ -110,7 +110,7 @@ def generic_notification_email(
     html_body = _document_html(
         title,
         (
-            "<tr><td style=\"padding:28px;\">"
+            '<tr><td style="padding:28px;">'
             f'<p style="margin:0 0 10px; font-size:20px; font-weight:700; color:#0f172a;">{title}</p>'
             f'<p style="margin:0; font-size:15px; line-height:1.6; color:#475569; white-space:pre-line;">{body}</p>'
             f"{cta_block}"
@@ -208,7 +208,7 @@ def password_reset_email(
     html = _document_html(
         labels["title"],
         (
-            "<tr><td style=\"padding:28px;\">"
+            '<tr><td style="padding:28px;">'
             f'<p style="margin:0 0 10px; font-size:20px; font-weight:700; color:#0f172a;">{labels["title"]}</p>'
             f'<p style="margin:0; font-size:15px; line-height:1.6; color:#475569;">{labels["body"]}</p>'
             '<p style="margin: 22px 0 0;">'

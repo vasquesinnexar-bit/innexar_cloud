@@ -109,6 +109,7 @@ class OrderWorkspaceService:
             return None
         pr, customer_name = row
         from sqlalchemy import select
+
         from app.models.customer import Customer
 
         customer_org = "innexar"

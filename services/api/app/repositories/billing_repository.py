@@ -746,9 +746,7 @@ class BillingRepository:
             )
         )
         await self._db.execute(
-            EmailDomain.__table__.delete().where(
-                EmailDomain.customer_id == customer_id
-            )
+            EmailDomain.__table__.delete().where(EmailDomain.customer_id == customer_id)
         )
         await self._db.execute(
             Service.__table__.delete().where(Service.customer_id == customer_id)

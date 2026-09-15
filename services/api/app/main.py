@@ -87,6 +87,10 @@ from app.modules.notifications.router_workspace import (
 from app.modules.orders.router_workspace import router as orders_workspace_router
 from app.modules.products.router_public import router as products_public_router
 from app.modules.projects.models import Project  # noqa: F401
+from app.modules.projects.modification_request import (  # noqa: F401
+    ModificationRequest,
+)
+from app.modules.projects.project_message import ProjectMessage  # noqa: F401
 from app.modules.projects.router_portal import router as projects_portal_router
 from app.modules.projects.router_workspace import router as projects_workspace_router
 from app.modules.reps.models import Representative  # noqa: F401

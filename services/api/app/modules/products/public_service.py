@@ -50,7 +50,9 @@ class ProductPublicService:
             )
         return result
 
-    async def list_paid_traffic(self, org_id: str = "innexar") -> list[PaidTrafficPlanOut]:
+    async def list_paid_traffic(
+        self, org_id: str = "innexar"
+    ) -> list[PaidTrafficPlanOut]:
         """Return paid traffic plans (Start, Growth, Premium) by slug."""
         rows = await self._repo.list_products_and_plans_by_filter(
             org_id=org_id,

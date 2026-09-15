@@ -56,8 +56,11 @@ class HostingError(Exception):
 def _docker(*args: str, timeout: int = 60, input_bytes: bytes | None = None) -> str:
     try:
         r = subprocess.run(
-            ["docker", *args], input=input_bytes, capture_output=True,
-            timeout=timeout, check=False,
+            ["docker", *args],
+            input=input_bytes,
+            capture_output=True,
+            timeout=timeout,
+            check=False,
         )
     except (subprocess.TimeoutExpired, FileNotFoundError) as e:
         raise HostingError(f"docker indisponível ({type(e).__name__})") from e
@@ -101,8 +104,17 @@ def _parse_size_to_bytes(raw: str) -> int | None:
     if not m:
         return None
     num, unit = float(m.group(1)), (m.group(2) or "B").upper()
-    mult = {"B": 1, "KB": 1000, "MB": 1000**2, "GB": 1000**3, "TB": 1000**4,
-            "KIB": 1024, "MIB": 1024**2, "GIB": 1024**3, "TIB": 1024**4}
+    mult = {
+        "B": 1,
+        "KB": 1000,
+        "MB": 1000**2,
+        "GB": 1000**3,
+        "TB": 1000**4,
+        "KIB": 1024,
+        "MIB": 1024**2,
+        "GIB": 1024**3,
+        "TIB": 1024**4,
+    }
     return int(num * mult.get(unit, 1))
 
 
@@ -130,20 +142,30 @@ class DockerHostingProvider:
 
     def status(self, name: str) -> ContainerStatus:
         info = self.inspect(name)
-        state = (info.get("State") or {})
+        state = info.get("State") or {}
         started = state.get("StartedAt")
         uptime = None
         try:
             if state.get("Running") and started:
                 uptime = max(
-                    0, int(time.time() - time.mktime(time.strptime(
-                        started[:19], "%Y-%m-%dT%H:%M:%S"))))
+                    0,
+                    int(
+                        time.time()
+                        - time.mktime(time.strptime(started[:19], "%Y-%m-%dT%H:%M:%S"))
+                    ),
+                )
         except (ValueError, OverflowError):
             uptime = None
         return ContainerStatus(
             name=info.get("Name", "").lstrip("/"),
-            state=_map_state(state.get("Status", ""), state.get("Health", {}).get("Status", "")
-                             if isinstance(state.get("Health"), dict) else ""),
+            state=_map_state(
+                state.get("Status", ""),
+                (
+                    state.get("Health", {}).get("Status", "")
+                    if isinstance(state.get("Health"), dict)
+                    else ""
+                ),
+            ),
             health=(state.get("Health", {}) or {}).get("Status", "") or "none",
             image=(info.get("Config") or {}).get("Image", ""),
             uptime_seconds=uptime,
@@ -153,8 +175,9 @@ class DockerHostingProvider:
     def metrics(self, name: str) -> dict:
         """Uma coleta (sem stream). Retorna dict serializável."""
         try:
-            line = _docker("stats", "--no-stream", "--format", "{{json .}}", name,
-                           timeout=30).splitlines()[0]
+            line = _docker(
+                "stats", "--no-stream", "--format", "{{json .}}", name, timeout=30
+            ).splitlines()[0]
             s = json.loads(line)
         except (HostingError, IndexError, json.JSONDecodeError) as e:
             raise HostingError(f"metrics indisponíveis p/ {name}") from e
@@ -215,14 +238,24 @@ class DockerHostingProvider:
             perms, _, _, _, size, mon, day, timeyear, fname = parts
             if fname in (".", ".."):
                 continue
-            ftype = "dir" if perms.startswith("d") else (
-                "link" if perms.startswith("l") else "file")
+            ftype = (
+                "dir"
+                if perms.startswith("d")
+                else ("link" if perms.startswith("l") else "file")
+            )
             try:
                 size_n: int | None = int(size)
             except ValueError:
                 size_n = None
-            entries.append({"name": fname, "type": ftype, "size": size_n,
-                            "mtime": f"{mon} {day} {timeyear}", "perms": perms})
+            entries.append(
+                {
+                    "name": fname,
+                    "type": ftype,
+                    "size": size_n,
+                    "mtime": f"{mon} {day} {timeyear}",
+                    "perms": perms,
+                }
+            )
         return entries
 
     def _resolve_container(self, container: str, base: str, rel: str) -> str:
@@ -230,22 +263,24 @@ class DockerHostingProvider:
         full = self._cjoin(base, rel)
         base_n = "/" + (base or "").strip("/")
         try:
-            resolved = _docker("exec", container, "readlink", "-f", "--",
-                               full, timeout=30).strip()
-        except HostingError:
+            resolved = _docker(
+                "exec", container, "readlink", "-f", "--", full, timeout=30
+            ).strip()
+        except HostingError as e:
             # alvo inexistente (ex. novo arquivo): valida o pai existente
             parent = full.rsplit("/", 1)[0] or "/"
             if parent == base_n:
                 return full
-            resolved_parent = _docker("exec", container, "readlink", "-f", "--",
-                                      parent, timeout=30).strip()
+            resolved_parent = _docker(
+                "exec", container, "readlink", "-f", "--", parent, timeout=30
+            ).strip()
             if resolved_parent != base_n and not resolved_parent.startswith(
-                    base_n.rstrip("/") + "/"):
-                raise HostingError("invalid_path", "escape do root bloqueado")
+                base_n.rstrip("/") + "/"
+            ):
+                raise HostingError("invalid_path", "escape do root bloqueado") from e
             return full
         if resolved != base_n and not resolved.startswith(base_n.rstrip("/") + "/"):
-            raise HostingError("invalid_path",
-                               "escape do root bloqueado (symlink)")
+            raise HostingError("invalid_path", "escape do root bloqueado (symlink)")
         return resolved
 
     def list_files(self, container: str, base: str, rel: str) -> list[dict]:
@@ -258,10 +293,15 @@ class DockerHostingProvider:
         return data
 
     def _read_cp(self, container: str, abspath: str) -> bytes:
-        raw = subprocess.run(
-            ["docker", "cp", f"{container}:{abspath}", "-"],
-            capture_output=True, timeout=60, check=False,
-        ).stdout or b""
+        raw = (
+            subprocess.run(
+                ["docker", "cp", f"{container}:{abspath}", "-"],
+                capture_output=True,
+                timeout=60,
+                check=False,
+            ).stdout
+            or b""
+        )
         try:
             with tarfile.open(fileobj=io.BytesIO(raw)) as tf:
                 member = next((m for m in tf.getmembers() if m.isfile()), None)
@@ -287,19 +327,30 @@ class DockerHostingProvider:
         parent = full.rsplit("/", 1)[0] or "/"
         r = subprocess.run(
             ["docker", "cp", "-", f"{container}:{parent}"],
-            input=buf.getvalue(), capture_output=True, timeout=60, check=False,
+            input=buf.getvalue(),
+            capture_output=True,
+            timeout=60,
+            check=False,
         )
         if r.returncode != 0:
             raise HostingError("escrita falhou")
-        resolved = _docker("exec", container, "readlink", "-f", "--",
-                           full, timeout=30).strip()
+        resolved = _docker(
+            "exec", container, "readlink", "-f", "--", full, timeout=30
+        ).strip()
         base_n = "/" + (base or "").strip("/")
         if resolved != base_n and not resolved.startswith(base_n.rstrip("/") + "/"):
             raise HostingError("verificação pós-escrita falhou")
 
     def make_dir(self, container: str, base: str, rel: str) -> None:
-        _docker("exec", container, "mkdir", "-p", "--",
-                self._resolve_container(container, base, rel), timeout=30)
+        _docker(
+            "exec",
+            container,
+            "mkdir",
+            "-p",
+            "--",
+            self._resolve_container(container, base, rel),
+            timeout=30,
+        )
 
     def rename(self, container: str, base: str, old_rel: str, new_rel: str) -> None:
         old = self._resolve_container(container, base, old_rel)
@@ -307,8 +358,9 @@ class DockerHostingProvider:
         paths.validate(new_rel, for_edit=True)
         _docker("exec", container, "mv", "--", old, new, timeout=30)
 
-    def delete_path(self, container: str, base: str, rel: str,
-                    recursive: bool = False) -> None:
+    def delete_path(
+        self, container: str, base: str, rel: str, recursive: bool = False
+    ) -> None:
         full = self._resolve_container(container, base, rel)
         base_n = "/" + (base or "").strip("/")
         if full == base_n:
@@ -329,12 +381,19 @@ class DockerHostingProvider:
                     st = e.stat(follow_symlinks=False)
                 except OSError:
                     continue
-                entries.append({
-                    "name": e.name,
-                    "type": "dir" if e.is_dir(follow_symlinks=False)
-                    else ("link" if e.is_symlink() else "file"),
-                    "size": st.st_size, "mtime": int(st.st_mtime), "perms": "",
-                })
+                entries.append(
+                    {
+                        "name": e.name,
+                        "type": (
+                            "dir"
+                            if e.is_dir(follow_symlinks=False)
+                            else ("link" if e.is_symlink() else "file")
+                        ),
+                        "size": st.st_size,
+                        "mtime": int(st.st_mtime),
+                        "perms": "",
+                    }
+                )
         return entries
 
     @staticmethod

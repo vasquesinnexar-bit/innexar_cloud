@@ -5,8 +5,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
 from app.core.auth_staff import get_current_staff
+from app.core.database import get_db
 from app.core.rbac import RequirePermission
 from app.core.router_org import router_org_list_filter, router_org_write
 from app.models.user import User
@@ -52,7 +52,9 @@ async def list_representatives(
     )
 
 
-@router.post("", response_model=RepresentativeResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=RepresentativeResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_representative(
     body: RepresentativeCreate,
     service: Annotated[RepresentativeService, Depends(get_representative_service)],

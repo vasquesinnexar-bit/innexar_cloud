@@ -3,18 +3,22 @@
 from app.modules.billing.enums import PaymentMethod, PaymentProvider
 
 PROVIDER_CAPABILITIES: dict[str, frozenset[str]] = {
-    PaymentProvider.MERCADOPAGO.value: frozenset({
-        PaymentMethod.PIX.value,
-        PaymentMethod.BOLETO.value,
-        PaymentMethod.CARD.value,
-        PaymentMethod.CHECKOUT_LINK.value,
-        PaymentMethod.SUBSCRIPTION.value,
-    }),
-    PaymentProvider.STRIPE.value: frozenset({
-        PaymentMethod.CARD.value,
-        PaymentMethod.CHECKOUT_LINK.value,
-        PaymentMethod.SUBSCRIPTION.value,
-    }),
+    PaymentProvider.MERCADOPAGO.value: frozenset(
+        {
+            PaymentMethod.PIX.value,
+            PaymentMethod.BOLETO.value,
+            PaymentMethod.CARD.value,
+            PaymentMethod.CHECKOUT_LINK.value,
+            PaymentMethod.SUBSCRIPTION.value,
+        }
+    ),
+    PaymentProvider.STRIPE.value: frozenset(
+        {
+            PaymentMethod.CARD.value,
+            PaymentMethod.CHECKOUT_LINK.value,
+            PaymentMethod.SUBSCRIPTION.value,
+        }
+    ),
 }
 
 METHOD_CURRENCIES: dict[str, frozenset[str]] = {
@@ -31,6 +35,7 @@ def available_methods(provider: str, currency: str) -> list[str]:
     """Métodos ofertáveis para provider+moeda (Portal só mostra compatíveis)."""
     cur = (currency or "USD").upper()
     return [
-        m for m in sorted(PROVIDER_CAPABILITIES.get((provider or "").lower(), set()))
+        m
+        for m in sorted(PROVIDER_CAPABILITIES.get((provider or "").lower(), set()))
         if cur in METHOD_CURRENCIES.get(m, frozenset({cur}))
     ]

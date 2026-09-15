@@ -6,6 +6,7 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.org import ORG_INNEXAR_BR, staff_org_id
 from app.core.security import hash_password
 from app.models.customer import Customer
 from app.models.customer_user import CustomerUser
@@ -17,7 +18,6 @@ from app.modules.customers.schemas import (
     GeneratePasswordResponse,
     SendCredentialsResponse,
 )
-from app.core.org import ORG_INNEXAR_BR, staff_org_id
 from app.repositories.billing_repository import BillingRepository
 from app.repositories.customer_repository import CustomerRepository
 from app.repositories.notification_repository import NotificationRepository
@@ -166,7 +166,9 @@ class CustomerService:
         await self._db.flush()
         return _customer_to_response(c, has_portal_access=has_portal_access)
 
-    async def delete_customer(self, customer_id: int, org_id: str | None = None) -> bool:
+    async def delete_customer(
+        self, customer_id: int, org_id: str | None = None
+    ) -> bool:
         """Delete customer and all related billing data and users. Returns True if existed."""
         c = await self._repo.get_by_id_with_users(customer_id, org_id=org_id)
         if not c:
@@ -179,18 +181,23 @@ class CustomerService:
             for box in await mail.list_mailboxes(c.id, str(c.org_id)):
                 try:
                     await mail.set_disabled(
-                        mailbox_id=box.id, customer_id=c.id, org_id=str(c.org_id),
-                        disabled=True, actor_type="system",
+                        mailbox_id=box.id,
+                        customer_id=c.id,
+                        org_id=str(c.org_id),
+                        disabled=True,
+                        actor_type="system",
                         actor_id=f"customer-delete:{customer_id}",
                     )
                 except Exception:
                     logger.warning(
                         "Falha ao desativar mailbox %s no delete do customer %s",
-                        box.address, customer_id,
+                        box.address,
+                        customer_id,
                     )
         except Exception:
             logger.warning(
-                "Mail disable no delete do customer %s falhou", customer_id,
+                "Mail disable no delete do customer %s falhou",
+                customer_id,
                 exc_info=True,
             )
         cu_ids = [u.id for u in c.users]

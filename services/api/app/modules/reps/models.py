@@ -26,9 +26,7 @@ class Representative(Base):
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     region: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
-    commission_pct: Mapped[Decimal] = mapped_column(
-        Numeric(5, 2), default=Decimal("0")
-    )
+    commission_pct: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=Decimal("0"))
     status: Mapped[str] = mapped_column(String(32), default="active", index=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utc_now

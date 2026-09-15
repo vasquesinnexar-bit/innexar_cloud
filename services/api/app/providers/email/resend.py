@@ -23,7 +23,9 @@ def _get_from_email() -> str:
 class ResendProvider:
     """Resend implementation of EmailProviderProtocol."""
 
-    def __init__(self, api_key: str | None = None, from_email: str | None = None) -> None:
+    def __init__(
+        self, api_key: str | None = None, from_email: str | None = None
+    ) -> None:
         self._api_key = api_key or _get_api_key()
         self._from_email = from_email or _get_from_email()
 

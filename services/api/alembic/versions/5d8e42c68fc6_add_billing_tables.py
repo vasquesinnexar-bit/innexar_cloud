@@ -104,9 +104,11 @@ def upgrade() -> None:
     )
     op.create_index("ix_billing_webhook_events_provider", "billing_webhook_events", ["provider"])
     op.create_index("ix_billing_webhook_events_event_id", "billing_webhook_events", ["event_id"])
-    op.create_unique_constraint(
-        "uq_webhook_provider_event_id", "billing_webhook_events", ["provider", "event_id"]
-    )
+    # SQLite (só CI/check) não suporta ADD CONSTRAINT; a constraint vale no postgres.
+    if op.get_bind().dialect.name != "sqlite":
+        op.create_unique_constraint(
+            "uq_webhook_provider_event_id", "billing_webhook_events", ["provider", "event_id"]
+        )
 
 
 def downgrade() -> None:

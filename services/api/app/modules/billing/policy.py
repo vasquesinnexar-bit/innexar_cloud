@@ -26,10 +26,14 @@ async def resolve_policy(
 ) -> dict:
     """Merge contract > product > org > global > defaults (só policies ativas)."""
     rows = (
-        await db.execute(
-            select(BillingPolicy).where(BillingPolicy.is_active.is_(True))
+        (
+            await db.execute(
+                select(BillingPolicy).where(BillingPolicy.is_active.is_(True))
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     by_scope: dict[tuple[str, str | None], BillingPolicy] = {
         (p.scope, p.scope_ref): p for p in rows
     }
@@ -46,10 +50,7 @@ async def resolve_policy(
         ("product", product_id),
         ("contract", contract_id),
     ):
-        if scope == "global":
-            p = by_scope.get(("global", None))
-        else:
-            p = pick(scope, ref)
+        p = by_scope.get(("global", None)) if scope == "global" else pick(scope, ref)
         if not p:
             continue
         merged["grace_period_days"] = p.grace_period_days

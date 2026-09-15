@@ -20,7 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 async def test_list_products_empty(db_session: AsyncSession) -> None:
     """List products when none returns empty list."""
     svc = BillingWorkspaceService(db_session)
-    result = await svc.list_products()
+    result = await svc.list_products(None)
     assert result == []
 
 
@@ -43,7 +43,7 @@ async def test_list_products_with_plans(db_session: AsyncSession) -> None:
     await db_session.refresh(plan)
 
     svc = BillingWorkspaceService(db_session)
-    result = await svc.list_products(with_plans=True)
+    result = await svc.list_products(None, with_plans=True)
     assert len(result) == 1
     assert "product" in result[0]
     assert "plans" in result[0]
@@ -57,7 +57,7 @@ async def test_create_product(db_session: AsyncSession) -> None:
     """Create product returns Product."""
     svc = BillingWorkspaceService(db_session)
     body = ProductCreate(name="NewProd", description="D", is_active=True)
-    p = await svc.create_product(body)
+    p = await svc.create_product(body, "innexar")
     assert p.id is not None
     assert p.name == "NewProd"
 
@@ -90,9 +90,9 @@ async def test_list_price_plans(db_session: AsyncSession) -> None:
     await db_session.flush()
 
     svc = BillingWorkspaceService(db_session)
-    all_plans = await svc.list_price_plans()
+    all_plans = await svc.list_price_plans(None)
     assert len(all_plans) == 1
-    by_product = await svc.list_price_plans(product_id=prod.id)
+    by_product = await svc.list_price_plans(None, product_id=prod.id)
     assert len(by_product) == 1
     assert by_product[0].name == "P1"
 
@@ -126,7 +126,7 @@ async def test_update_price_plan_not_found(db_session: AsyncSession) -> None:
 async def test_list_invoices_empty(db_session: AsyncSession) -> None:
     """List invoices when none returns empty list."""
     svc = BillingWorkspaceService(db_session)
-    result = await svc.list_invoices()
+    result = await svc.list_invoices(None)
     assert result == []
 
 

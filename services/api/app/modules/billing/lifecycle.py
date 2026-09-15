@@ -7,7 +7,7 @@ no timezone do contrato (default por org).
 from __future__ import annotations
 
 import logging
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from sqlalchemy import select
@@ -18,13 +18,10 @@ from app.models.customer import Customer
 from app.models.customer_user import CustomerUser
 from app.modules.billing import policy as billing_policy
 from app.modules.billing.enums import (
-    ContractStatus,
     InvoiceStatus,
-    SubscriptionStatus,
 )
-from app.modules.billing.models import Contract, Invoice, Subscription
+from app.modules.billing.models import Contract, Invoice
 from app.modules.billing.notify_templates import render
-from app.modules.mail.enums import MailServiceStatus, MailboxStatus
 from app.modules.mail.models import EmailMailbox, Service
 from app.modules.notifications.service import (
     create_notification_and_maybe_send_email,
@@ -56,10 +53,14 @@ def _money(total: float, currency: str, locale: str) -> str:
 
 async def _customer_users(db: AsyncSession, customer_id: int) -> list[CustomerUser]:
     rows = (
-        await db.execute(
-            select(CustomerUser).where(CustomerUser.customer_id == customer_id)
+        (
+            await db.execute(
+                select(CustomerUser).where(CustomerUser.customer_id == customer_id)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return list(rows)
 
 
@@ -82,8 +83,14 @@ async def notify_customer(
     for cu in users:
         if background_tasks is not None:
             await create_notification_and_maybe_send_email(
-                db, background_tasks, customer_user_id=cu.id, channel="in_app+email",
-                title=title, body=body, recipient_email=cu.email, org_id=org_id,
+                db,
+                background_tasks,
+                customer_user_id=cu.id,
+                channel="in_app+email",
+                title=title,
+                body=body,
+                recipient_email=cu.email,
+                org_id=org_id,
                 email_locale=locale,
             )
         else:
@@ -91,8 +98,11 @@ async def notify_customer(
             from app.models.notification import Notification
             from app.providers.email.loader import get_email_provider
 
-            db.add(Notification(customer_user_id=cu.id, channel="in_app",
-                                title=title, body=body))
+            db.add(
+                Notification(
+                    customer_user_id=cu.id, channel="in_app", title=title, body=body
+                )
+            )
             provider = await get_email_provider(db, org_id=org_id)
             if provider and cu.email:
                 try:
@@ -118,9 +128,9 @@ async def mark_past_due(db: AsyncSession, *, background_tasks=None) -> int:
     now = datetime.now(UTC)
     rows = (
         await db.execute(
-            select(Invoice, Customer).join(
-                Customer, Customer.id == Invoice.customer_id
-            ).where(
+            select(Invoice, Customer)
+            .join(Customer, Customer.id == Invoice.customer_id)
+            .where(
                 Invoice.status == InvoiceStatus.PENDING.value,
                 Invoice.due_date < now,
             )
@@ -130,14 +140,22 @@ async def mark_past_due(db: AsyncSession, *, background_tasks=None) -> int:
     for inv, cust in rows:
         inv.status = InvoiceStatus.PAST_DUE.value
         await log_audit(
-            db, entity="invoice", entity_id=str(inv.id), action="invoice_past_due",
-            actor_type="system", actor_id="lifecycle",
+            db,
+            entity="invoice",
+            entity_id=str(inv.id),
+            action="invoice_past_due",
+            actor_type="system",
+            actor_id="lifecycle",
             payload={"due_date": inv.due_date.isoformat()},
         )
         await notify_customer(
-            db, cust, "invoice_overdue", background_tasks=background_tasks,
+            db,
+            cust,
+            "invoice_overdue",
+            background_tasks=background_tasks,
             org_id=cust.org_id,
-            id=inv.id, total=_money(inv.total, inv.currency, _locale_for(cust)),
+            id=inv.id,
+            total=_money(inv.total, inv.currency, _locale_for(cust)),
             due=inv.due_date.date().isoformat(),
         )
         count += 1
@@ -150,11 +168,12 @@ async def send_reminders(db: AsyncSession, *, background_tasks=None) -> int:
     now = datetime.now(UTC)
     rows = (
         await db.execute(
-            select(Invoice, Customer).join(
-                Customer, Customer.id == Invoice.customer_id
-            ).where(
-                Invoice.status.in_([
-                    InvoiceStatus.PENDING.value, InvoiceStatus.PAST_DUE.value]),
+            select(Invoice, Customer)
+            .join(Customer, Customer.id == Invoice.customer_id)
+            .where(
+                Invoice.status.in_(
+                    [InvoiceStatus.PENDING.value, InvoiceStatus.PAST_DUE.value]
+                ),
             )
         )
     ).all()
@@ -170,16 +189,29 @@ async def send_reminders(db: AsyncSession, *, background_tasks=None) -> int:
                 if days <= d and not await _reminded(inv, key):
                     k = "invoice_due_today" if days == 0 else "invoice_due_soon"
                     await notify_customer(
-                        db, cust, k, background_tasks=background_tasks,
-                        org_id=cust.org_id, id=inv.id, total=total, due=due,
+                        db,
+                        cust,
+                        k,
+                        background_tasks=background_tasks,
+                        org_id=cust.org_id,
+                        id=inv.id,
+                        total=total,
+                        due=due,
                         days=days,
                     )
                     await _mark_reminded(db, inv, key)
                     sent += 1
         elif days == 0 and not await _reminded(inv, "today"):
             await notify_customer(
-                db, cust, "invoice_due_today", background_tasks=background_tasks,
-                org_id=cust.org_id, id=inv.id, total=total, due=due, days=0,
+                db,
+                cust,
+                "invoice_due_today",
+                background_tasks=background_tasks,
+                org_id=cust.org_id,
+                id=inv.id,
+                total=total,
+                due=due,
+                days=0,
             )
             await _mark_reminded(db, inv, "today")
             sent += 1
@@ -189,9 +221,14 @@ async def send_reminders(db: AsyncSession, *, background_tasks=None) -> int:
                 key = f"after_{d}"
                 if overdue_days >= d and not await _reminded(inv, key):
                     await notify_customer(
-                        db, cust, "invoice_overdue",
-                        background_tasks=background_tasks, org_id=cust.org_id,
-                        id=inv.id, total=total, due=due,
+                        db,
+                        cust,
+                        "invoice_overdue",
+                        background_tasks=background_tasks,
+                        org_id=cust.org_id,
+                        id=inv.id,
+                        total=total,
+                        due=due,
                     )
                     await _mark_reminded(db, inv, key)
                     sent += 1
@@ -205,9 +242,9 @@ async def suspend_overdue(db: AsyncSession, *, background_tasks=None) -> int:
     now = datetime.now(UTC)
     rows = (
         await db.execute(
-            select(Invoice, Customer).join(
-                Customer, Customer.id == Invoice.customer_id
-            ).where(Invoice.status == InvoiceStatus.PAST_DUE.value)
+            select(Invoice, Customer)
+            .join(Customer, Customer.id == Invoice.customer_id)
+            .where(Invoice.status == InvoiceStatus.PAST_DUE.value)
         )
     ).all()
     count = 0
@@ -219,9 +256,13 @@ async def suspend_overdue(db: AsyncSession, *, background_tasks=None) -> int:
                 key = "susp_warn"
                 if not await _reminded(inv, key):
                     await notify_customer(
-                        db, cust, "service_suspension_warning",
-                        background_tasks=background_tasks, org_id=cust.org_id,
-                        days=pol["suspend_after_days"] - overdue_days, id=inv.id,
+                        db,
+                        cust,
+                        "service_suspension_warning",
+                        background_tasks=background_tasks,
+                        org_id=cust.org_id,
+                        days=pol["suspend_after_days"] - overdue_days,
+                        id=inv.id,
                     )
                     await _mark_reminded(db, inv, key)
             continue
@@ -231,22 +272,30 @@ async def suspend_overdue(db: AsyncSession, *, background_tasks=None) -> int:
         provider = DockerMailserverProvider()
         suspended_here = 0
         services = (
-            await db.execute(
-                select(Service).where(
-                    Service.customer_id == cust.id,
-                    Service.status == "active",
-                )
-            )
-        ).scalars().all()
-        for svc in services:
-            boxes = (
+            (
                 await db.execute(
-                    select(EmailMailbox).where(
-                        EmailMailbox.service_id == svc.id,
-                        EmailMailbox.status == "active",
+                    select(Service).where(
+                        Service.customer_id == cust.id,
+                        Service.status == "active",
                     )
                 )
-            ).scalars().all()
+            )
+            .scalars()
+            .all()
+        )
+        for svc in services:
+            boxes = (
+                (
+                    await db.execute(
+                        select(EmailMailbox).where(
+                            EmailMailbox.service_id == svc.id,
+                            EmailMailbox.status == "active",
+                        )
+                    )
+                )
+                .scalars()
+                .all()
+            )
             for box in boxes:
                 try:
                     provider.disable_mailbox(box.address)
@@ -257,31 +306,48 @@ async def suspend_overdue(db: AsyncSession, *, background_tasks=None) -> int:
             svc.suspended_at = now
             suspended_here += 1
             await log_audit(
-                db, entity="service", entity_id=str(svc.id),
-                action="service_suspended", actor_type="system",
-                actor_id="lifecycle", payload={"invoice_id": inv.id},
+                db,
+                entity="service",
+                entity_id=str(svc.id),
+                action="service_suspended",
+                actor_type="system",
+                actor_id="lifecycle",
+                payload={"invoice_id": inv.id},
             )
             from app.modules.fulfillment.facade import (
                 sync_service_event as _sync_fulfillment,
             )
 
-            await _sync_fulfillment(db, contract_item_id=None,
-                                    service_id=svc.id, suspended=True,
-                                    actor_type="system", actor_id="lifecycle")
+            await _sync_fulfillment(
+                db,
+                contract_item_id=None,
+                service_id=svc.id,
+                suspended=True,
+                actor_type="system",
+                actor_id="lifecycle",
+            )
         contracts = (
-            await db.execute(
-                select(Contract).where(
-                    Contract.customer_id == cust.id,
-                    Contract.status == "active",
+            (
+                await db.execute(
+                    select(Contract).where(
+                        Contract.customer_id == cust.id,
+                        Contract.status == "active",
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         for contract in contracts:
             contract.status = "suspended"
             await log_audit(
-                db, entity="contract", entity_id=str(contract.id),
-                action="contract_suspended", actor_type="system",
-                actor_id="lifecycle", payload={"invoice_id": inv.id},
+                db,
+                entity="contract",
+                entity_id=str(contract.id),
+                action="contract_suspended",
+                actor_type="system",
+                actor_id="lifecycle",
+                payload={"invoice_id": inv.id},
             )
         # Só notifica suspensão se algo foi efetivamente suspenso.
         # Fase 4: hosting (docker stop reversível, preserva tudo).
@@ -292,13 +358,17 @@ async def suspend_overdue(db: AsyncSession, *, background_tasks=None) -> int:
         hprovider = DockerHostingProvider()
         hosting_suspended = 0
         hservices = (
-            await db.execute(
-                select(HostingService).where(
-                    HostingService.customer_id == cust.id,
-                    HostingService.status == HostingServiceStatus.ACTIVE.value,
+            (
+                await db.execute(
+                    select(HostingService).where(
+                        HostingService.customer_id == cust.id,
+                        HostingService.status == HostingServiceStatus.ACTIVE.value,
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         for hsvc in hservices:
             try:
                 if hsvc.container_name:
@@ -306,21 +376,32 @@ async def suspend_overdue(db: AsyncSession, *, background_tasks=None) -> int:
                 hsvc.status = HostingServiceStatus.SUSPENDED.value
                 hosting_suspended += 1
                 await log_audit(
-                    db, entity="hosting_service", entity_id=str(hsvc.id),
-                    action="hosting_suspended", actor_type="system",
-                    actor_id="lifecycle", payload={"invoice_id": inv.id},
+                    db,
+                    entity="hosting_service",
+                    entity_id=str(hsvc.id),
+                    action="hosting_suspended",
+                    actor_type="system",
+                    actor_id="lifecycle",
+                    payload={"invoice_id": inv.id},
                 )
                 from app.modules.fulfillment.facade import (
                     sync_service_event as _sync_fulfillment,
                 )
 
                 await _sync_fulfillment(
-                    db, contract_item_id=hsvc.contract_item_id,
-                    service_id=None, suspended=True,
-                    actor_type="system", actor_id="lifecycle")
+                    db,
+                    contract_item_id=hsvc.contract_item_id,
+                    service_id=None,
+                    suspended=True,
+                    actor_type="system",
+                    actor_id="lifecycle",
+                )
                 await notify_customer(
-                    db, cust, "hosting_suspended",
-                    background_tasks=background_tasks, org_id=cust.org_id,
+                    db,
+                    cust,
+                    "hosting_suspended",
+                    background_tasks=background_tasks,
+                    org_id=cust.org_id,
                     domain=hsvc.primary_domain or hsvc.container_name or "",
                 )
             except Exception:  # noqa: BLE001
@@ -328,8 +409,12 @@ async def suspend_overdue(db: AsyncSession, *, background_tasks=None) -> int:
         if suspended_here or contracts or hosting_suspended:
             if not hosting_suspended:
                 await notify_customer(
-                    db, cust, "service_suspended", background_tasks=background_tasks,
-                    org_id=cust.org_id, id=inv.id,
+                    db,
+                    cust,
+                    "service_suspended",
+                    background_tasks=background_tasks,
+                    org_id=cust.org_id,
+                    id=inv.id,
                 )
             count += 1
     await db.flush()
@@ -350,22 +435,30 @@ async def reactivate_customer(
     provider = DockerMailserverProvider()
     reactivated = 0
     services = (
-        await db.execute(
-            select(Service).where(
-                Service.customer_id == customer_id,
-                Service.status == "suspended",
-            )
-        )
-    ).scalars().all()
-    for svc in services:
-        boxes = (
+        (
             await db.execute(
-                select(EmailMailbox).where(
-                    EmailMailbox.service_id == svc.id,
-                    EmailMailbox.status == "disabled",
+                select(Service).where(
+                    Service.customer_id == customer_id,
+                    Service.status == "suspended",
                 )
             )
-        ).scalars().all()
+        )
+        .scalars()
+        .all()
+    )
+    for svc in services:
+        boxes = (
+            (
+                await db.execute(
+                    select(EmailMailbox).where(
+                        EmailMailbox.service_id == svc.id,
+                        EmailMailbox.status == "disabled",
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
         for box in boxes:
             try:
                 provider.enable_mailbox(box.address)
@@ -377,26 +470,38 @@ async def reactivate_customer(
         svc.suspended_at = None
         svc.activated_at = datetime.now(UTC)
         await log_audit(
-            db, entity="service", entity_id=str(svc.id),
-            action="service_reactivated", actor_type="system",
+            db,
+            entity="service",
+            entity_id=str(svc.id),
+            action="service_reactivated",
+            actor_type="system",
             actor_id="lifecycle",
         )
         from app.modules.fulfillment.facade import (
             sync_service_event as _sync_fulfillment,
         )
 
-        await _sync_fulfillment(db, contract_item_id=None,
-                                service_id=svc.id, suspended=False,
-                                actor_type="system", actor_id="lifecycle")
+        await _sync_fulfillment(
+            db,
+            contract_item_id=None,
+            service_id=svc.id,
+            suspended=False,
+            actor_type="system",
+            actor_id="lifecycle",
+        )
         reactivated += 1
     contracts = (
-        await db.execute(
-            select(Contract).where(
-                Contract.customer_id == customer_id,
-                Contract.status == "suspended",
+        (
+            await db.execute(
+                select(Contract).where(
+                    Contract.customer_id == customer_id,
+                    Contract.status == "suspended",
+                )
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     for contract in contracts:
         contract.status = "active"
     mail_reactivated = reactivated
@@ -407,13 +512,17 @@ async def reactivate_customer(
 
     hprovider = DockerHostingProvider()
     hservices = (
-        await db.execute(
-            select(HostingService).where(
-                HostingService.customer_id == customer_id,
-                HostingService.status == HostingServiceStatus.SUSPENDED.value,
+        (
+            await db.execute(
+                select(HostingService).where(
+                    HostingService.customer_id == customer_id,
+                    HostingService.status == HostingServiceStatus.SUSPENDED.value,
+                )
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     for hsvc in hservices:
         try:
             if hsvc.container_name:
@@ -423,8 +532,11 @@ async def reactivate_customer(
             continue
         hsvc.status = HostingServiceStatus.ACTIVE.value
         await log_audit(
-            db, entity="hosting_service", entity_id=str(hsvc.id),
-            action="hosting_reactivated", actor_type="system",
+            db,
+            entity="hosting_service",
+            entity_id=str(hsvc.id),
+            action="hosting_reactivated",
+            actor_type="system",
             actor_id="lifecycle",
         )
         from app.modules.fulfillment.facade import (
@@ -432,18 +544,28 @@ async def reactivate_customer(
         )
 
         await _sync_fulfillment(
-            db, contract_item_id=hsvc.contract_item_id,
-            service_id=None, suspended=False,
-            actor_type="system", actor_id="lifecycle")
+            db,
+            contract_item_id=hsvc.contract_item_id,
+            service_id=None,
+            suspended=False,
+            actor_type="system",
+            actor_id="lifecycle",
+        )
         reactivated += 1
         await notify_customer(
-            db, cust, "hosting_reactivated", background_tasks=background_tasks,
+            db,
+            cust,
+            "hosting_reactivated",
+            background_tasks=background_tasks,
             org_id=cust.org_id,
             domain=hsvc.primary_domain or hsvc.container_name or "",
         )
     if mail_reactivated:
         await notify_customer(
-            db, cust, "service_reactivated", background_tasks=background_tasks,
+            db,
+            cust,
+            "service_reactivated",
+            background_tasks=background_tasks,
             org_id=cust.org_id,
         )
     await db.flush()
@@ -458,10 +580,14 @@ async def reconcile(db: AsyncSession) -> dict:
 
     fixed = {"invoices_paid": 0, "attempts_failed": 0, "checked": 0}
     attempts = (
-        await db.execute(
-            select(PaymentAttempt).where(PaymentAttempt.status == "pending")
+        (
+            await db.execute(
+                select(PaymentAttempt).where(PaymentAttempt.status == "pending")
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     for att in attempts:
         fixed["checked"] += 1
         inv = await db.get(Invoice, att.invoice_id)
@@ -479,8 +605,7 @@ async def reconcile(db: AsyncSession) -> dict:
                 att.paid_at = datetime.now(UTC)
                 fixed["invoices_paid"] += 1
                 await reactivate_customer(db, inv.customer_id)
-            elif st in ("expired", "cancelled", "rejected", "refunded",
-                        "charged_back"):
+            elif st in ("expired", "cancelled", "rejected", "refunded", "charged_back"):
                 att.status = "failed" if st != "refunded" else "refunded"
                 att.failure_code = f"mp:{st}"
                 fixed["attempts_failed"] += 1

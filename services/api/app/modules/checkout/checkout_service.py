@@ -6,9 +6,9 @@ from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 from urllib.parse import quote
 
-from app.core.security import create_token_customer, hash_password
 from app.core.ops_notifications import send_ops_alert
 from app.core.org import default_currency_for_org
+from app.core.security import create_token_customer, hash_password
 from app.models.customer import Customer
 from app.models.customer_user import CustomerUser
 from app.modules.billing.enums import InvoiceStatus, SubscriptionStatus
@@ -140,7 +140,9 @@ class CheckoutService:
         success_url = body.success_url
         if success_url and checkout_token:
             separator = "&" if "?" in success_url else "?"
-            success_url = f"{success_url}{separator}token={quote(checkout_token, safe='')}"
+            success_url = (
+                f"{success_url}{separator}token={quote(checkout_token, safe='')}"
+            )
         try:
             res = await create_payment_attempt(
                 self._db,
@@ -226,7 +228,9 @@ class CheckoutService:
         """Find or create Customer and CustomerUser. Returns (customer_id, customer_user_id, cust, existing_customer)."""
         cu = await self._customer.get_customer_user_by_email(email, org_id=org_id)
         if cu:
-            cust = await self._customer.get_by_id_with_users(cu.customer_id, org_id=org_id)
+            cust = await self._customer.get_by_id_with_users(
+                cu.customer_id, org_id=org_id
+            )
             return (cu.customer_id, cu.id, cust, True)
 
         cust = await self._customer.get_by_email(email, org_id=org_id)

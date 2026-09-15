@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -34,11 +34,18 @@ def _actor(current: User) -> tuple[str, str]:
 
 
 def _box_dict(svc: MailService, m) -> dict:
-    usage = (svc.mailbox_usage().get((m.address or "").lower()) or {})
-    return {"id": m.id, "address": m.address, "display_name": m.display_name,
-            "quota": m.quota, "status": m.status, "created_at": m.created_at,
-            "usage_used": usage.get("used"), "usage_pct": usage.get("pct"),
-            "last_activity": None}
+    usage = svc.mailbox_usage().get((m.address or "").lower()) or {}
+    return {
+        "id": m.id,
+        "address": m.address,
+        "display_name": m.display_name,
+        "quota": m.quota,
+        "status": m.status,
+        "created_at": m.created_at,
+        "usage_used": usage.get("used"),
+        "usage_pct": usage.get("pct"),
+        "last_activity": None,
+    }
 
 
 @router.post("/mail/domains", response_model=EmailDomainResponse, status_code=201)
@@ -58,13 +65,19 @@ async def register_domain(
         d = await svc.register_domain(
             customer_id=customer_id,
             org_id=router_org_write(current, org_id),
-            domain=body.domain, contract_item_id=body.contract_item_id,
-            actor_type=actor_type, actor_id=actor_id,
+            domain=body.domain,
+            contract_item_id=body.contract_item_id,
+            actor_type=actor_type,
+            actor_id=actor_id,
         )
     except MailError as e:
-        raise _http_error(e)
-    return {"id": d.id, "domain": d.domain, "status": d.status,
-            "verified_at": d.verified_at}
+        raise _http_error(e) from e
+    return {
+        "id": d.id,
+        "domain": d.domain,
+        "status": d.status,
+        "verified_at": d.verified_at,
+    }
 
 
 @router.get("/mail/domains", response_model=list[EmailDomainResponse])
@@ -94,13 +107,17 @@ async def domain_dns(
     svc = MailService(db)
     result = check_domain_dns(domain)
     expected = svc.expected_dns_records(domain)
-    return {"domain": result["domain"],
-            "all_ok": result["checks"].pop("all_ok", False),
-            "checks": result["checks"],
-            "expected_records": expected["records"]}
+    return {
+        "domain": result["domain"],
+        "all_ok": result["checks"].pop("all_ok", False),
+        "checks": result["checks"],
+        "expected_records": expected["records"],
+    }
 
 
-@router.get("/mail/customers/{customer_id}/entitlement", response_model=EntitlementResponse)
+@router.get(
+    "/mail/customers/{customer_id}/entitlement", response_model=EntitlementResponse
+)
 async def entitlement(
     customer_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -116,7 +133,9 @@ async def entitlement(
     return await svc.entitlement(customer_id, str(org_filter), domain)
 
 
-@router.get("/mail/customers/{customer_id}/mailboxes", response_model=list[MailboxResponse])
+@router.get(
+    "/mail/customers/{customer_id}/mailboxes", response_model=list[MailboxResponse]
+)
 async def list_boxes(
     customer_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -133,8 +152,11 @@ async def list_boxes(
     return [_box_dict(svc, m) for m in boxes]
 
 
-@router.post("/mail/customers/{customer_id}/mailboxes", response_model=MailboxResponse,
-             status_code=201)
+@router.post(
+    "/mail/customers/{customer_id}/mailboxes",
+    response_model=MailboxResponse,
+    status_code=201,
+)
 async def create_box(
     customer_id: int,
     body: MailboxCreate,
@@ -149,13 +171,18 @@ async def create_box(
     actor_type, actor_id = _actor(current)
     try:
         m = await svc.create_mailbox(
-            customer_id=customer_id, org_id=router_org_write(current, org_id),
-            domain=body.domain, local_part=body.local_part,
-            display_name=body.display_name, password=body.password, quota=body.quota,
-            actor_type=actor_type, actor_id=actor_id,
+            customer_id=customer_id,
+            org_id=router_org_write(current, org_id),
+            domain=body.domain,
+            local_part=body.local_part,
+            display_name=body.display_name,
+            password=body.password,
+            quota=body.quota,
+            actor_type=actor_type,
+            actor_id=actor_id,
         )
     except MailError as e:
-        raise _http_error(e)
+        raise _http_error(e) from e
     return _box_dict(svc, m)
 
 
@@ -175,12 +202,15 @@ async def change_pw(
     actor_type, actor_id = _actor(current)
     try:
         await svc.change_password(
-            mailbox_id=mailbox_id, customer_id=customer_id,
+            mailbox_id=mailbox_id,
+            customer_id=customer_id,
             org_id=router_org_list_filter(org_id) or current.org_id,
-            password=body.password, actor_type=actor_type, actor_id=actor_id,
+            password=body.password,
+            actor_type=actor_type,
+            actor_id=actor_id,
         )
     except MailError as e:
-        raise _http_error(e)
+        raise _http_error(e) from e
     return {"ok": True}
 
 
@@ -200,12 +230,15 @@ async def set_quota(
     actor_type, actor_id = _actor(current)
     try:
         await svc.set_quota(
-            mailbox_id=mailbox_id, customer_id=customer_id,
+            mailbox_id=mailbox_id,
+            customer_id=customer_id,
             org_id=router_org_list_filter(org_id) or current.org_id,
-            quota=body.quota, actor_type=actor_type, actor_id=actor_id,
+            quota=body.quota,
+            actor_type=actor_type,
+            actor_id=actor_id,
         )
     except MailError as e:
-        raise _http_error(e)
+        raise _http_error(e) from e
     return {"ok": True}
 
 
@@ -224,12 +257,15 @@ async def disable_box(
     actor_type, actor_id = _actor(current)
     try:
         await svc.set_disabled(
-            mailbox_id=mailbox_id, customer_id=customer_id,
+            mailbox_id=mailbox_id,
+            customer_id=customer_id,
             org_id=router_org_list_filter(org_id) or current.org_id,
-            disabled=True, actor_type=actor_type, actor_id=actor_id,
+            disabled=True,
+            actor_type=actor_type,
+            actor_id=actor_id,
         )
     except MailError as e:
-        raise _http_error(e)
+        raise _http_error(e) from e
     return {"ok": True}
 
 
@@ -248,12 +284,15 @@ async def enable_box(
     actor_type, actor_id = _actor(current)
     try:
         await svc.set_disabled(
-            mailbox_id=mailbox_id, customer_id=customer_id,
+            mailbox_id=mailbox_id,
+            customer_id=customer_id,
             org_id=router_org_list_filter(org_id) or current.org_id,
-            disabled=False, actor_type=actor_type, actor_id=actor_id,
+            disabled=False,
+            actor_type=actor_type,
+            actor_id=actor_id,
         )
     except MailError as e:
-        raise _http_error(e)
+        raise _http_error(e) from e
     return {"ok": True}
 
 
@@ -272,12 +311,14 @@ async def delete_box(
     actor_type, actor_id = _actor(current)
     try:
         await svc.delete_mailbox(
-            mailbox_id=mailbox_id, customer_id=customer_id,
+            mailbox_id=mailbox_id,
+            customer_id=customer_id,
             org_id=router_org_list_filter(org_id) or current.org_id,
-            actor_type=actor_type, actor_id=actor_id,
+            actor_type=actor_type,
+            actor_id=actor_id,
         )
     except MailError as e:
-        raise _http_error(e)
+        raise _http_error(e) from e
     return {"ok": True}
 
 
@@ -296,9 +337,12 @@ async def sync_domain(
     actor_type, actor_id = _actor(current)
     try:
         rep = await svc.sync_domain(
-            customer_id=customer_id, org_id=router_org_write(current, org_id),
-            domain=body.domain, actor_type=actor_type, actor_id=actor_id,
+            customer_id=customer_id,
+            org_id=router_org_write(current, org_id),
+            domain=body.domain,
+            actor_type=actor_type,
+            actor_id=actor_id,
         )
     except MailError as e:
-        raise _http_error(e)
+        raise _http_error(e) from e
     return rep

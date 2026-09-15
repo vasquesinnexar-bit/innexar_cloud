@@ -159,7 +159,11 @@ async def send_invoice_reminders(
         total_str = (
             f"R$ {inv.total:.2f}"
             if (inv.currency or "").upper() == "BRL"
-            else f"${inv.total:.2f}" if (inv.currency or "USD").upper() == "USD" else f"{inv.total:.2f} {inv.currency or ''}"
+            else (
+                f"${inv.total:.2f}"
+                if (inv.currency or "USD").upper() == "USD"
+                else f"{inv.total:.2f} {inv.currency or ''}"
+            )
         )
         title = "Lembrete: fatura em breve"
         body = f"Sua fatura #{inv.id} vence em {due_str}. Valor: {total_str}. Acesse o portal para pagar."

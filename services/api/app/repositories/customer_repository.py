@@ -43,7 +43,9 @@ class CustomerRepository:
         r = await self._db.execute(q.limit(1))
         return r.scalar_one_or_none()
 
-    async def list_test_customer_ids_for_cleanup(self, org_id: str = "innexar") -> list[int]:
+    async def list_test_customer_ids_for_cleanup(
+        self, org_id: str = "innexar"
+    ) -> list[int]:
         """Ids of test customers for org (email @test.innexar.com, etc.)."""
         keep_name = "INSTITUTO LASER OCULAR TOUFIC SLEIMAN"
         is_test = or_(

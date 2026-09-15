@@ -135,9 +135,7 @@ class ProjectRepository:
             return
 
         await self._db.execute(
-            update(Ticket)
-            .where(Ticket.project_id.in_(pids))
-            .values(project_id=None)
+            update(Ticket).where(Ticket.project_id.in_(pids)).values(project_id=None)
         )
         await self._db.execute(
             update(ProjectRequest)
@@ -148,9 +146,7 @@ class ProjectRepository:
             delete(ProjectMessage).where(ProjectMessage.project_id.in_(pids))
         )
         await self._db.execute(
-            delete(ModificationRequest).where(
-                ModificationRequest.project_id.in_(pids)
-            )
+            delete(ModificationRequest).where(ModificationRequest.project_id.in_(pids))
         )
         await self._db.execute(
             delete(ProjectFile).where(ProjectFile.project_id.in_(pids))

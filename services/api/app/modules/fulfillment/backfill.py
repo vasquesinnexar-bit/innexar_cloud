@@ -34,10 +34,15 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 async def _mail_service_state(db, customer_id: int) -> str | None:
     from app.modules.mail.models import Service as MailService
 
-    rows = (await db.execute(
-        select(MailService.status).where(
-            MailService.customer_id == customer_id)
-    )).scalars().all()
+    rows = (
+        (
+            await db.execute(
+                select(MailService.status).where(MailService.customer_id == customer_id)
+            )
+        )
+        .scalars()
+        .all()
+    )
     if not rows:
         return None
     if any(s == "active" for s in rows):
@@ -52,54 +57,78 @@ async def _project_state(db, subscription_id: int | None) -> str | None:
         return None
     from app.modules.projects.models import Project
 
-    row = (await db.execute(
-        select(Project.status).where(
-            Project.subscription_id == subscription_id)
-        .order_by(Project.id.desc())
-    )).scalars().first()
+    row = (
+        (
+            await db.execute(
+                select(Project.status)
+                .where(Project.subscription_id == subscription_id)
+                .order_by(Project.id.desc())
+            )
+        )
+        .scalars()
+        .first()
+    )
     return row
 
 
 async def _hestia_state(db, subscription_id: int | None) -> str | None:
     if not subscription_id:
         return None
-    row = (await db.execute(
-        select(ProvisioningRecord.status).where(
-            ProvisioningRecord.subscription_id == subscription_id,
-            ProvisioningRecord.provider == "hestia")
-        .order_by(ProvisioningRecord.id.desc())
-    )).scalars().first()
+    row = (
+        (
+            await db.execute(
+                select(ProvisioningRecord.status)
+                .where(
+                    ProvisioningRecord.subscription_id == subscription_id,
+                    ProvisioningRecord.provider == "hestia",
+                )
+                .order_by(ProvisioningRecord.id.desc())
+            )
+        )
+        .scalars()
+        .first()
+    )
     return row
 
 
-async def _contract_has_paid_invoice(db, contract_id: int,
-                                     subscription_id: int | None) -> bool:
+async def _contract_has_paid_invoice(
+    db, contract_id: int, subscription_id: int | None
+) -> bool:
     q = select(Invoice.id).where(Invoice.status == "paid")
     if subscription_id:
         sub = await db.get(Subscription, subscription_id)
         if sub:
-            q = q.where((Invoice.subscription_id == subscription_id)
-                        | (Invoice.customer_id == sub.customer_id))
+            q = q.where(
+                (Invoice.subscription_id == subscription_id)
+                | (Invoice.customer_id == sub.customer_id)
+            )
             row = (await db.execute(q.limit(1))).first()
             return row is not None
     contract = await db.get(Contract, contract_id)
     if not contract:
         return False
-    row = (await db.execute(
-        q.where(Invoice.customer_id == contract.customer_id).limit(1))).first()
+    row = (
+        await db.execute(q.where(Invoice.customer_id == contract.customer_id).limit(1))
+    ).first()
     return row is not None
 
 
 async def plan(db) -> list[dict]:
     """Descreve o que o backfill criaria (sem escrever)."""
     out = []
-    items = (await db.execute(
-        select(ContractItem).order_by(ContractItem.id))).scalars().all()
+    items = (
+        (await db.execute(select(ContractItem).order_by(ContractItem.id)))
+        .scalars()
+        .all()
+    )
     for item in items:
-        exists = (await db.execute(
-            select(facade.Fulfillment.id).where(
-                facade.Fulfillment.idempotency_key == f"ci-{item.id}")
-        )).first()
+        exists = (
+            await db.execute(
+                select(facade.Fulfillment.id).where(
+                    facade.Fulfillment.idempotency_key == f"ci-{item.id}"
+                )
+            )
+        ).first()
         if exists:
             continue
         contract = await db.get(Contract, item.contract_id)
@@ -125,14 +154,23 @@ async def plan(db) -> list[dict]:
             if st == "provisioned":
                 status, step, progress = "active", "done", 100
         elif handler == "manual":
-            if await _contract_has_paid_invoice(db, item.contract_id,
-                                                item.subscription_id):
+            if await _contract_has_paid_invoice(
+                db, item.contract_id, item.subscription_id
+            ):
                 status, step, progress = "active", "manual_followup", 100
-        out.append({"contract_item_id": item.id, "contract_id": item.contract_id,
-                    "customer_id": contract.customer_id,
-                    "product": product.name if product else None,
-                    "handler": handler, "strategy": strategy,
-                    "status": status, "step": step, "progress": progress})
+        out.append(
+            {
+                "contract_item_id": item.id,
+                "contract_id": item.contract_id,
+                "customer_id": contract.customer_id,
+                "product": product.name if product else None,
+                "handler": handler,
+                "strategy": strategy,
+                "status": status,
+                "step": step,
+                "progress": progress,
+            }
+        )
     return out
 
 
@@ -147,21 +185,36 @@ async def apply() -> dict:
             contract = await db.get(Contract, r["contract_id"])
             inv = None
             if item.subscription_id:
-                inv = (await db.execute(
-                    select(Invoice).where(
-                        Invoice.subscription_id == item.subscription_id,
-                        Invoice.status == "paid")
-                    .order_by(Invoice.id.desc()))).scalars().first()
+                inv = (
+                    (
+                        await db.execute(
+                            select(Invoice)
+                            .where(
+                                Invoice.subscription_id == item.subscription_id,
+                                Invoice.status == "paid",
+                            )
+                            .order_by(Invoice.id.desc())
+                        )
+                    )
+                    .scalars()
+                    .first()
+                )
             f = Fulfillment(
-                org_id=contract.org_id, customer_id=r["customer_id"],
-                contract_id=r["contract_id"], contract_item_id=item.id,
-                product_id=item.product_id, invoice_id=inv.id if inv else None,
+                org_id=contract.org_id,
+                customer_id=r["customer_id"],
+                contract_id=r["contract_id"],
+                contract_item_id=item.id,
+                product_id=item.product_id,
+                invoice_id=inv.id if inv else None,
                 subscription_id=item.subscription_id,
-                strategy=r["strategy"], handler_key=r["handler"],
-                status=r["status"], current_step=r["step"],
+                strategy=r["strategy"],
+                handler_key=r["handler"],
+                status=r["status"],
+                current_step=r["step"],
                 progress=r["progress"],
                 idempotency_key=f"ci-{item.id}",
-                meta={"backfill": True})
+                meta={"backfill": True},
+            )
             if r["status"] == "active":
                 from app.core.datetime_utils import utc_now
 
@@ -171,10 +224,15 @@ async def apply() -> dict:
             from app.core.audit import log_audit
 
             await log_audit(
-                db, entity="fulfillment", entity_id=None,
-                action="fulfillment_backfilled", actor_type="system",
-                actor_id="backfill", org_id=contract.org_id,
-                payload={"contract_item_id": item.id})
+                db,
+                entity="fulfillment",
+                entity_id=None,
+                action="fulfillment_backfilled",
+                actor_type="system",
+                actor_id="backfill",
+                org_id=contract.org_id,
+                payload={"contract_item_id": item.id},
+            )
             created += 1
         await db.commit()
         return {"created": created, "planned": len(rows)}
@@ -186,8 +244,10 @@ async def amain(apply_flag: bool) -> int:
     if not apply_flag:
         print(f"DRY-RUN: {len(rows)} fulfillments seriam criados")
         for r in rows:
-            print(f"  item={r['contract_item_id']} prod={r['product']} "
-                  f"handler={r['handler']} → {r['status']}/{r['step']}")
+            print(
+                f"  item={r['contract_item_id']} prod={r['product']} "
+                f"handler={r['handler']} → {r['status']}/{r['step']}"
+            )
         return 0
     result = await apply()
     print(f"APPLY: {result}")

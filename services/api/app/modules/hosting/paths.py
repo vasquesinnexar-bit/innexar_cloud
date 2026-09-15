@@ -12,19 +12,46 @@ MAX_READ_BYTES = 2 * 1024 * 1024
 MAX_REVISION_BYTES = 100 * 1024
 
 BLOCKED_NAMES = {
-    ".env", ".env.local", ".env.production", ".env.example",
-    "dockerfile", "docker-compose.yml", "docker-compose.yaml",
-    "docker-compose.override.yml", ".dockerignore",
-    ".git", ".ssh", ".traefik", "traefik.yml", "traefik.yaml",
-    "id_rsa", "id_ed25519", "known_hosts",
+    ".env",
+    ".env.local",
+    ".env.production",
+    ".env.example",
+    "dockerfile",
+    "docker-compose.yml",
+    "docker-compose.yaml",
+    "docker-compose.override.yml",
+    ".dockerignore",
+    ".git",
+    ".ssh",
+    ".traefik",
+    "traefik.yml",
+    "traefik.yaml",
+    "id_rsa",
+    "id_ed25519",
+    "known_hosts",
 }
 BLOCKED_SUFFIXES = (".pem", ".key", ".p12", ".pfx", ".asc", ".gpg")
 BLOCKED_SUBSTRINGS = ("secret", "credential", "passwd", "shadow")
 
 ALLOWED_EDIT_EXTS = {
-    ".html", ".htm", ".css", ".js", ".jsx", ".ts", ".tsx", ".json",
-    ".php", ".md", ".markdown", ".txt", ".yml", ".yaml", ".xml",
-    ".svg", ".csv", ".htaccess",
+    ".html",
+    ".htm",
+    ".css",
+    ".js",
+    ".jsx",
+    ".ts",
+    ".tsx",
+    ".json",
+    ".php",
+    ".md",
+    ".markdown",
+    ".txt",
+    ".yml",
+    ".yaml",
+    ".xml",
+    ".svg",
+    ".csv",
+    ".htaccess",
 }
 
 

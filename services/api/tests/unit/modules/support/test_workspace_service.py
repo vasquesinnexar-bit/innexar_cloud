@@ -23,7 +23,7 @@ def _make_service(db: AsyncSession) -> SupportWorkspaceService:
 async def test_list_tickets_empty(db_session: AsyncSession) -> None:
     """List when no tickets returns empty list."""
     svc = _make_service(db_session)
-    result = await svc.list_tickets()
+    result = await svc.list_tickets(None)
     assert result == []
 
 

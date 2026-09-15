@@ -9,15 +9,15 @@ from typing import TYPE_CHECKING
 from fastapi import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.database import AsyncSessionLocal
 from app.core.email_templates import invoice_paid_email, normalize_locale
-from app.core.config import settings
 from app.core.ops_notifications import send_ops_alert
 from app.modules.billing.post_payment import create_project_and_notify_after_payment
+from app.modules.billing.service import process_webhook
 from app.modules.fulfillment.tasks import (
     fulfillment_after_payment as _fulfillment_after_payment,
 )
-from app.modules.billing.service import process_webhook
 from app.repositories.billing_repository import BillingRepository
 from app.repositories.customer_repository import CustomerRepository
 
@@ -188,16 +188,14 @@ class BillingPublicService:
             background_tasks.add_task(_run_create_project_and_notify, paid_invoice_id)
             return
         customer = await self._customer.get_by_id_with_users(inv.customer_id)
-        org_id = (
-            customer.org_id if customer and customer.org_id else ORG_INNEXAR_US
-        )
+        org_id = customer.org_id if customer and customer.org_id else ORG_INNEXAR_US
         cu = await self._customer.get_customer_user_by_customer_id(inv.customer_id)
         if cu:
             locale = _invoice_locale(inv.line_items)
-            portal_base = (
-                str(getattr(settings, "PORTAL_URL", None) or getattr(settings, "FRONTEND_URL", "http://localhost:3000"))
-                .rstrip("/")
-            )
+            portal_base = str(
+                getattr(settings, "PORTAL_URL", None)
+                or getattr(settings, "FRONTEND_URL", "http://localhost:3000")
+            ).rstrip("/")
             billing_url = f"{portal_base}/{locale}/billing"
             email_subject, email_plain, email_html = invoice_paid_email(
                 invoice_id=inv.id,

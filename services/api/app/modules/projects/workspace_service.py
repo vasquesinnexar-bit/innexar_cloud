@@ -2,9 +2,9 @@
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.org import staff_org_id
 from app.models.notification import Notification
 from app.models.user import User
-from app.core.org import staff_org_id
 from app.modules.projects.models import Project
 from app.modules.projects.project_message import ProjectMessage
 from app.modules.projects.schemas import (
@@ -43,7 +43,9 @@ class ProjectWorkspaceService:
     async def list_projects(self, org_id: str | None) -> list[Project]:
         return await self._repo.list_all(org_id=org_id)
 
-    async def get_project(self, project_id: int, org_id: str | None = None) -> Project | None:
+    async def get_project(
+        self, project_id: int, org_id: str | None = None
+    ) -> Project | None:
         return await self._repo.get_by_id(project_id, org_id=org_id)
 
     async def create_project(self, body: ProjectCreate, org_id: str) -> Project:

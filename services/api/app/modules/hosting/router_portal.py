@@ -6,7 +6,7 @@ Sem start/stop/restore-backup/delete (admin/workspace).
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,9 +18,7 @@ from app.modules.billing.dependencies import require_billing_enabled
 from app.modules.hosting.provider import HostingError
 from app.modules.hosting.schemas import (
     BackupCreateBody,
-    FileRenameBody,
     FileWriteBody,
-    MkdirBody,
 )
 from app.modules.hosting.service import HostingServiceLayer
 
@@ -37,24 +35,25 @@ def _err(e: Exception) -> HTTPException:
         "job_conflict": status.HTTP_409_CONFLICT,
         "job_failed": status.HTTP_502_BAD_GATEWAY,
     }
-    return HTTPException(mapping.get(code, status.HTTP_502_BAD_GATEWAY),
-                         {"code": code, "message": detail})
+    return HTTPException(
+        mapping.get(code, status.HTTP_502_BAD_GATEWAY),
+        {"code": code, "message": detail},
+    )
 
 
-async def _own(
-    db: AsyncSession, current: CustomerUser, service_id: int
-):
+async def _own(db: AsyncSession, current: CustomerUser, service_id: int):
     from app.models.customer import Customer
 
     layer = HostingServiceLayer(db)
-    cust = (await db.get(Customer, current.customer_id))
+    cust = await db.get(Customer, current.customer_id)
     if not cust:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Customer não encontrado")
     try:
         svc = await layer._require_service(  # noqa: SLF001
-            service_id, current.customer_id, str(cust.org_id))
+            service_id, current.customer_id, str(cust.org_id)
+        )
     except HostingError as e:
-        raise _err(e)
+        raise _err(e) from e
     return layer, svc
 
 
@@ -72,11 +71,16 @@ async def my_services(
             ov = await layer.overview(svc)
         except HostingError:
             ov = {"id": svc.id, "status": svc.status, "runtime": "unknown"}
-        out.append({
-            "id": svc.id, "primary_domain": svc.primary_domain,
-            "status": svc.status, "runtime": ov.get("runtime", "unknown"),
-            "project": svc.project_name, "environment": svc.environment,
-        })
+        out.append(
+            {
+                "id": svc.id,
+                "primary_domain": svc.primary_domain,
+                "status": svc.status,
+                "runtime": ov.get("runtime", "unknown"),
+                "project": svc.project_name,
+                "environment": svc.environment,
+            }
+        )
     return out
 
 
@@ -93,7 +97,7 @@ async def service_overview(
         ov["deploy"] = layer.deploy_info(svc)
         return ov
     except HostingError as e:
-        raise _err(e)
+        raise _err(e) from e
 
 
 @router.get("/hosting/services/{service_id}/logs")
@@ -108,10 +112,13 @@ async def service_logs(
     if not svc.container_name:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Sem container")
     try:
-        return {"logs": layer._provider.logs(  # noqa: SLF001
-            svc.container_name, tail=min(max(tail, 1), 1000))}
+        return {
+            "logs": layer._provider.logs(  # noqa: SLF001
+                svc.container_name, tail=min(max(tail, 1), 1000)
+            )
+        }
     except HostingError as e:
-        raise _err(e)
+        raise _err(e) from e
 
 
 @router.post("/hosting/services/{service_id}/restart")
@@ -128,20 +135,28 @@ async def restart_service(
 
     layer, svc = await _own(db, current, service_id)
     if svc.status != "active":
-        raise HTTPException(status.HTTP_409_CONFLICT,
-                            {"code": "service_not_active",
-                             "message": "Serviço não está ativo"})
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            {"code": "service_not_active", "message": "Serviço não está ativo"},
+        )
     try:
         job = await layer.enqueue_job(
-            service_id=svc.id, org_id=svc.org_id, job_type="hosting_restart")
+            service_id=svc.id, org_id=svc.org_id, job_type="hosting_restart"
+        )
         await layer.run_job(job)
-        await log_audit(db, entity="hosting_service", entity_id=str(svc.id),
-                        action="hosting_restart", actor_type="customer",
-                        actor_id=str(current.id), org_id=svc.org_id)
+        await log_audit(
+            db,
+            entity="hosting_service",
+            entity_id=str(svc.id),
+            action="hosting_restart",
+            actor_type="customer",
+            actor_id=str(current.id),
+            org_id=svc.org_id,
+        )
         await db.flush()
         return {"job_id": job.id, "status": job.status}
     except HostingError as e:
-        raise _err(e)
+        raise _err(e) from e
 
 
 @router.get("/hosting/services/{service_id}/files")
@@ -156,7 +171,7 @@ async def list_files(
     try:
         return layer.list_files(svc, path)
     except HostingError as e:
-        raise _err(e)
+        raise _err(e) from e
 
 
 @router.get("/hosting/services/{service_id}/files/read")
@@ -175,7 +190,7 @@ async def read_file(
         except UnicodeDecodeError:
             return {"path": path, "content": None, "binary": True, "size": len(data)}
     except HostingError as e:
-        raise _err(e)
+        raise _err(e) from e
 
 
 @router.put("/hosting/services/{service_id}/files/write")
@@ -190,10 +205,14 @@ async def write_file(
     layer, svc = await _own(db, current, service_id)
     try:
         return await layer.write_file(
-            svc, path, body.content.encode("utf-8"),
-            actor_type="customer", actor_id=str(current.id))
+            svc,
+            path,
+            body.content.encode("utf-8"),
+            actor_type="customer",
+            actor_id=str(current.id),
+        )
     except HostingError as e:
-        raise _err(e)
+        raise _err(e) from e
 
 
 @router.get("/hosting/services/{service_id}/backups")
@@ -209,15 +228,28 @@ async def list_backups(
 
     _, svc = await _own(db, current, service_id)
     rows = (
-        await db.execute(
-            select(HostingBackup).where(
-                HostingBackup.hosting_service_id == svc.id)
-            .order_by(HostingBackup.id.desc()).limit(20)
+        (
+            await db.execute(
+                select(HostingBackup)
+                .where(HostingBackup.hosting_service_id == svc.id)
+                .order_by(HostingBackup.id.desc())
+                .limit(20)
+            )
         )
-    ).scalars().all()
-    return [{"id": b.id, "status": b.status, "size_bytes": b.size_bytes,
-             "created_at": b.created_at, "completed_at": b.completed_at,
-             "expires_at": b.expires_at} for b in rows]
+        .scalars()
+        .all()
+    )
+    return [
+        {
+            "id": b.id,
+            "status": b.status,
+            "size_bytes": b.size_bytes,
+            "created_at": b.created_at,
+            "completed_at": b.completed_at,
+            "expires_at": b.expires_at,
+        }
+        for b in rows
+    ]
 
 
 @router.post("/hosting/services/{service_id}/backups", status_code=201)
@@ -233,14 +265,25 @@ async def create_backup(
     layer, svc = await _own(db, current, service_id)
     try:
         job = await layer.enqueue_job(
-            service_id=svc.id, org_id=svc.org_id, job_type="hosting_backup",
-            payload={"retention": max(1, min(body.retention, 30)),
-                     "actor": f"customer:{current.id}"})
-        await log_audit(db, entity="hosting_service", entity_id=str(svc.id),
-                        action="hosting_backup_created", actor_type="customer",
-                        actor_id=str(current.id), org_id=svc.org_id,
-                        payload={"job_id": job.id})
+            service_id=svc.id,
+            org_id=svc.org_id,
+            job_type="hosting_backup",
+            payload={
+                "retention": max(1, min(body.retention, 30)),
+                "actor": f"customer:{current.id}",
+            },
+        )
+        await log_audit(
+            db,
+            entity="hosting_service",
+            entity_id=str(svc.id),
+            action="hosting_backup_created",
+            actor_type="customer",
+            actor_id=str(current.id),
+            org_id=svc.org_id,
+            payload={"job_id": job.id},
+        )
         await db.flush()
         return {"job_id": job.id, "status": job.status}
     except HostingError as e:
-        raise _err(e)
+        raise _err(e) from e

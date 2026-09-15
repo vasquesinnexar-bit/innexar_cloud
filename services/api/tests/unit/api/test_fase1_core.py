@@ -61,8 +61,13 @@ async def test_contracts_crud(
     c = await client.post(
         "/api/workspace/customers",
         headers=h,
-        json={"name": "Contrato SA", "email": "contrato@example.com", "country": "BR",
-              "currency": "BRL", "billing_provider": "mercadopago"},
+        json={
+            "name": "Contrato SA",
+            "email": "contrato@example.com",
+            "country": "BR",
+            "currency": "BRL",
+            "billing_provider": "mercadopago",
+        },
     )
     assert c.status_code == 201, c.text
     cid = c.json()["id"]
@@ -71,9 +76,12 @@ async def test_contracts_crud(
     r = await client.post(
         "/api/workspace/billing/contracts",
         headers=h,
-        json={"customer_id": cid,
-              "items": [{"description": "E-mail 3 contas", "quantity": 3,
-                         "unit_amount": 25}]},
+        json={
+            "customer_id": cid,
+            "items": [
+                {"description": "E-mail 3 contas", "quantity": 3, "unit_amount": 25}
+            ],
+        },
     )
     assert r.status_code == 201, r.text
     data = r.json()

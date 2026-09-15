@@ -79,7 +79,9 @@ def test_create_payment_link_raises_on_non_201() -> None:
             )
 
 
-def test_handle_webhook_not_configured_returns_not_processed() -> None:
+def test_handle_webhook_not_configured_returns_not_processed(monkeypatch) -> None:
+    monkeypatch.delenv("MP_ACCESS_TOKEN", raising=False)
+    monkeypatch.delenv("MERCADOPAGO_ACCESS_TOKEN", raising=False)
     provider = MercadoPagoProvider(access_token="")
     result = provider.handle_webhook(b'{"type":"payment","data":{"id":"123"}}', {})
     assert result.processed is False

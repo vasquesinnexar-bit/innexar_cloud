@@ -13,13 +13,10 @@ from app.models.customer_user import CustomerUser
 from app.modules.mail.schemas import (
     DomainDNSResponse,
     EmailDomainResponse,
-    EntitlementResponse,
     MailboxCreate,
     MailboxPasswordChange,
-    MailboxQuotaChange,
     MailboxResponse,
     ServiceSummaryResponse,
-    SyncResponse,
     UpgradeRequestResponse,
 )
 from app.modules.mail.service import MailError, MailService
@@ -44,9 +41,7 @@ def _http_error(e: MailError) -> HTTPException:
     )
 
 
-async def _ctx(
-    db: AsyncSession, current: CustomerUser
-) -> tuple[MailService, int, str]:
+async def _ctx(db: AsyncSession, current: CustomerUser) -> tuple[MailService, int, str]:
     cust = (
         await db.execute(select(Customer).where(Customer.id == current.customer_id))
     ).scalar_one_or_none()
@@ -56,11 +51,18 @@ async def _ctx(
 
 
 def _box_dict(svc: MailService, m) -> dict:
-    usage = (svc.mailbox_usage().get((m.address or "").lower()) or {})
-    return {"id": m.id, "address": m.address, "display_name": m.display_name,
-            "quota": m.quota, "status": m.status, "created_at": m.created_at,
-            "usage_used": usage.get("used"), "usage_pct": usage.get("pct"),
-            "last_activity": None}
+    usage = svc.mailbox_usage().get((m.address or "").lower()) or {}
+    return {
+        "id": m.id,
+        "address": m.address,
+        "display_name": m.display_name,
+        "quota": m.quota,
+        "status": m.status,
+        "created_at": m.created_at,
+        "usage_used": usage.get("used"),
+        "usage_pct": usage.get("pct"),
+        "last_activity": None,
+    }
 
 
 @router.get("/services/email/domains", response_model=list[EmailDomainResponse])
@@ -88,10 +90,12 @@ async def own_domain_dns(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Domínio não encontrado")
     result = check_domain_dns(domain)
     expected = svc.expected_dns_records(domain)
-    return {"domain": result["domain"],
-            "all_ok": result["checks"].pop("all_ok", False),
-            "checks": result["checks"],
-            "expected_records": expected["records"]}
+    return {
+        "domain": result["domain"],
+        "all_ok": result["checks"].pop("all_ok", False),
+        "checks": result["checks"],
+        "expected_records": expected["records"],
+    }
 
 
 @router.get("/services/email", response_model=ServiceSummaryResponse)
@@ -107,7 +111,9 @@ async def email_overview(
         if domain:
             dom = next((d for d in domains if d.domain == domain.strip().lower()), None)
             if not dom:
-                raise MailError("email_domain_not_configured", "Domínio não configurado")
+                raise MailError(
+                    "email_domain_not_configured", "Domínio não configurado"
+                )
         else:
             dom = domains[0] if domains else None
         ent = await svc.entitlement(customer_id, org_id, dom.domain if dom else None)
@@ -121,7 +127,7 @@ async def email_overview(
             "mailboxes": [_box_dict(svc, m) for m in boxes],
         }
     except MailError as e:
-        raise _http_error(e)
+        raise _http_error(e) from e
 
 
 @router.get("/services/email/mailboxes", response_model=list[MailboxResponse])
@@ -135,7 +141,9 @@ async def list_boxes(
     return [_box_dict(svc, m) for m in boxes]
 
 
-@router.post("/services/email/mailboxes", response_model=MailboxResponse, status_code=201)
+@router.post(
+    "/services/email/mailboxes", response_model=MailboxResponse, status_code=201
+)
 async def create_box(
     body: MailboxCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -144,13 +152,18 @@ async def create_box(
     svc, customer_id, org_id = await _ctx(db, current)
     try:
         m = await svc.create_mailbox(
-            customer_id=customer_id, org_id=org_id, domain=body.domain,
-            local_part=body.local_part, display_name=body.display_name,
-            password=body.password, quota=body.quota,
-            actor_type="customer", actor_id=str(current.id),
+            customer_id=customer_id,
+            org_id=org_id,
+            domain=body.domain,
+            local_part=body.local_part,
+            display_name=body.display_name,
+            password=body.password,
+            quota=body.quota,
+            actor_type="customer",
+            actor_id=str(current.id),
         )
     except MailError as e:
-        raise _http_error(e)
+        raise _http_error(e) from e
     return _box_dict(svc, m)
 
 
@@ -165,13 +178,18 @@ async def request_box(
     svc, customer_id, org_id = await _ctx(db, current)
     try:
         return await svc.request_additional_mailbox(
-            customer_id=customer_id, org_id=org_id, domain=body.domain,
-            local_part=body.local_part, display_name=body.display_name,
-            password=body.password, quota=body.quota,
-            actor_type="customer", actor_id=str(current.id),
+            customer_id=customer_id,
+            org_id=org_id,
+            domain=body.domain,
+            local_part=body.local_part,
+            display_name=body.display_name,
+            password=body.password,
+            quota=body.quota,
+            actor_type="customer",
+            actor_id=str(current.id),
         )
     except MailError as e:
-        raise _http_error(e)
+        raise _http_error(e) from e
 
 
 @router.post("/services/email/mailboxes/{mailbox_id}/password")
@@ -184,11 +202,15 @@ async def change_pw(
     svc, customer_id, org_id = await _ctx(db, current)
     try:
         await svc.change_password(
-            mailbox_id=mailbox_id, customer_id=customer_id, org_id=org_id,
-            password=body.password, actor_type="customer", actor_id=str(current.id),
+            mailbox_id=mailbox_id,
+            customer_id=customer_id,
+            org_id=org_id,
+            password=body.password,
+            actor_type="customer",
+            actor_id=str(current.id),
         )
     except MailError as e:
-        raise _http_error(e)
+        raise _http_error(e) from e
     return {"ok": True}
 
 
@@ -201,11 +223,15 @@ async def disable_box(
     svc, customer_id, org_id = await _ctx(db, current)
     try:
         await svc.set_disabled(
-            mailbox_id=mailbox_id, customer_id=customer_id, org_id=org_id,
-            disabled=True, actor_type="customer", actor_id=str(current.id),
+            mailbox_id=mailbox_id,
+            customer_id=customer_id,
+            org_id=org_id,
+            disabled=True,
+            actor_type="customer",
+            actor_id=str(current.id),
         )
     except MailError as e:
-        raise _http_error(e)
+        raise _http_error(e) from e
     return {"ok": True}
 
 
@@ -218,11 +244,15 @@ async def enable_box(
     svc, customer_id, org_id = await _ctx(db, current)
     try:
         await svc.set_disabled(
-            mailbox_id=mailbox_id, customer_id=customer_id, org_id=org_id,
-            disabled=False, actor_type="customer", actor_id=str(current.id),
+            mailbox_id=mailbox_id,
+            customer_id=customer_id,
+            org_id=org_id,
+            disabled=False,
+            actor_type="customer",
+            actor_id=str(current.id),
         )
     except MailError as e:
-        raise _http_error(e)
+        raise _http_error(e) from e
     return {"ok": True}
 
 

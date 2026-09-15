@@ -6,8 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.router_org import router_org_list_filter
 from app.core.rbac import RequirePermission
+from app.core.router_org import router_org_list_filter
 from app.models.user import User
 from app.modules.orders.schemas import BriefingDetail, BriefingItem, OrderItem
 from app.modules.orders.workspace_service import OrderWorkspaceService

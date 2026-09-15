@@ -2,7 +2,14 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    HTTPException,
+    UploadFile,
+    status,
+)
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -13,7 +20,6 @@ from app.core.rbac import RequirePermission
 from app.models.user import User
 from app.modules.billing.dependencies import require_billing_enabled
 from app.modules.hosting.models import (
-    FileRevision,
     HostingBackup,
     HostingJob,
     HostingServer,
@@ -23,7 +29,6 @@ from app.modules.hosting.models import (
 from app.modules.hosting.provider import HostingError
 from app.modules.hosting.schemas import (
     BackupCreateBody,
-    DiffResponse,
     FileEntry,
     FileRenameBody,
     FileWriteBody,
@@ -64,8 +69,10 @@ def _err(e: Exception) -> HTTPException:
         "empty_stack": status.HTTP_422_UNPROCESSABLE_CONTENT,
         "job_failed": status.HTTP_502_BAD_GATEWAY,
     }
-    return HTTPException(mapping.get(code, status.HTTP_502_BAD_GATEWAY),
-                         {"code": code, "message": detail})
+    return HTTPException(
+        mapping.get(code, status.HTTP_502_BAD_GATEWAY),
+        {"code": code, "message": detail},
+    )
 
 
 def _layer(db: AsyncSession) -> HostingServiceLayer:
@@ -149,8 +156,7 @@ async def get_stack(
     return stack
 
 
-@router.post("/hosting/stacks/link", response_model=StackResponse,
-             status_code=201)
+@router.post("/hosting/stacks/link", response_model=StackResponse, status_code=201)
 async def link_stack(
     body: StackLinkCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -170,7 +176,8 @@ async def link_stack(
             contract_item_id=body.contract_item_id,
             name=(body.name or "").strip() or None,
             primary_domain=(body.primary_domain or "").strip() or None,
-            actor_type="staff", actor_id=str(current.id),
+            actor_type="staff",
+            actor_id=str(current.id),
         )
     except HostingError as e:
         raise _err(e) from e
@@ -203,13 +210,20 @@ async def update_stack(
     if body.stack_type is not None:
         allowed = {StackType.CUSTOMER_SERVICE.value, StackType.PLATFORM_INFRA.value}
         if body.stack_type not in allowed:
-            raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT,
-                                "stack_type inválido")
+            raise HTTPException(
+                status.HTTP_422_UNPROCESSABLE_CONTENT, "stack_type inválido"
+            )
         stack.stack_type = body.stack_type
     await db.flush()
-    await log_audit(db, entity="hosting_stack", entity_id=str(stack.id),
-                    action="hosting_stack_updated", actor_type="staff",
-                    actor_id=str(current.id), org_id=org)
+    await log_audit(
+        db,
+        entity="hosting_stack",
+        entity_id=str(stack.id),
+        action="hosting_stack_updated",
+        actor_type="staff",
+        actor_id=str(current.id),
+        org_id=org,
+    )
     await db.flush()
     await db.refresh(stack, ["components"])
     return stack
@@ -235,9 +249,7 @@ async def servers_overview(
     except OSError:
         # Path não montado no container (ex.: backups fora do volume).
         disk_total = disk_used = disk_free = None
-    rows = (
-        await db.execute(select(HostingService))
-    ).scalars().all()
+    rows = (await db.execute(select(HostingService))).scalars().all()
     return {
         "containers_running": info.get("ContainersRunning"),
         "containers_total": info.get("Containers"),
@@ -261,8 +273,11 @@ async def recent_backups(
     from app.core.router_org import router_org_list_filter
 
     of = router_org_list_filter(org_id)
-    q = select(HostingBackup).order_by(HostingBackup.id.desc()).limit(
-        max(1, min(limit, 100)))
+    q = (
+        select(HostingBackup)
+        .order_by(HostingBackup.id.desc())
+        .limit(max(1, min(limit, 100)))
+    )
     rows = (await db.execute(q)).scalars().all()
     if of is not None:
         rows = [b for b in rows if (b.hosting_service_id and True)]
@@ -271,19 +286,25 @@ async def recent_backups(
         svc = await db.get(HostingService, b.hosting_service_id)
         if of is not None and (not svc or svc.org_id != of):
             continue
-        out.append({
-            "id": b.id, "service_id": b.hosting_service_id,
-            "domain": svc.primary_domain if svc else None,
-            "customer_id": svc.customer_id if svc else None,
-            "status": b.status, "size_bytes": b.size_bytes,
-            "created_at": b.created_at, "completed_at": b.completed_at,
-            "expires_at": b.expires_at,
-        })
+        out.append(
+            {
+                "id": b.id,
+                "service_id": b.hosting_service_id,
+                "domain": svc.primary_domain if svc else None,
+                "customer_id": svc.customer_id if svc else None,
+                "status": b.status,
+                "size_bytes": b.size_bytes,
+                "created_at": b.created_at,
+                "completed_at": b.completed_at,
+                "expires_at": b.expires_at,
+            }
+        )
     return out
 
 
-@router.post("/hosting/services", response_model=HostingServiceResponse,
-             status_code=201)
+@router.post(
+    "/hosting/services", response_model=HostingServiceResponse, status_code=201
+)
 async def link_service(
     body: HostingServiceCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -297,13 +318,16 @@ async def link_service(
         svc = await _layer(db).link_service(
             customer_id=body.customer_id,
             org_id=router_org_write(current, org_id),
-            container_name=body.container_name, root_path=body.root_path,
-            path_mode=body.path_mode, primary_domain=body.primary_domain,
+            container_name=body.container_name,
+            root_path=body.root_path,
+            path_mode=body.path_mode,
+            primary_domain=body.primary_domain,
             environment=body.environment,
-            actor_type="staff", actor_id=str(current.id),
+            actor_type="staff",
+            actor_id=str(current.id),
         )
     except HostingError as e:
-        raise _err(e)
+        raise _err(e) from e
     return svc
 
 
@@ -337,10 +361,11 @@ async def service_overview(
     layer = _layer(db)
     try:
         svc = await layer._require_service(  # noqa: SLF001 (mesma camada)
-            service_id, None, router_org_list_filter(org_id))
+            service_id, None, router_org_list_filter(org_id)
+        )
         return await layer.overview(svc)
     except HostingError as e:
-        raise _err(e)
+        raise _err(e) from e
 
 
 @router.get("/hosting/services/{service_id}/deploy")
@@ -355,10 +380,11 @@ async def deploy_info(
     layer = _layer(db)
     try:
         svc = await layer._require_service(
-            service_id, None, router_org_list_filter(org_id))
+            service_id, None, router_org_list_filter(org_id)
+        )
         return layer.deploy_info(svc)
     except HostingError as e:
-        raise _err(e)
+        raise _err(e) from e
 
 
 @router.get("/hosting/services/{service_id}/logs")
@@ -374,13 +400,17 @@ async def service_logs(
     layer = _layer(db)
     try:
         svc = await layer._require_service(
-            service_id, None, router_org_list_filter(org_id))
+            service_id, None, router_org_list_filter(org_id)
+        )
         if not svc.container_name:
             raise HostingError("job_failed", "sem container vinculado")
-        return {"logs": layer._provider.logs(  # noqa: SLF001
-            svc.container_name, tail=min(max(tail, 1), 1000))}
+        return {
+            "logs": layer._provider.logs(  # noqa: SLF001
+                svc.container_name, tail=min(max(tail, 1), 1000)
+            )
+        }
     except HostingError as e:
-        raise _err(e)
+        raise _err(e) from e
 
 
 @router.post("/hosting/services/{service_id}/restart", response_model=JobResponse)
@@ -396,17 +426,25 @@ async def restart_service(
     layer = _layer(db)
     try:
         svc = await layer._require_service(
-            service_id, None, router_org_list_filter(org_id))
+            service_id, None, router_org_list_filter(org_id)
+        )
         job = await layer.enqueue_job(
-            service_id=svc.id, org_id=svc.org_id, job_type="hosting_restart")
+            service_id=svc.id, org_id=svc.org_id, job_type="hosting_restart"
+        )
         await layer.run_job(job)
-        await log_audit(db, entity="hosting_service", entity_id=str(svc.id),
-                        action="hosting_restart", actor_type="staff",
-                        actor_id=str(current.id), org_id=svc.org_id)
+        await log_audit(
+            db,
+            entity="hosting_service",
+            entity_id=str(svc.id),
+            action="hosting_restart",
+            actor_type="staff",
+            actor_id=str(current.id),
+            org_id=svc.org_id,
+        )
         await db.flush()
         return job
     except HostingError as e:
-        raise _err(e)
+        raise _err(e) from e
 
 
 @router.post("/hosting/services/{service_id}/stop", response_model=JobResponse)
@@ -421,17 +459,25 @@ async def stop_service(
     layer = _layer(db)
     try:
         svc = await layer._require_service(
-            service_id, None, router_org_list_filter(org_id))
+            service_id, None, router_org_list_filter(org_id)
+        )
         job = await layer.enqueue_job(
-            service_id=svc.id, org_id=svc.org_id, job_type="hosting_stop")
+            service_id=svc.id, org_id=svc.org_id, job_type="hosting_stop"
+        )
         await layer.run_job(job)
-        await log_audit(db, entity="hosting_service", entity_id=str(svc.id),
-                        action="hosting_stop", actor_type="staff",
-                        actor_id=str(current.id), org_id=svc.org_id)
+        await log_audit(
+            db,
+            entity="hosting_service",
+            entity_id=str(svc.id),
+            action="hosting_stop",
+            actor_type="staff",
+            actor_id=str(current.id),
+            org_id=svc.org_id,
+        )
         await db.flush()
         return job
     except HostingError as e:
-        raise _err(e)
+        raise _err(e) from e
 
 
 @router.post("/hosting/services/{service_id}/start", response_model=JobResponse)
@@ -446,17 +492,25 @@ async def start_service(
     layer = _layer(db)
     try:
         svc = await layer._require_service(
-            service_id, None, router_org_list_filter(org_id))
+            service_id, None, router_org_list_filter(org_id)
+        )
         job = await layer.enqueue_job(
-            service_id=svc.id, org_id=svc.org_id, job_type="hosting_start")
+            service_id=svc.id, org_id=svc.org_id, job_type="hosting_start"
+        )
         await layer.run_job(job)
-        await log_audit(db, entity="hosting_service", entity_id=str(svc.id),
-                        action="hosting_start", actor_type="staff",
-                        actor_id=str(current.id), org_id=svc.org_id)
+        await log_audit(
+            db,
+            entity="hosting_service",
+            entity_id=str(svc.id),
+            action="hosting_start",
+            actor_type="staff",
+            actor_id=str(current.id),
+            org_id=svc.org_id,
+        )
         await db.flush()
         return job
     except HostingError as e:
-        raise _err(e)
+        raise _err(e) from e
 
 
 @router.get("/hosting/services/{service_id}/files", response_model=list[FileEntry])
@@ -472,10 +526,11 @@ async def list_files(
     layer = _layer(db)
     try:
         svc = await layer._require_service(
-            service_id, None, router_org_list_filter(org_id))
+            service_id, None, router_org_list_filter(org_id)
+        )
         return layer.list_files(svc, path)
     except HostingError as e:
-        raise _err(e)
+        raise _err(e) from e
 
 
 @router.get("/hosting/services/{service_id}/files/read")
@@ -491,15 +546,15 @@ async def read_file(
     layer = _layer(db)
     try:
         svc = await layer._require_service(
-            service_id, None, router_org_list_filter(org_id))
+            service_id, None, router_org_list_filter(org_id)
+        )
         data = layer.read_file(svc, path)
         try:
             return {"path": path, "content": data.decode("utf-8"), "binary": False}
         except UnicodeDecodeError:
-            return {"path": path, "content": None, "binary": True,
-                    "size": len(data)}
+            return {"path": path, "content": None, "binary": True, "size": len(data)}
     except HostingError as e:
-        raise _err(e)
+        raise _err(e) from e
 
 
 @router.put("/hosting/services/{service_id}/files/write")
@@ -516,12 +571,17 @@ async def write_file(
     layer = _layer(db)
     try:
         svc = await layer._require_service(
-            service_id, None, router_org_list_filter(org_id))
+            service_id, None, router_org_list_filter(org_id)
+        )
         return await layer.write_file(
-            svc, path, body.content.encode("utf-8"),
-            actor_type="staff", actor_id=str(current.id))
+            svc,
+            path,
+            body.content.encode("utf-8"),
+            actor_type="staff",
+            actor_id=str(current.id),
+        )
     except HostingError as e:
-        raise _err(e)
+        raise _err(e) from e
 
 
 @router.post("/hosting/services/{service_id}/files/mkdir")
@@ -533,13 +593,13 @@ async def make_dir(
     org_id: str | None = None,
 ):
     from app.core.router_org import router_org_list_filter
-
     from app.modules.hosting.provider import DockerHostingProvider
 
     layer = _layer(db)
     try:
         svc = await layer._require_service(
-            service_id, None, router_org_list_filter(org_id))
+            service_id, None, router_org_list_filter(org_id)
+        )
         mode, base = layer._base(svc)  # noqa: SLF001
         if mode == "host":
             import os
@@ -548,16 +608,21 @@ async def make_dir(
 
             os.makedirs(_paths.contain(base, body.path), exist_ok=True)
         else:
-            DockerHostingProvider().make_dir(svc.container_name or "", base,
-                                             body.path)
-        await log_audit(db, entity="hosting_service", entity_id=str(svc.id),
-                        action="hosting_file_created", actor_type="staff",
-                        actor_id=str(current.id), org_id=svc.org_id,
-                        payload={"path": body.path})
+            DockerHostingProvider().make_dir(svc.container_name or "", base, body.path)
+        await log_audit(
+            db,
+            entity="hosting_service",
+            entity_id=str(svc.id),
+            action="hosting_file_created",
+            actor_type="staff",
+            actor_id=str(current.id),
+            org_id=svc.org_id,
+            payload={"path": body.path},
+        )
         await db.flush()
         return {"ok": True}
     except HostingError as e:
-        raise _err(e)
+        raise _err(e) from e
 
 
 @router.delete("/hosting/services/{service_id}/files")
@@ -570,13 +635,13 @@ async def delete_file(
     recursive: bool = False,
 ):
     from app.core.router_org import router_org_list_filter
-
     from app.modules.hosting.provider import DockerHostingProvider
 
     layer = _layer(db)
     try:
         svc = await layer._require_service(
-            service_id, None, router_org_list_filter(org_id))
+            service_id, None, router_org_list_filter(org_id)
+        )
         mode, base = layer._base(svc)  # noqa: SLF001
         if mode == "host":
             import os
@@ -587,22 +652,28 @@ async def delete_file(
             full = _paths.contain(base, path)
             if os.path.isdir(full) and not os.path.islink(full):
                 if not recursive:
-                    raise HostingError("invalid_path",
-                                       "diretório exige recursive=true")
+                    raise HostingError("invalid_path", "diretório exige recursive=true")
                 shutil.rmtree(full)
             else:
                 os.remove(full)
         else:
-            DockerHostingProvider().delete_path(svc.container_name or "", base,
-                                                path, recursive)
-        await log_audit(db, entity="hosting_service", entity_id=str(svc.id),
-                        action="hosting_file_deleted", actor_type="staff",
-                        actor_id=str(current.id), org_id=svc.org_id,
-                        payload={"path": path})
+            DockerHostingProvider().delete_path(
+                svc.container_name or "", base, path, recursive
+            )
+        await log_audit(
+            db,
+            entity="hosting_service",
+            entity_id=str(svc.id),
+            action="hosting_file_deleted",
+            actor_type="staff",
+            actor_id=str(current.id),
+            org_id=svc.org_id,
+            payload={"path": path},
+        )
         await db.flush()
         return {"ok": True}
     except HostingError as e:
-        raise _err(e)
+        raise _err(e) from e
 
 
 @router.put("/hosting/services/{service_id}/files/rename")
@@ -615,13 +686,13 @@ async def rename_file(
     path: str = "",
 ):
     from app.core.router_org import router_org_list_filter
-
     from app.modules.hosting.provider import DockerHostingProvider
 
     layer = _layer(db)
     try:
         svc = await layer._require_service(
-            service_id, None, router_org_list_filter(org_id))
+            service_id, None, router_org_list_filter(org_id)
+        )
         mode, base = layer._base(svc)  # noqa: SLF001
         if mode == "host":
             import os
@@ -633,35 +704,42 @@ async def rename_file(
             new_full = _paths.contain(base, new_rel)
             os.rename(old_full, new_full)
         else:
-            DockerHostingProvider().rename(svc.container_name or "", base,
-                                           path, body.new_path)
-        await log_audit(db, entity="hosting_service", entity_id=str(svc.id),
-                        action="hosting_file_updated", actor_type="staff",
-                        actor_id=str(current.id), org_id=svc.org_id,
-                        payload={"from": path, "to": body.new_path})
+            DockerHostingProvider().rename(
+                svc.container_name or "", base, path, body.new_path
+            )
+        await log_audit(
+            db,
+            entity="hosting_service",
+            entity_id=str(svc.id),
+            action="hosting_file_updated",
+            actor_type="staff",
+            actor_id=str(current.id),
+            org_id=svc.org_id,
+            payload={"from": path, "to": body.new_path},
+        )
         await db.flush()
         return {"ok": True}
     except HostingError as e:
-        raise _err(e)
+        raise _err(e) from e
 
 
 @router.post("/hosting/services/{service_id}/files/upload")
 async def upload_file(
     service_id: int,
+    file: Annotated[UploadFile, File(...)],
     db: Annotated[AsyncSession, Depends(get_db)],
     current: Annotated[User, Depends(FILES_UPLOAD)],
     org_id: str | None = None,
     path: str = "",
-    file: UploadFile = File(...),
 ):
     from app.core.router_org import router_org_list_filter
-
     from app.modules.hosting import paths as _paths
 
     layer = _layer(db)
     try:
         svc = await layer._require_service(
-            service_id, None, router_org_list_filter(org_id))
+            service_id, None, router_org_list_filter(org_id)
+        )
         _paths.validate(path, for_edit=True)
         data = await file.read(2 * 1024 * 1024 + 1)
         if len(data) > 2 * 1024 * 1024:
@@ -673,15 +751,22 @@ async def upload_file(
             DockerHostingProvider.host_write(base, path, data)
         else:
             layer._provider.write_file(  # noqa: SLF001
-                svc.container_name or "", base, path, data)
-        await log_audit(db, entity="hosting_service", entity_id=str(svc.id),
-                        action="hosting_file_uploaded", actor_type="staff",
-                        actor_id=str(current.id), org_id=svc.org_id,
-                        payload={"path": path, "size": len(data)})
+                svc.container_name or "", base, path, data
+            )
+        await log_audit(
+            db,
+            entity="hosting_service",
+            entity_id=str(svc.id),
+            action="hosting_file_uploaded",
+            actor_type="staff",
+            actor_id=str(current.id),
+            org_id=svc.org_id,
+            payload={"path": path, "size": len(data)},
+        )
         await db.flush()
         return {"ok": True, "size": len(data)}
     except HostingError as e:
-        raise _err(e)
+        raise _err(e) from e
 
 
 @router.get("/hosting/services/{service_id}/backups")
@@ -696,24 +781,41 @@ async def list_backups(
     layer = _layer(db)
     try:
         svc = await layer._require_service(
-            service_id, None, router_org_list_filter(org_id))
+            service_id, None, router_org_list_filter(org_id)
+        )
         rows = (
-            await db.execute(
-                select(HostingBackup).where(
-                    HostingBackup.hosting_service_id == svc.id)
-                .order_by(HostingBackup.id.desc()).limit(50)
+            (
+                await db.execute(
+                    select(HostingBackup)
+                    .where(HostingBackup.hosting_service_id == svc.id)
+                    .order_by(HostingBackup.id.desc())
+                    .limit(50)
+                )
             )
-        ).scalars().all()
-        return [{"id": b.id, "backup_type": b.backup_type, "status": b.status,
-                 "size_bytes": b.size_bytes, "created_at": b.created_at,
-                 "completed_at": b.completed_at, "expires_at": b.expires_at}
-                for b in rows]
+            .scalars()
+            .all()
+        )
+        return [
+            {
+                "id": b.id,
+                "backup_type": b.backup_type,
+                "status": b.status,
+                "size_bytes": b.size_bytes,
+                "created_at": b.created_at,
+                "completed_at": b.completed_at,
+                "expires_at": b.expires_at,
+            }
+            for b in rows
+        ]
     except HostingError as e:
-        raise _err(e)
+        raise _err(e) from e
 
 
-@router.post("/hosting/services/{service_id}/backups", response_model=JobResponse,
-             status_code=201)
+@router.post(
+    "/hosting/services/{service_id}/backups",
+    response_model=JobResponse,
+    status_code=201,
+)
 async def create_backup(
     service_id: int,
     body: BackupCreateBody,
@@ -726,19 +828,31 @@ async def create_backup(
     layer = _layer(db)
     try:
         svc = await layer._require_service(
-            service_id, None, router_org_list_filter(org_id))
+            service_id, None, router_org_list_filter(org_id)
+        )
         job = await layer.enqueue_job(
-            service_id=svc.id, org_id=svc.org_id, job_type="hosting_backup",
-            payload={"retention": max(1, min(body.retention, 30)),
-                     "actor": f"staff:{current.id}"})
-        await log_audit(db, entity="hosting_service", entity_id=str(svc.id),
-                        action="hosting_backup_created", actor_type="staff",
-                        actor_id=str(current.id), org_id=svc.org_id,
-                        payload={"job_id": job.id})
+            service_id=svc.id,
+            org_id=svc.org_id,
+            job_type="hosting_backup",
+            payload={
+                "retention": max(1, min(body.retention, 30)),
+                "actor": f"staff:{current.id}",
+            },
+        )
+        await log_audit(
+            db,
+            entity="hosting_service",
+            entity_id=str(svc.id),
+            action="hosting_backup_created",
+            actor_type="staff",
+            actor_id=str(current.id),
+            org_id=svc.org_id,
+            payload={"job_id": job.id},
+        )
         await db.flush()
         return job
     except HostingError as e:
-        raise _err(e)
+        raise _err(e) from e
 
 
 @router.post("/hosting/backups/{backup_id}/restore", response_model=JobResponse)
@@ -759,20 +873,30 @@ async def restore_backup(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Serviço não encontrado")
     try:
         job = await layer.enqueue_job(
-            service_id=svc.id, org_id=svc.org_id, job_type="hosting_restore",
-            payload={"backup_id": bak.id, "actor": f"staff:{current.id}"})
-        await log_audit(db, entity="hosting_service", entity_id=str(svc.id),
-                        action="hosting_backup_restored", actor_type="staff",
-                        actor_id=str(current.id), org_id=svc.org_id,
-                        payload={"backup_id": bak.id})
+            service_id=svc.id,
+            org_id=svc.org_id,
+            job_type="hosting_restore",
+            payload={"backup_id": bak.id, "actor": f"staff:{current.id}"},
+        )
+        await log_audit(
+            db,
+            entity="hosting_service",
+            entity_id=str(svc.id),
+            action="hosting_backup_restored",
+            actor_type="staff",
+            actor_id=str(current.id),
+            org_id=svc.org_id,
+            payload={"backup_id": bak.id},
+        )
         await db.flush()
         return job
     except HostingError as e:
-        raise _err(e)
+        raise _err(e) from e
 
 
-@router.get("/hosting/services/{service_id}/revisions",
-            response_model=list[RevisionResponse])
+@router.get(
+    "/hosting/services/{service_id}/revisions", response_model=list[RevisionResponse]
+)
 async def list_revisions(
     service_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -785,16 +909,23 @@ async def list_revisions(
     layer = _layer(db)
     try:
         svc = await layer._require_service(
-            service_id, None, router_org_list_filter(org_id))
+            service_id, None, router_org_list_filter(org_id)
+        )
         rows = (
-            await db.execute(
-                select(_Rev).where(_Rev.hosting_service_id == svc.id)
-                .order_by(_Rev.id.desc()).limit(50)
+            (
+                await db.execute(
+                    select(_Rev)
+                    .where(_Rev.hosting_service_id == svc.id)
+                    .order_by(_Rev.id.desc())
+                    .limit(50)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         return list(rows)
     except HostingError as e:
-        raise _err(e)
+        raise _err(e) from e
 
 
 @router.get("/hosting/revisions/{revision_id}/diff")
@@ -824,11 +955,22 @@ async def revision_diff(
             current_content = data.decode(errors="replace")[:200000]
     except HostingError:
         current_content = ""
-    diff = list(difflib.unified_diff(
-        before.splitlines(), current_content.splitlines(),
-        fromfile="antes", tofile="atual", lineterm="", n=3))[:500]
-    return {"path": rev.path, "before": before[:200000] or None,
-            "after": current_content or None, "diff": diff}
+    diff = list(
+        difflib.unified_diff(
+            before.splitlines(),
+            current_content.splitlines(),
+            fromfile="antes",
+            tofile="atual",
+            lineterm="",
+            n=3,
+        )
+    )[:500]
+    return {
+        "path": rev.path,
+        "before": before[:200000] or None,
+        "after": current_content or None,
+        "diff": diff,
+    }
 
 
 @router.post("/hosting/revisions/{revision_id}/restore")
@@ -851,20 +993,27 @@ async def revision_restore(
         if mode == "host":
             from app.modules.hosting.provider import DockerHostingProvider
 
-            DockerHostingProvider.host_write(base, rev.path,
-                                             rev.content_before.encode())
+            DockerHostingProvider.host_write(
+                base, rev.path, rev.content_before.encode()
+            )
         else:
             layer._provider.write_file(  # noqa: SLF001
-                svc.container_name or "", base, rev.path,
-                rev.content_before.encode())
-        await log_audit(db, entity="file_revision", entity_id=str(rev.id),
-                        action="hosting_revision_restored", actor_type="staff",
-                        actor_id=str(current.id), org_id=svc.org_id,
-                        payload={"path": rev.path})
+                svc.container_name or "", base, rev.path, rev.content_before.encode()
+            )
+        await log_audit(
+            db,
+            entity="file_revision",
+            entity_id=str(rev.id),
+            action="hosting_revision_restored",
+            actor_type="staff",
+            actor_id=str(current.id),
+            org_id=svc.org_id,
+            payload={"path": rev.path},
+        )
         await db.flush()
         return {"ok": True}
     except HostingError as e:
-        raise _err(e)
+        raise _err(e) from e
 
 
 @router.get("/hosting/services/{service_id}/jobs", response_model=list[JobResponse])
@@ -879,17 +1028,23 @@ async def list_jobs(
     layer = _layer(db)
     try:
         svc = await layer._require_service(
-            service_id, None, router_org_list_filter(org_id))
+            service_id, None, router_org_list_filter(org_id)
+        )
         rows = (
-            await db.execute(
-                select(HostingJob).where(
-                    HostingJob.hosting_service_id == svc.id)
-                .order_by(HostingJob.id.desc()).limit(30)
+            (
+                await db.execute(
+                    select(HostingJob)
+                    .where(HostingJob.hosting_service_id == svc.id)
+                    .order_by(HostingJob.id.desc())
+                    .limit(30)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         return list(rows)
     except HostingError as e:
-        raise _err(e)
+        raise _err(e) from e
 
 
 @router.get("/hosting/services/{service_id}/download")
@@ -907,11 +1062,14 @@ async def download_file(
     layer = _layer(db)
     try:
         svc = await layer._require_service(
-            service_id, None, router_org_list_filter(org_id))
+            service_id, None, router_org_list_filter(org_id)
+        )
         data = layer.read_file(svc, path)
         name = path.rsplit("/", 1)[-1] or "download"
-        return _Response(content=data, media_type="application/octet-stream",
-                         headers={"Content-Disposition":
-                                  f'attachment; filename="{name}"'})
+        return _Response(
+            content=data,
+            media_type="application/octet-stream",
+            headers={"Content-Disposition": f'attachment; filename="{name}"'},
+        )
     except HostingError as e:
-        raise _err(e)
+        raise _err(e) from e

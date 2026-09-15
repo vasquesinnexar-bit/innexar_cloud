@@ -102,6 +102,7 @@ async def test_process_webhook_idempotent(db_session: AsyncSession) -> None:
     mock_result.processed = True
     mock_result.invoice_id = inv.id
     mock_result.message = event_id
+    mock_result.event_action = "paid"
 
     with patch("app.modules.billing.webhook_ops.StripeProvider") as mock_stripe_class:
         mock_stripe_class.return_value.handle_webhook.return_value = mock_result
@@ -722,6 +723,7 @@ async def test_process_webhook_stripe_with_invoice_and_subscription(
         processed=True,
         invoice_id=inv.id,
         message=event_id,
+        event_action="paid",
     )
     with (
         patch("app.modules.billing.webhook_ops.StripeProvider") as mock_stripe_class,

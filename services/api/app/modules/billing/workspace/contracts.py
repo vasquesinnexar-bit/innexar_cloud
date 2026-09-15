@@ -11,8 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
-from app.core.router_org import router_org_list_filter, router_org_write
 from app.core.rbac import RequirePermission
+from app.core.router_org import router_org_list_filter, router_org_write
 from app.models.customer import Customer
 from app.models.user import User
 from app.modules.billing.dependencies import require_billing_enabled
@@ -52,7 +52,9 @@ def _to_response(c: Contract) -> ContractResponse:
                 "subscription_id": i.subscription_id,
                 "description": i.description,
                 "quantity": i.quantity,
-                "unit_amount": float(i.unit_amount) if i.unit_amount is not None else None,
+                "unit_amount": (
+                    float(i.unit_amount) if i.unit_amount is not None else None
+                ),
             }
             for i in (c.items or [])
         ],
@@ -95,7 +97,9 @@ async def create_contract(
     org = router_org_write(current, org_id)
     cust = (
         await db.execute(
-            select(Customer).where(Customer.id == body.customer_id, Customer.org_id == org)
+            select(Customer).where(
+                Customer.id == body.customer_id, Customer.org_id == org
+            )
         )
     ).scalar_one_or_none()
     if not cust:

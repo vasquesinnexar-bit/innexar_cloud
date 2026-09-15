@@ -84,10 +84,20 @@ def _is_transient_hestia_error(exc: Exception) -> bool:
     text = f"{type(exc).__name__}: {exc}".lower()
     if isinstance(exc, (TimeoutError, ConnectionError)):
         return True
-    return any(k in text for k in (
-        "timeout", "timed out", "connection", "temporarily",
-        "502", "503", "504", "unavailable", "try again",
-    ))
+    return any(
+        k in text
+        for k in (
+            "timeout",
+            "timed out",
+            "connection",
+            "temporarily",
+            "502",
+            "503",
+            "504",
+            "unavailable",
+            "try again",
+        )
+    )
 
 
 async def run_hestia_for_invoice(db: AsyncSession, invoice_id: int) -> dict:
@@ -112,9 +122,12 @@ async def run_hestia_for_invoice(db: AsyncSession, invoice_id: int) -> dict:
         logger.warning(
             "Provisioning waiting input: no domain in invoice %s line_items", invoice_id
         )
-        return {"status": "waiting_input", "reason": "domain_required",
-                "step": "domain",
-                "message": "Domínio necessário para continuar provisionamento."}
+        return {
+            "status": "waiting_input",
+            "reason": "domain_required",
+            "step": "domain",
+            "message": "Domínio necessário para continuar provisionamento.",
+        }
 
     job = ProvisioningJob(
         subscription_id=sub.id,
@@ -148,9 +161,13 @@ async def run_hestia_for_invoice(db: AsyncSession, invoice_id: int) -> dict:
         )
         billing_repo.add_provisioning_record(rec)
         await db.flush()
-        return {"status": "failed", "retryable": False,
-                "error": "Hestia not configured",
-                "step": "create_user", "job_id": job.id}
+        return {
+            "status": "failed",
+            "retryable": False,
+            "error": "Hestia not configured",
+            "step": "create_user",
+            "job_id": job.id,
+        }
 
     hestia_user = _sanitize_hestia_user(inv.customer_id, domain)
     password = secrets.token_urlsafe(16)
@@ -231,10 +248,13 @@ async def run_hestia_for_invoice(db: AsyncSession, invoice_id: int) -> dict:
         )
         billing_repo.add_provisioning_record(rec)
         await db.flush()
-        return {"status": "failed",
-                "retryable": _is_transient_hestia_error(e),
-                "error": str(e)[:500], "step": job.step,
-                "job_id": job.id}
+        return {
+            "status": "failed",
+            "retryable": _is_transient_hestia_error(e),
+            "error": str(e)[:500],
+            "step": job.step,
+            "job_id": job.id,
+        }
 
     site_url = f"https://{domain}"
     panel_url = getattr(client, "base_url", "") or ""
@@ -263,6 +283,11 @@ async def run_hestia_for_invoice(db: AsyncSession, invoice_id: int) -> dict:
         hestia_user,
         domain,
     )
-    return {"status": "success", "step": "finalize", "progress": 100,
-            "job_id": job.id, "external_user": hestia_user,
-            "meta": {"domain": domain, "site_url": site_url}}
+    return {
+        "status": "success",
+        "step": "finalize",
+        "progress": 100,
+        "job_id": job.id,
+        "external_user": hestia_user,
+        "meta": {"domain": domain, "site_url": site_url},
+    }

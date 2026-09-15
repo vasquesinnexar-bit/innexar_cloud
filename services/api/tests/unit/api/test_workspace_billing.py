@@ -214,7 +214,7 @@ async def test_workspace_billing_mark_paid_200(
     inv_id = inv_r.json()["id"]
     # Background task uses AsyncSessionLocal (different DB); mock so task body does not hit DB
     with patch(
-        "app.modules.billing.workspace.invoices.trigger_provisioning_if_needed",
+        "app.modules.fulfillment.tasks.fulfillment_after_payment",
         new_callable=AsyncMock,
     ):
         r = await client.post(
@@ -308,46 +308,34 @@ async def test_workspace_billing_get_invoice_200(
 
 
 @pytest.mark.asyncio
-async def test_workspace_billing_payment_link_400_invoice_not_found(
+async def test_workspace_billing_payment_link_404_invoice_not_found(
     client: AsyncClient,
     staff_user: User,
     billing_enabled: None,
 ) -> None:
-    """POST payment-link for non-existent invoice returns 400."""
-    with patch(
-        "app.modules.billing.workspace.invoices.create_payment_attempt",
-        new_callable=AsyncMock,
-        side_effect=ValueError("Invoice not found"),
-    ):
-        r = await client.post(
-            "/api/workspace/billing/invoices/99999/payment-link",
-            headers=_staff_headers(staff_user),
-            params={"success_url": "https://ok", "cancel_url": "https://cancel"},
-        )
-    assert r.status_code == 400
+    """POST payment-link for non-existent invoice returns 404 (lookup first)."""
+    r = await client.post(
+        "/api/workspace/billing/invoices/99999/payment-link",
+        headers=_staff_headers(staff_user),
+        params={"success_url": "https://ok", "cancel_url": "https://cancel"},
+    )
+    assert r.status_code == 404
     assert "not found" in r.json().get("detail", "").lower()
 
 
 @pytest.mark.asyncio
-async def test_workspace_billing_mark_paid_400_not_found(
+async def test_workspace_billing_mark_paid_404_not_found(
     client: AsyncClient,
     staff_user: User,
     billing_enabled: None,
 ) -> None:
-    """POST mark-paid for non-existent invoice returns 400."""
-    with patch(
-        "app.modules.billing.workspace.invoices.trigger_provisioning_if_needed",
-        new_callable=AsyncMock,
-    ):
-        r = await client.post(
-            "/api/workspace/billing/invoices/99999/mark-paid",
-            headers=_staff_headers(staff_user),
-        )
-    assert r.status_code == 400
-    assert (
-        "not found" in r.json().get("detail", "").lower()
-        or "already paid" in r.json().get("detail", "").lower()
+    """POST mark-paid for non-existent invoice returns 404."""
+    r = await client.post(
+        "/api/workspace/billing/invoices/99999/mark-paid",
+        headers=_staff_headers(staff_user),
     )
+    assert r.status_code == 404
+    assert "not found" in r.json().get("detail", "").lower()
 
 
 @pytest.mark.asyncio

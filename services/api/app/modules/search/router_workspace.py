@@ -38,76 +38,181 @@ async def global_search(
     of = router_org_list_filter(org_id)
 
     async def _customers():
-        query = select(Customer).where(or_(
-            Customer.name.ilike(like), Customer.email.ilike(like),
-            Customer.company.ilike(like),
-        )).limit(LIMIT_EACH)
+        query = (
+            select(Customer)
+            .where(
+                or_(
+                    Customer.name.ilike(like),
+                    Customer.email.ilike(like),
+                    Customer.company.ilike(like),
+                )
+            )
+            .limit(LIMIT_EACH)
+        )
         if of is not None:
             query = query.where(Customer.org_id == of)
         rows = (await db.execute(query)).scalars().all()
-        return [{"type": "customer", "id": r.id, "label": f"{r.name} <{r.email}>",
-                 "href": f"/customers/{r.id}"} for r in rows]
+        return [
+            {
+                "type": "customer",
+                "id": r.id,
+                "label": f"{r.name} <{r.email}>",
+                "href": f"/customers/{r.id}",
+            }
+            for r in rows
+        ]
 
     async def _contacts():
-        rows = (await db.execute(
-            select(Contact).where(or_(
-                Contact.name.ilike(like), Contact.email.ilike(like),
-            )).limit(LIMIT_EACH))).scalars().all()
-        return [{"type": "contact", "id": r.id,
-                 "label": f"{r.name} <{r.email or ''}>".strip(),
-                 "href": "/crm/contacts"} for r in rows]
+        rows = (
+            (
+                await db.execute(
+                    select(Contact)
+                    .where(
+                        or_(
+                            Contact.name.ilike(like),
+                            Contact.email.ilike(like),
+                        )
+                    )
+                    .limit(LIMIT_EACH)
+                )
+            )
+            .scalars()
+            .all()
+        )
+        return [
+            {
+                "type": "contact",
+                "id": r.id,
+                "label": f"{r.name} <{r.email or ''}>".strip(),
+                "href": "/crm/contacts",
+            }
+            for r in rows
+        ]
 
     async def _invoices():
-        query = select(Invoice).where(Invoice.id.cast(__import__(
-            "sqlalchemy").String).ilike(like)).limit(LIMIT_EACH)
+        query = (
+            select(Invoice)
+            .where(Invoice.id.cast(__import__("sqlalchemy").String).ilike(like))
+            .limit(LIMIT_EACH)
+        )
         rows = (await db.execute(query)).scalars().all()
-        return [{"type": "invoice", "id": r.id,
-                 "label": f"#{r.id} · {r.status} · {r.total}",
-                 "href": "/billing/invoices"} for r in rows]
+        return [
+            {
+                "type": "invoice",
+                "id": r.id,
+                "label": f"#{r.id} · {r.status} · {r.total}",
+                "href": "/billing/invoices",
+            }
+            for r in rows
+        ]
 
     async def _contracts():
-        rows = (await db.execute(
-            select(Contract).order_by(Contract.id.desc()).limit(50)
-        )).scalars().all()
+        rows = (
+            (await db.execute(select(Contract).order_by(Contract.id.desc()).limit(50)))
+            .scalars()
+            .all()
+        )
         out = []
         for r in rows:
-            if term.lower() in str(r.id) or (r.notes or "").lower().find(term.lower()) >= 0:
-                out.append({"type": "contract", "id": r.id,
-                            "label": f"Contrato #{r.id} · {r.status}",
-                            "href": "/billing/contracts"})
+            if (
+                term.lower() in str(r.id)
+                or (r.notes or "").lower().find(term.lower()) >= 0
+            ):
+                out.append(
+                    {
+                        "type": "contract",
+                        "id": r.id,
+                        "label": f"Contrato #{r.id} · {r.status}",
+                        "href": "/billing/contracts",
+                    }
+                )
             if len(out) >= LIMIT_EACH:
                 break
         return out
 
     async def _mailboxes():
-        rows = (await db.execute(
-            select(EmailMailbox).where(
-                EmailMailbox.address.ilike(like)).limit(LIMIT_EACH)
-        )).scalars().all()
-        return [{"type": "mailbox", "id": r.id, "label": r.address,
-                 "href": "/customers/{}".format(r.customer_id)} for r in rows]
+        rows = (
+            (
+                await db.execute(
+                    select(EmailMailbox)
+                    .where(EmailMailbox.address.ilike(like))
+                    .limit(LIMIT_EACH)
+                )
+            )
+            .scalars()
+            .all()
+        )
+        return [
+            {
+                "type": "mailbox",
+                "id": r.id,
+                "label": r.address,
+                "href": f"/customers/{r.customer_id}",
+            }
+            for r in rows
+        ]
 
     async def _domains():
-        rows = (await db.execute(
-            select(EmailDomain).where(
-                EmailDomain.domain.ilike(like)).limit(LIMIT_EACH)
-        )).scalars().all()
-        return [{"type": "domain", "id": r.id, "label": r.domain,
-                 "href": "/customers/{}".format(r.customer_id)} for r in rows]
+        rows = (
+            (
+                await db.execute(
+                    select(EmailDomain)
+                    .where(EmailDomain.domain.ilike(like))
+                    .limit(LIMIT_EACH)
+                )
+            )
+            .scalars()
+            .all()
+        )
+        return [
+            {
+                "type": "domain",
+                "id": r.id,
+                "label": r.domain,
+                "href": f"/customers/{r.customer_id}",
+            }
+            for r in rows
+        ]
 
     async def _projects():
-        rows = (await db.execute(
-            select(Project).where(Project.name.ilike(like)).limit(LIMIT_EACH)
-        )).scalars().all()
-        return [{"type": "project", "id": r.id, "label": r.name,
-                 "href": f"/projects/{r.id}"} for r in rows]
+        rows = (
+            (
+                await db.execute(
+                    select(Project).where(Project.name.ilike(like)).limit(LIMIT_EACH)
+                )
+            )
+            .scalars()
+            .all()
+        )
+        return [
+            {
+                "type": "project",
+                "id": r.id,
+                "label": r.name,
+                "href": f"/projects/{r.id}",
+            }
+            for r in rows
+        ]
 
     async def _tickets():
-        rows = (await db.execute(
-            select(Ticket).where(Ticket.subject.ilike(like)).limit(LIMIT_EACH)
-        )).scalars().all()
-        return [{"type": "ticket", "id": r.id, "label": r.subject,
-                 "href": f"/support/tickets/{r.id}"} for r in rows]
+        rows = (
+            (
+                await db.execute(
+                    select(Ticket).where(Ticket.subject.ilike(like)).limit(LIMIT_EACH)
+                )
+            )
+            .scalars()
+            .all()
+        )
+        return [
+            {
+                "type": "ticket",
+                "id": r.id,
+                "label": r.subject,
+                "href": f"/support/tickets/{r.id}",
+            }
+            for r in rows
+        ]
 
     return {
         "customers": await _customers(),

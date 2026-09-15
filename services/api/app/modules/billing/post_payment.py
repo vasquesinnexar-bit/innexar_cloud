@@ -23,15 +23,18 @@ def _is_site_product(product: Product) -> bool:
     de nome ("site" no nome foi removido — P0).
     """
     try:
+        from app.modules.fulfillment import enums as fulfillment_enums
         from app.modules.fulfillment.registry import (
             resolve_handler as _resolve,
         )
-        from app.modules.fulfillment.enums import (
-            FulfillmentHandler as _H,
+
+        return (
+            _resolve(product)[1] == fulfillment_enums.FulfillmentHandler.PROJECT.value
         )
-        return _resolve(product)[1] == _H.PROJECT.value
     except Exception:  # noqa: BLE001 (fallback legado se registry indisponível)
-        return (product.provisioning_type or "").lower() == SITE_DELIVERY_PROVISIONING_TYPE
+        return (
+            product.provisioning_type or ""
+        ).lower() == SITE_DELIVERY_PROVISIONING_TYPE
 
 
 async def create_project_and_notify_after_payment(

@@ -49,17 +49,13 @@ class Product(Base):
         String(64), nullable=True, index=True
     )
     # P0 — fulfillment explícito (elimina fuzzy por slug/nome).
-    fulfillment_strategy: Mapped[str | None] = mapped_column(
-        String(32), nullable=True
-    )
+    fulfillment_strategy: Mapped[str | None] = mapped_column(String(32), nullable=True)
     fulfillment_handler: Mapped[str | None] = mapped_column(
         String(32), nullable=True, index=True
     )
     hestia_package: Mapped[str | None] = mapped_column(String(128), nullable=True)
     # Fase 1 — catálogo (Website, Hosting, Professional Email, Domain…).
-    category: Mapped[str | None] = mapped_column(
-        String(64), nullable=True, index=True
-    )
+    category: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     slug: Mapped[str | None] = mapped_column(
         String(128), nullable=True, unique=True, index=True
     )
@@ -457,9 +453,7 @@ class Contract(Base):
         DateTime(timezone=True), default=utc_now, onupdate=utc_now
     )
 
-    customer: Mapped["Customer"] = relationship(
-        "Customer", back_populates="contracts"
-    )
+    customer: Mapped["Customer"] = relationship("Customer", back_populates="contracts")
     items: Mapped[list["ContractItem"]] = relationship(
         "ContractItem", back_populates="contract", cascade="all, delete-orphan"
     )

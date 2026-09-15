@@ -8,13 +8,13 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.public_service import PublicService
+from app.core.database import get_db
 from app.core.org import (
     region_code_for_org,
     region_label_for_org,
     resolve_public_org,
 )
-from app.api.public_service import PublicService
-from app.core.database import get_db
 from app.schemas.auth import CustomerLoginResponse, LoginRequest, MessageResponse
 
 router = APIRouter()

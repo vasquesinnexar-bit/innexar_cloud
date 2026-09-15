@@ -9,7 +9,6 @@ from __future__ import annotations
 import logging
 import re
 import secrets
-from datetime import datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -75,13 +74,17 @@ def check_domain_dns(domain: str) -> dict:
     def _txt(name: str) -> list[str]:
         try:
             import dns.resolver
+
             res = dns.resolver.Resolver()
             res.lifetime = res.timeout = 8
             out = []
             for r in res.resolve(name, "TXT"):
-                out.append("".join(
-                    p.decode() if isinstance(p, bytes) else str(p)
-                    for p in r.strings))
+                out.append(
+                    "".join(
+                        p.decode() if isinstance(p, bytes) else str(p)
+                        for p in r.strings
+                    )
+                )
             return out
         except Exception:  # noqa: BLE001 (DNS ausente = check falho, não erro)
             return []
@@ -89,40 +92,48 @@ def check_domain_dns(domain: str) -> dict:
     def _mx() -> list[str]:
         try:
             import dns.resolver
+
             res = dns.resolver.Resolver()
             res.lifetime = res.timeout = 8
-            return sorted(str(r.exchange).rstrip(".").lower()
-                          for r in res.resolve(domain, "MX"))
+            return sorted(
+                str(r.exchange).rstrip(".").lower() for r in res.resolve(domain, "MX")
+            )
         except Exception:  # noqa: BLE001
             return []
 
     mx = _mx()
     mx_ok = any(m == f"mail.{domain}" or m.endswith(f".{domain}") for m in mx)
     checks["mx"] = {
-        "ok": mx_ok, "found": mx,
+        "ok": mx_ok,
+        "found": mx,
         "expected": f"10 mail.{domain}",
         "hint": "MX deve apontar para mail." + domain,
     }
     txts = _txt(domain)
     spf = [t for t in txts if t.lower().startswith("v=spf1")]
-    spf_ok = any(("mx" in t.lower() and (MAIL_IPV4 in t or f"mail.{domain}" in t.lower()))
-                 for t in spf)
+    spf_ok = any(
+        ("mx" in t.lower() and (MAIL_IPV4 in t or f"mail.{domain}" in t.lower()))
+        for t in spf
+    )
     checks["spf"] = {
-        "ok": spf_ok, "found": spf,
+        "ok": spf_ok,
+        "found": spf,
         "expected": f"v=spf1 mx a:mail.{domain} ip4:{MAIL_IPV4} -all",
         "hint": "SPF precisa autorizar nosso MX/IP",
     }
     dkim = _txt(f"{DKIM_SELECTOR}._domainkey.{domain}")
     dkim_ok = any("v=dkim1" in t.lower().replace(" ", "") for t in dkim)
     checks["dkim"] = {
-        "ok": dkim_ok, "found": [t[:80] + ("…" if len(t) > 80 else "") for t in dkim],
+        "ok": dkim_ok,
+        "found": [t[:80] + ("…" if len(t) > 80 else "") for t in dkim],
         "expected": f"{DKIM_SELECTOR}._domainkey.{domain} TXT (chave do mailserver)",
         "hint": "DKIM é gerado no mailserver (mail-admin)",
     }
     dmarc = _txt(f"_dmarc.{domain}")
     dmarc_ok = any("v=dmarc1" in t.lower().replace(" ", "") for t in dmarc)
     checks["dmarc"] = {
-        "ok": dmarc_ok, "found": dmarc,
+        "ok": dmarc_ok,
+        "found": dmarc,
         "expected": f"v=DMARC1; p=quarantine; rua=mailto:postmaster@{domain}",
         "hint": "DMARC protege contra spoofing",
     }
@@ -145,19 +156,32 @@ def _validate_password(password: str) -> None:
 class MailService:
     """Professional Email business logic. Depends on AsyncSession only."""
 
-    def __init__(self, db: AsyncSession, provider: DockerMailserverProvider | None = None):
+    def __init__(
+        self, db: AsyncSession, provider: DockerMailserverProvider | None = None
+    ):
         self._db = db
         self._provider = provider or DockerMailserverProvider()
 
     # -- internal helpers -------------------------------------------------
     async def _audit(
-        self, *, entity: str, entity_id: str | None, action: str,
-        actor_type: str, actor_id: str | None, org_id: str,
+        self,
+        *,
+        entity: str,
+        entity_id: str | None,
+        action: str,
+        actor_type: str,
+        actor_id: str | None,
+        org_id: str,
         payload: dict | None = None,
     ) -> None:
         await log_audit(
-            self._db, entity=entity, entity_id=entity_id, action=action,
-            actor_type=actor_type, actor_id=actor_id, org_id=org_id,
+            self._db,
+            entity=entity,
+            entity_id=entity_id,
+            action=action,
+            actor_type=actor_type,
+            actor_id=actor_id,
+            org_id=org_id,
             payload=payload,
         )
 
@@ -227,7 +251,9 @@ class MailService:
         ).scalar_one_or_none()
         if not cust:
             raise MailError("unauthorized_mailbox_access", "Cliente não encontrado")
-        currency = (cust.currency or ("BRL" if cust.org_id == "innexar-br" else "USD")).upper()
+        currency = (
+            cust.currency or ("BRL" if cust.org_id == "innexar-br" else "USD")
+        ).upper()
 
         products = (await self._db.execute(self._email_products_q())).scalars().all()
         product_ids = [p.id for p in products]
@@ -250,16 +276,23 @@ class MailService:
                 contracted += item.quantity or 0
             # preço de referência: plano mensal recorrente na moeda do cliente
             plans = (
-                await self._db.execute(
-                    select(PricePlan).where(
-                        PricePlan.product_id.in_(product_ids),
-                        PricePlan.currency == currency,
+                (
+                    await self._db.execute(
+                        select(PricePlan).where(
+                            PricePlan.product_id.in_(product_ids),
+                            PricePlan.currency == currency,
+                        )
                     )
                 )
-            ).scalars().all()
-            monthly = [p for p in plans
-                       if (p.billing_type or "recurring") == "recurring"
-                       and (p.interval or "") == "monthly"]
+                .scalars()
+                .all()
+            )
+            monthly = [
+                p
+                for p in plans
+                if (p.billing_type or "recurring") == "recurring"
+                and (p.interval or "") == "monthly"
+            ]
             ref = monthly[0] if monthly else (plans[0] if plans else None)
             if ref:
                 unit_price = float(ref.amount)
@@ -293,9 +326,14 @@ class MailService:
 
     # -- domains ----------------------------------------------------------
     async def register_domain(
-        self, *, customer_id: int, org_id: str, domain: str,
+        self,
+        *,
+        customer_id: int,
+        org_id: str,
+        domain: str,
         contract_item_id: int | None = None,
-        actor_type: str, actor_id: str | None,
+        actor_type: str,
+        actor_id: str | None,
     ) -> EmailDomain:
         domain = _norm_domain(domain)
         if not domain or "." not in domain:
@@ -304,7 +342,8 @@ class MailService:
         if existing:
             if contract_item_id and not existing.service_id:
                 svc = await self._get_or_create_service(
-                    customer_id, org_id, contract_item_id)
+                    customer_id, org_id, contract_item_id
+                )
                 existing.service_id = svc.id
                 await self._db.flush()
             return existing
@@ -318,18 +357,23 @@ class MailService:
                 f"Domínio {domain} não existe no mailserver (DKIM/conta ausente)",
             )
         d = EmailDomain(
-            customer_id=customer_id, org_id=org_id, domain=domain,
+            customer_id=customer_id,
+            org_id=org_id,
+            domain=domain,
             status=EmailDomainStatus.ACTIVE.value,
         )
         self._db.add(d)
         await self._db.flush()
         d.verified_at = utc_now()
-        svc = await self._get_or_create_service(
-            customer_id, org_id, contract_item_id)
+        svc = await self._get_or_create_service(customer_id, org_id, contract_item_id)
         d.service_id = svc.id
         await self._audit(
-            entity="email_domain", entity_id=str(d.id), action="email_domain_added",
-            actor_type=actor_type, actor_id=actor_id, org_id=org_id,
+            entity="email_domain",
+            entity_id=str(d.id),
+            action="email_domain_added",
+            actor_type=actor_type,
+            actor_id=actor_id,
+            org_id=org_id,
             payload={"domain": domain, "contract_item_id": contract_item_id},
         )
         await self._db.flush()
@@ -346,12 +390,21 @@ class MailService:
             "domain": domain,
             "records": [
                 {"type": "MX", "host": "@", "value": f"10 mail.{domain}"},
-                {"type": "TXT", "host": "@",
-                 "value": f"v=spf1 mx a:mail.{domain} ip4:{MAIL_IPV4} -all"},
-                {"type": "TXT", "host": f"{DKIM_SELECTOR}._domainkey",
-                 "value": dkim_txt or "(gerar DKIM no mail-admin primeiro)"},
-                {"type": "TXT", "host": "_dmarc",
-                 "value": f"v=DMARC1; p=quarantine; rua=mailto:postmaster@{domain}"},
+                {
+                    "type": "TXT",
+                    "host": "@",
+                    "value": f"v=spf1 mx a:mail.{domain} ip4:{MAIL_IPV4} -all",
+                },
+                {
+                    "type": "TXT",
+                    "host": f"{DKIM_SELECTOR}._domainkey",
+                    "value": dkim_txt or "(gerar DKIM no mail-admin primeiro)",
+                },
+                {
+                    "type": "TXT",
+                    "host": "_dmarc",
+                    "value": f"v=DMARC1; p=quarantine; rua=mailto:postmaster@{domain}",
+                },
                 {"type": "A", "host": "mail", "value": MAIL_IPV4},
             ],
             "auto_provision": "supported_when_dns_credentials",
@@ -363,8 +416,10 @@ class MailService:
             infos = self._provider.list_mailboxes()
         except MailProviderError:
             return {}
-        return {i.address.lower(): {"used": i.used, "quota": i.quota,
-                                    "pct": i.pct} for i in infos}
+        return {
+            i.address.lower(): {"used": i.used, "quota": i.quota, "pct": i.pct}
+            for i in infos
+        }
 
     async def _get_or_create_service(
         self, customer_id: int, org_id: str, contract_item_id: int | None
@@ -373,17 +428,21 @@ class MailService:
             select(Service).where(
                 Service.customer_id == customer_id,
                 Service.service_type == "professional_email",
-                Service.status.in_([
-                    MailServiceStatus.PENDING.value, MailServiceStatus.ACTIVE.value]),
+                Service.status.in_(
+                    [MailServiceStatus.PENDING.value, MailServiceStatus.ACTIVE.value]
+                ),
             )
         )
         svc = r.scalars().first()
         if svc:
             return svc
         svc = Service(
-            customer_id=customer_id, contract_item_id=contract_item_id,
-            org_id=org_id, service_type="professional_email",
-            status=MailServiceStatus.ACTIVE.value, provider="docker-mailserver",
+            customer_id=customer_id,
+            contract_item_id=contract_item_id,
+            org_id=org_id,
+            service_type="professional_email",
+            status=MailServiceStatus.ACTIVE.value,
+            provider="docker-mailserver",
             activated_at=utc_now(),
         )
         self._db.add(svc)
@@ -430,9 +489,17 @@ class MailService:
         return f"{local}@{_norm_domain(domain)}"
 
     async def create_mailbox(
-        self, *, customer_id: int, org_id: str, domain: str, local_part: str,
-        display_name: str | None, password: str, quota: str | None,
-        actor_type: str, actor_id: str | None,
+        self,
+        *,
+        customer_id: int,
+        org_id: str,
+        domain: str,
+        local_part: str,
+        display_name: str | None,
+        password: str,
+        quota: str | None,
+        actor_type: str,
+        actor_id: str | None,
     ) -> EmailMailbox:
         _validate_password(password)
         d = await self._require_domain(customer_id, org_id, domain)
@@ -442,8 +509,12 @@ class MailService:
             raise MailError(
                 "mailbox_limit_reached",
                 f"Plano contratado: {ent['contracted']} contas em uso: {ent['used']}",
-                extra={"contracted": ent["contracted"], "used": ent["used"],
-                       "currency": ent["currency"], "unit_price": ent["unit_price"]},
+                extra={
+                    "contracted": ent["contracted"],
+                    "used": ent["used"],
+                    "currency": ent["currency"],
+                    "unit_price": ent["unit_price"],
+                },
             )
         dup = await self._db.execute(
             select(EmailMailbox).where(EmailMailbox.address == address)
@@ -452,7 +523,9 @@ class MailService:
             raise MailError("mailbox_exists", f"Conta {address} já existe")
         try:
             if self._provider.mailbox_exists(address):
-                raise MailError("mailbox_exists", f"Conta {address} já existe no servidor")
+                raise MailError(
+                    "mailbox_exists", f"Conta {address} já existe no servidor"
+                )
             self._provider.create_mailbox(address, password)
             if quota:
                 self._provider.set_quota(address, quota)
@@ -461,10 +534,14 @@ class MailService:
         except MailProviderError as e:
             raise MailError("mail_provisioning_failed", str(e)) from e
         m = EmailMailbox(
-            customer_id=customer_id, org_id=org_id, email_domain_id=d.id,
-            address=address, local_part=address.split("@")[0],
+            customer_id=customer_id,
+            org_id=org_id,
+            email_domain_id=d.id,
+            address=address,
+            local_part=address.split("@")[0],
             display_name=(display_name or "").strip() or None,
-            quota=quota, status=MailboxStatus.ACTIVE.value,
+            quota=quota,
+            status=MailboxStatus.ACTIVE.value,
             external_id=address,
         )
         self._db.add(m)
@@ -472,16 +549,26 @@ class MailService:
         svc = await self._get_or_create_service(customer_id, org_id, None)
         m.service_id = svc.id
         await self._audit(
-            entity="email_mailbox", entity_id=str(m.id), action="mailbox_created",
-            actor_type=actor_type, actor_id=actor_id, org_id=org_id,
+            entity="email_mailbox",
+            entity_id=str(m.id),
+            action="mailbox_created",
+            actor_type=actor_type,
+            actor_id=actor_id,
+            org_id=org_id,
             payload={"address": address, "quota": quota},
         )
         await self._db.flush()
         return m
 
     async def change_password(
-        self, *, mailbox_id: int, customer_id: int, org_id: str,
-        password: str, actor_type: str, actor_id: str | None,
+        self,
+        *,
+        mailbox_id: int,
+        customer_id: int,
+        org_id: str,
+        password: str,
+        actor_type: str,
+        actor_id: str | None,
     ) -> EmailMailbox:
         _validate_password(password)
         m = await self._require_mailbox(mailbox_id, customer_id, org_id)
@@ -490,16 +577,26 @@ class MailService:
         except MailProviderError as e:
             raise MailError("mail_provisioning_failed", str(e)) from e
         await self._audit(
-            entity="email_mailbox", entity_id=str(m.id),
-            action="mailbox_password_changed", actor_type=actor_type,
-            actor_id=actor_id, org_id=org_id, payload={"address": m.address},
+            entity="email_mailbox",
+            entity_id=str(m.id),
+            action="mailbox_password_changed",
+            actor_type=actor_type,
+            actor_id=actor_id,
+            org_id=org_id,
+            payload={"address": m.address},
         )
         await self._db.flush()
         return m
 
     async def set_quota(
-        self, *, mailbox_id: int, customer_id: int, org_id: str, quota: str | None,
-        actor_type: str, actor_id: str | None,
+        self,
+        *,
+        mailbox_id: int,
+        customer_id: int,
+        org_id: str,
+        quota: str | None,
+        actor_type: str,
+        actor_id: str | None,
     ) -> EmailMailbox:
         m = await self._require_mailbox(mailbox_id, customer_id, org_id)
         try:
@@ -508,16 +605,26 @@ class MailService:
             raise MailError("mail_provisioning_failed", str(e)) from e
         m.quota = quota
         await self._audit(
-            entity="email_mailbox", entity_id=str(m.id), action="mailbox_quota_changed",
-            actor_type=actor_type, actor_id=actor_id, org_id=org_id,
+            entity="email_mailbox",
+            entity_id=str(m.id),
+            action="mailbox_quota_changed",
+            actor_type=actor_type,
+            actor_id=actor_id,
+            org_id=org_id,
             payload={"address": m.address, "quota": quota},
         )
         await self._db.flush()
         return m
 
     async def set_disabled(
-        self, *, mailbox_id: int, customer_id: int, org_id: str, disabled: bool,
-        actor_type: str, actor_id: str | None,
+        self,
+        *,
+        mailbox_id: int,
+        customer_id: int,
+        org_id: str,
+        disabled: bool,
+        actor_type: str,
+        actor_id: str | None,
     ) -> EmailMailbox:
         m = await self._require_mailbox(mailbox_id, customer_id, org_id)
         try:
@@ -531,17 +638,25 @@ class MailService:
             MailboxStatus.DISABLED.value if disabled else MailboxStatus.ACTIVE.value
         )
         await self._audit(
-            entity="email_mailbox", entity_id=str(m.id),
+            entity="email_mailbox",
+            entity_id=str(m.id),
             action="mailbox_disabled" if disabled else "mailbox_enabled",
-            actor_type=actor_type, actor_id=actor_id, org_id=org_id,
+            actor_type=actor_type,
+            actor_id=actor_id,
+            org_id=org_id,
             payload={"address": m.address},
         )
         await self._db.flush()
         return m
 
     async def delete_mailbox(
-        self, *, mailbox_id: int, customer_id: int, org_id: str,
-        actor_type: str, actor_id: str | None,
+        self,
+        *,
+        mailbox_id: int,
+        customer_id: int,
+        org_id: str,
+        actor_type: str,
+        actor_id: str | None,
     ) -> None:
         m = await self._require_mailbox(mailbox_id, customer_id, org_id)
         try:
@@ -549,8 +664,12 @@ class MailService:
         except MailProviderError as e:
             raise MailError("mail_provisioning_failed", str(e)) from e
         await self._audit(
-            entity="email_mailbox", entity_id=str(m.id), action="mailbox_deleted",
-            actor_type=actor_type, actor_id=actor_id, org_id=org_id,
+            entity="email_mailbox",
+            entity_id=str(m.id),
+            action="mailbox_deleted",
+            actor_type=actor_type,
+            actor_id=actor_id,
+            org_id=org_id,
             payload={"address": m.address},
         )
         await self._db.delete(m)
@@ -558,9 +677,17 @@ class MailService:
 
     # -- paid additional mailbox (§29: sem cobrança automática; com confirmação) --
     async def request_additional_mailbox(
-        self, *, customer_id: int, org_id: str, domain: str, local_part: str,
-        display_name: str | None, password: str, quota: str | None,
-        actor_type: str, actor_id: str | None,
+        self,
+        *,
+        customer_id: int,
+        org_id: str,
+        domain: str,
+        local_part: str,
+        display_name: str | None,
+        password: str,
+        quota: str | None,
+        actor_type: str,
+        actor_id: str | None,
     ) -> dict:
         """Conta além do plano: cria ContractItem + Invoice pendente + mailbox
         pending_payment + job. A mailbox só é provisionada após o pagamento
@@ -574,13 +701,22 @@ class MailService:
         if ent["available"] > 0:
             # Dentro do plano: cria direto, sem cobrança.
             m = await self.create_mailbox(
-                customer_id=customer_id, org_id=org_id, domain=d.domain,
-                local_part=local_part, display_name=display_name,
-                password=password, quota=quota,
-                actor_type=actor_type, actor_id=actor_id,
+                customer_id=customer_id,
+                org_id=org_id,
+                domain=d.domain,
+                local_part=local_part,
+                display_name=display_name,
+                password=password,
+                quota=quota,
+                actor_type=actor_type,
+                actor_id=actor_id,
             )
-            return {"mailbox_id": m.id, "address": m.address, "invoice_id": None,
-                    "charged": False}
+            return {
+                "mailbox_id": m.id,
+                "address": m.address,
+                "invoice_id": None,
+                "charged": False,
+            }
         dup = await self._db.execute(
             select(EmailMailbox).where(EmailMailbox.address == address)
         )
@@ -592,23 +728,25 @@ class MailService:
                 "Sem plano de e-mail contratado — fale com a Innexar",
             )
         cust = (
-            await self._db.execute(
-                select(Customer).where(Customer.id == customer_id)
-            )
+            await self._db.execute(select(Customer).where(Customer.id == customer_id))
         ).scalar_one()
         products = (await self._db.execute(self._email_products_q())).scalars().all()
         plan = None
         for p in products:
             plans = (
-                await self._db.execute(
-                    select(PricePlan).where(
-                        PricePlan.product_id == p.id,
-                        PricePlan.currency == ent["currency"],
-                        PricePlan.billing_type == "recurring",
-                        PricePlan.interval == "monthly",
+                (
+                    await self._db.execute(
+                        select(PricePlan).where(
+                            PricePlan.product_id == p.id,
+                            PricePlan.currency == ent["currency"],
+                            PricePlan.billing_type == "recurring",
+                            PricePlan.interval == "monthly",
+                        )
                     )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
             if plans:
                 plan, product = plans[0], p
                 break
@@ -618,75 +756,119 @@ class MailService:
                 f"Sem preço mensal {ent['currency']} no catálogo",
             )
         contract = (
-            await self._db.execute(
-                select(Contract).where(
-                    Contract.customer_id == customer_id,
-                    Contract.status.in_(["active", "pending"]),
+            (
+                await self._db.execute(
+                    select(Contract).where(
+                        Contract.customer_id == customer_id,
+                        Contract.status.in_(["active", "pending"]),
+                    )
                 )
             )
-        ).scalars().first()
+            .scalars()
+            .first()
+        )
         if not contract:
-            contract = Contract(customer_id=customer_id, org_id=org_id,
-                                status="pending", currency=ent["currency"])
+            contract = Contract(
+                customer_id=customer_id,
+                org_id=org_id,
+                status="pending",
+                currency=ent["currency"],
+            )
             self._db.add(contract)
             await self._db.flush()
         item = ContractItem(
-            contract_id=contract.id, product_id=product.id, price_plan_id=plan.id,
+            contract_id=contract.id,
+            product_id=product.id,
+            price_plan_id=plan.id,
             description=f"Conta adicional: {address}",
-            quantity=1, unit_amount=float(plan.amount),
+            quantity=1,
+            unit_amount=float(plan.amount),
         )
         self._db.add(item)
         await self._db.flush()
         due = utc_now() + timedelta(days=3)
         inv = Invoice(
-            customer_id=customer_id, status="pending", due_date=due,
-            total=float(plan.amount), currency=ent["currency"],
-            line_items={"items": [{
-                "description": f"Conta adicional: {address}",
-                "quantity": 1, "unit_amount": float(plan.amount),
-                "mailbox_address": address,
-                "preferred_locale": (cust.locale or "pt-BR"
-                                     if cust.org_id == "innexar-br" else "en-US"),
-            }]},
+            customer_id=customer_id,
+            status="pending",
+            due_date=due,
+            total=float(plan.amount),
+            currency=ent["currency"],
+            line_items={
+                "items": [
+                    {
+                        "description": f"Conta adicional: {address}",
+                        "quantity": 1,
+                        "unit_amount": float(plan.amount),
+                        "mailbox_address": address,
+                        "preferred_locale": (
+                            cust.locale or "pt-BR"
+                            if cust.org_id == "innexar-br"
+                            else "en-US"
+                        ),
+                    }
+                ]
+            },
         )
         # Lazy import: evita ciclo billing -> mail.
         from app.repositories.billing_repository import BillingRepository
+
         BillingRepository(self._db).add_invoice(inv)
         await self._db.flush()
         password_enc = encrypt_value(password)
         m = EmailMailbox(
-            customer_id=customer_id, org_id=org_id, email_domain_id=d.id,
-            address=address, local_part=address.split("@")[0],
+            customer_id=customer_id,
+            org_id=org_id,
+            email_domain_id=d.id,
+            address=address,
+            local_part=address.split("@")[0],
             display_name=(display_name or "").strip() or None,
-            quota=quota, status=MailboxStatus.PENDING_PAYMENT.value,
+            quota=quota,
+            status=MailboxStatus.PENDING_PAYMENT.value,
         )
         self._db.add(m)
         await self._db.flush()
         await self.enqueue_job(
-            job_type=MailJobType.CREATE_MAILBOX.value, org_id=org_id,
-            mailbox_id=m.id, invoice_id=inv.id,
-            payload={"address": address, "quota": quota,
-                     "password_enc": password_enc} if password_enc else
-                    {"address": address, "quota": quota},
+            job_type=MailJobType.CREATE_MAILBOX.value,
+            org_id=org_id,
+            mailbox_id=m.id,
+            invoice_id=inv.id,
+            payload=(
+                {"address": address, "quota": quota, "password_enc": password_enc}
+                if password_enc
+                else {"address": address, "quota": quota}
+            ),
             idempotency_key=f"mail-{inv.id}-{address}",
         )
         svc = await self._get_or_create_service(customer_id, org_id, item.id)
         m.service_id = svc.id
         await self._audit(
-            entity="email_mailbox", entity_id=str(m.id),
-            action="mailbox_pending_payment", actor_type=actor_type,
-            actor_id=actor_id, org_id=org_id,
+            entity="email_mailbox",
+            entity_id=str(m.id),
+            action="mailbox_pending_payment",
+            actor_type=actor_type,
+            actor_id=actor_id,
+            org_id=org_id,
             payload={"address": address, "invoice_id": inv.id},
         )
         await self._db.flush()
-        return {"mailbox_id": m.id, "address": address, "invoice_id": inv.id,
-                "total": float(plan.amount), "currency": ent["currency"],
-                "charged": True}
+        return {
+            "mailbox_id": m.id,
+            "address": address,
+            "invoice_id": inv.id,
+            "total": float(plan.amount),
+            "currency": ent["currency"],
+            "charged": True,
+        }
 
     # -- sync -------------------------------------------------------------
     async def sync_domain(
-        self, *, customer_id: int, org_id: str, domain: str,
-        actor_type: str, actor_id: str | None,
+        self,
+        *,
+        customer_id: int,
+        org_id: str,
+        domain: str,
+        actor_type: str,
+        actor_id: str | None,
     ) -> dict:
         d = await self._require_domain(customer_id, org_id, domain)
         try:
@@ -702,10 +884,14 @@ class MailService:
             if addr not in local_by_addr:
                 self._db.add(
                     EmailMailbox(
-                        customer_id=customer_id, org_id=org_id, email_domain_id=d.id,
-                        address=addr, local_part=addr.split("@")[0],
+                        customer_id=customer_id,
+                        org_id=org_id,
+                        email_domain_id=d.id,
+                        address=addr,
+                        local_part=addr.split("@")[0],
                         quota=None if info.quota.strip() == "~" else info.quota,
-                        status=MailboxStatus.ACTIVE.value, external_id=addr,
+                        status=MailboxStatus.ACTIVE.value,
+                        external_id=addr,
                     )
                 )
                 created += 1
@@ -716,16 +902,28 @@ class MailService:
                     m.quota = quota
                     updated += 1
         for addr in remote:
-            if "@" in addr and addr.endswith("@" + d.domain) and addr not in local_by_addr:
+            if (
+                "@" in addr
+                and addr.endswith("@" + d.domain)
+                and addr not in local_by_addr
+            ):
                 unknown_remote.append(addr)
         await self._db.flush()
-        return {"created": created, "updated": updated, "remote_total": len(
-            [a for a in remote if a.endswith("@" + d.domain)])}
+        return {
+            "created": created,
+            "updated": updated,
+            "remote_total": len([a for a in remote if a.endswith("@" + d.domain)]),
+        }
 
     # -- jobs (async provisioning) ----------------------------------------
     async def enqueue_job(
-        self, *, job_type: str, org_id: str, mailbox_id: int | None = None,
-        invoice_id: int | None = None, payload: dict | None = None,
+        self,
+        *,
+        job_type: str,
+        org_id: str,
+        mailbox_id: int | None = None,
+        invoice_id: int | None = None,
+        payload: dict | None = None,
         idempotency_key: str | None = None,
     ) -> MailProvisioningJob:
         if idempotency_key:
@@ -739,9 +937,13 @@ class MailService:
             if existing:
                 return existing
         job = MailProvisioningJob(
-            mailbox_id=mailbox_id, invoice_id=invoice_id, org_id=org_id,
-            job_type=job_type, status=MailJobStatus.PENDING.value,
-            payload=payload, idempotency_key=idempotency_key,
+            mailbox_id=mailbox_id,
+            invoice_id=invoice_id,
+            org_id=org_id,
+            job_type=job_type,
+            status=MailJobStatus.PENDING.value,
+            payload=payload,
+            idempotency_key=idempotency_key,
         )
         self._db.add(job)
         await self._db.flush()
@@ -750,13 +952,17 @@ class MailService:
     async def process_pending_jobs(self, limit: int = 10) -> dict:
         """Worker: processa jobs pendentes (idempotente)."""
         rows = (
-            await self._db.execute(
-                select(MailProvisioningJob)
-                .where(MailProvisioningJob.status == MailJobStatus.PENDING.value)
-                .order_by(MailProvisioningJob.id)
-                .limit(limit)
+            (
+                await self._db.execute(
+                    select(MailProvisioningJob)
+                    .where(MailProvisioningJob.status == MailJobStatus.PENDING.value)
+                    .order_by(MailProvisioningJob.id)
+                    .limit(limit)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         done, failed = 0, 0
         for job in rows:
             job.status = MailJobStatus.PROCESSING.value
@@ -768,8 +974,9 @@ class MailService:
                 job.completed_at = utc_now()
                 # limpa segredo do payload após concluir
                 if job.payload and "password_enc" in job.payload:
-                    job.payload = {k: v for k, v in job.payload.items()
-                                   if k != "password_enc"}
+                    job.payload = {
+                        k: v for k, v in job.payload.items() if k != "password_enc"
+                    }
                 done += 1
             except Exception as e:  # noqa: BLE001 (worker não pode morrer)
                 job.status = MailJobStatus.FAILED.value
@@ -806,4 +1013,6 @@ class MailService:
             if self._provider.mailbox_exists(address):
                 self._provider.delete_mailbox(address)
         else:
-            raise MailError("mail_provisioning_failed", f"job_type {job.job_type} desconhecido")
+            raise MailError(
+                "mail_provisioning_failed", f"job_type {job.job_type} desconhecido"
+            )

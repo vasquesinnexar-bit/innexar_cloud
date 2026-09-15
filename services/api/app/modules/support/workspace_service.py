@@ -37,7 +37,9 @@ class SupportWorkspaceService:
             org_id=org_id, category=category, project_id=project_id
         )
 
-    async def get_ticket(self, ticket_id: int, org_id: str | None = None) -> Ticket | None:
+    async def get_ticket(
+        self, ticket_id: int, org_id: str | None = None
+    ) -> Ticket | None:
         return await self._repo.get_ticket_by_id(ticket_id, org_id=org_id)
 
     async def list_messages(

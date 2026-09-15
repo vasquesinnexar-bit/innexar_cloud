@@ -2,7 +2,15 @@
 
 from fastapi import APIRouter
 
-from app.modules.billing.workspace import contracts, invoices, policies, price_plans, products, refunds, subscriptions
+from app.modules.billing.workspace import (
+    contracts,
+    invoices,
+    policies,
+    price_plans,
+    products,
+    refunds,
+    subscriptions,
+)
 
 router = APIRouter(prefix="/billing", tags=["workspace-billing"])
 router.include_router(products.router)

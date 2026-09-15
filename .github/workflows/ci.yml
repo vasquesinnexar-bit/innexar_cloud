@@ -144,7 +144,7 @@ jobs:
       - run: ruff check app tests
       - run: black --check app tests
       - run: alembic heads
-      - run: alembic check
+      - run: python scripts/ci_alembic_check.py
         env:
           DATABASE_URL: "sqlite+aiosqlite:///:memory:"
       - run: PYTHONPATH=. pytest tests/unit -q --tb=short

@@ -88,11 +88,13 @@ async def pay_invoice_pix(
 ):
     """Gera cobrança PIX oficial (QR + copia e cola). Rate limited."""
     try:
-        return await create_pix_charge(db, invoice_id=invoice_id,
-                                       customer_id=current.customer_id)
+        return await create_pix_charge(
+            db, invoice_id=invoice_id, customer_id=current.customer_id
+        )
     except PayMethodError as e:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT,
-                            {"code": e.code, "message": e.detail})
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT, {"code": e.code, "message": e.detail}
+        ) from e
 
 
 @router.post("/invoices/{invoice_id}/pay-boleto")
@@ -106,11 +108,13 @@ async def pay_invoice_boleto(
 ):
     """Gera boleto oficial (código + URL). Rate limited."""
     try:
-        view = await create_boleto_charge(db, invoice_id=invoice_id,
-                                          customer_id=current.customer_id)
+        view = await create_boleto_charge(
+            db, invoice_id=invoice_id, customer_id=current.customer_id
+        )
     except PayMethodError as e:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT,
-                            {"code": e.code, "message": e.detail})
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT, {"code": e.code, "message": e.detail}
+        ) from e
     return view
 
 
@@ -138,8 +142,10 @@ async def invoice_payment_methods(
     provider = resolve_provider_name(
         cust.billing_provider if cust else None, inv.currency
     )
-    return {"provider": provider,
-            "methods": capabilities.available_methods(provider, inv.currency or "USD")}
+    return {
+        "provider": provider,
+        "methods": capabilities.available_methods(provider, inv.currency or "USD"),
+    }
 
 
 @router.get("/billing/summary")
@@ -154,35 +160,57 @@ async def billing_summary(
     from app.modules.billing.models import Invoice, PaymentAttempt
 
     invs = (
-        await db.execute(
-            select(Invoice).where(Invoice.customer_id == current.customer_id)
-            .order_by(Invoice.due_date)
+        (
+            await db.execute(
+                select(Invoice)
+                .where(Invoice.customer_id == current.customer_id)
+                .order_by(Invoice.due_date)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     open_statuses = {"pending", "past_due", "failed"}
     open_invs = [i for i in invs if i.status in open_statuses]
     nxt = min(open_invs, key=lambda i: i.due_date, default=None)
     attempts = (
-        await db.execute(
-            select(PaymentAttempt).where(
-                PaymentAttempt.invoice_id.in_([i.id for i in invs] or [0])
-            ).order_by(PaymentAttempt.id.desc()).limit(10)
+        (
+            await db.execute(
+                select(PaymentAttempt)
+                .where(PaymentAttempt.invoice_id.in_([i.id for i in invs] or [0]))
+                .order_by(PaymentAttempt.id.desc())
+                .limit(10)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return {
-        "next_charge": ({
-            "invoice_id": nxt.id, "due_date": nxt.due_date.isoformat(),
-            "total": float(nxt.total), "currency": nxt.currency,
-            "status": nxt.status,
-        } if nxt else None),
+        "next_charge": (
+            {
+                "invoice_id": nxt.id,
+                "due_date": nxt.due_date.isoformat(),
+                "total": float(nxt.total),
+                "currency": nxt.currency,
+                "status": nxt.status,
+            }
+            if nxt
+            else None
+        ),
         "open_count": len(open_invs),
         "open_total": round(sum(float(i.total) for i in open_invs), 2),
-        "recent_payments": [{
-            "id": a.id, "invoice_id": a.invoice_id, "provider": a.provider,
-            "method": a.method, "status": a.status,
-            "amount": float(a.amount) if a.amount is not None else None,
-            "paid_at": a.paid_at.isoformat() if a.paid_at else None,
-        } for a in attempts],
+        "recent_payments": [
+            {
+                "id": a.id,
+                "invoice_id": a.invoice_id,
+                "provider": a.provider,
+                "method": a.method,
+                "status": a.status,
+                "amount": float(a.amount) if a.amount is not None else None,
+                "paid_at": a.paid_at.isoformat() if a.paid_at else None,
+            }
+            for a in attempts
+        ],
     }
 
 
@@ -204,34 +232,59 @@ async def invoice_payments(
     if not inv or inv.customer_id != current.customer_id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Fatura não encontrada")
     attempts = (
-        await db.execute(
-            select(PaymentAttempt).where(PaymentAttempt.invoice_id == inv.id)
-            .order_by(PaymentAttempt.id.desc())
+        (
+            await db.execute(
+                select(PaymentAttempt)
+                .where(PaymentAttempt.invoice_id == inv.id)
+                .order_by(PaymentAttempt.id.desc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     refunds = (
-        await db.execute(
-            select(Refund).where(Refund.invoice_id == inv.id)
-            .order_by(Refund.id.desc())
+        (
+            await db.execute(
+                select(Refund)
+                .where(Refund.invoice_id == inv.id)
+                .order_by(Refund.id.desc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return {
-        "invoice": {"id": inv.id, "status": inv.status, "total": float(inv.total),
-                    "currency": inv.currency,
-                    "due_date": inv.due_date.isoformat(),
-                    "paid_at": inv.paid_at.isoformat() if inv.paid_at else None,
-                    "line_items": inv.line_items},
-        "attempts": [{
-            "id": a.id, "provider": a.provider, "method": a.method,
-            "status": a.status, "amount": float(a.amount) if a.amount is not None else None,
-            "expires_at": a.expires_at.isoformat() if a.expires_at else None,
-            "paid_at": a.paid_at.isoformat() if a.paid_at else None,
-            "failure_code": a.failure_code,
-        } for a in attempts],
-        "refunds": [{
-            "id": r.id, "amount": float(r.amount), "status": r.status,
-            "reason": r.reason,
-        } for r in refunds],
+        "invoice": {
+            "id": inv.id,
+            "status": inv.status,
+            "total": float(inv.total),
+            "currency": inv.currency,
+            "due_date": inv.due_date.isoformat(),
+            "paid_at": inv.paid_at.isoformat() if inv.paid_at else None,
+            "line_items": inv.line_items,
+        },
+        "attempts": [
+            {
+                "id": a.id,
+                "provider": a.provider,
+                "method": a.method,
+                "status": a.status,
+                "amount": float(a.amount) if a.amount is not None else None,
+                "expires_at": a.expires_at.isoformat() if a.expires_at else None,
+                "paid_at": a.paid_at.isoformat() if a.paid_at else None,
+                "failure_code": a.failure_code,
+            }
+            for a in attempts
+        ],
+        "refunds": [
+            {
+                "id": r.id,
+                "amount": float(r.amount),
+                "status": r.status,
+                "reason": r.reason,
+            }
+            for r in refunds
+        ],
     }
 
 
@@ -255,6 +308,7 @@ async def stripe_billing_portal_link(
 ):
     """Gera link do Stripe Customer Portal para o cliente gerenciar cartão/pagamento."""
     import os
+
     import stripe
     from fastapi import HTTPException
     from sqlalchemy import select
@@ -275,10 +329,12 @@ async def stripe_billing_portal_link(
             from app.modules.billing.models import Subscription
 
             result = await db.execute(
-                select(Subscription).where(
+                select(Subscription)
+                .where(
                     Subscription.customer_id == current.customer_id,
                     Subscription.external_id.isnot(None),
-                ).limit(1)
+                )
+                .limit(1)
             )
             sub = result.scalar_one_or_none()
             if sub and sub.external_id:
@@ -296,4 +352,4 @@ async def stripe_billing_portal_link(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao criar portal: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro ao criar portal: {e}") from e

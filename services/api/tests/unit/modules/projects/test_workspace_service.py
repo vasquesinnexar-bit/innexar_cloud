@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 async def test_list_projects_empty(db_session: AsyncSession) -> None:
     """List when no projects returns empty list."""
     svc = ProjectWorkspaceService(db_session)
-    result = await svc.list_projects()
+    result = await svc.list_projects(None)
     assert result == []
 
 
@@ -28,7 +28,7 @@ async def test_create_project(db_session: AsyncSession) -> None:
 
     svc = ProjectWorkspaceService(db_session)
     body = ProjectCreate(customer_id=cust.id, name="My Project", status="active")
-    p = await svc.create_project(body)
+    p = await svc.create_project(body, "innexar")
     assert p.id is not None
     assert p.name == "My Project"
     assert p.customer_id == cust.id
@@ -58,7 +58,7 @@ async def test_update_project_invalid_status_raises(db_session: AsyncSession) ->
     await db_session.flush()
     svc = ProjectWorkspaceService(db_session)
     body = ProjectCreate(customer_id=cust.id, name="P", status="active")
-    p = await svc.create_project(body)
+    p = await svc.create_project(body, "innexar")
 
     with pytest.raises(ValueError, match="status must be one of"):
         await svc.update_project(p.id, ProjectUpdate(status="invalid_status"))
@@ -72,7 +72,7 @@ async def test_update_project_name_and_status(db_session: AsyncSession) -> None:
     await db_session.flush()
     svc = ProjectWorkspaceService(db_session)
     body = ProjectCreate(customer_id=cust.id, name="Original", status="active")
-    p = await svc.create_project(body)
+    p = await svc.create_project(body, "innexar")
 
     updated = await svc.update_project(
         p.id,
@@ -85,10 +85,24 @@ async def test_update_project_name_and_status(db_session: AsyncSession) -> None:
 
 @pytest.mark.asyncio
 async def test_list_project_messages_empty(db_session: AsyncSession) -> None:
-    """List messages for project returns empty list when none."""
+    """List messages for existing project without messages returns []."""
+    cust = Customer(org_id="innexar", name="C", email="lme@example.com")
+    db_session.add(cust)
+    await db_session.flush()
+    proj = Project(customer_id=cust.id, name="P", status="active")
+    db_session.add(proj)
+    await db_session.flush()
     svc = ProjectWorkspaceService(db_session)
-    result = await svc.list_project_messages(1)
+    result = await svc.list_project_messages(proj.id)
     assert result == []
+
+
+async def test_list_project_messages_missing_project_returns_none(
+    db_session: AsyncSession,
+) -> None:
+    """Missing project returns None (router maps to 404)."""
+    svc = ProjectWorkspaceService(db_session)
+    assert await svc.list_project_messages(999999) is None
 
 
 @pytest.mark.asyncio
@@ -148,10 +162,24 @@ async def test_send_project_message(db_session: AsyncSession) -> None:
 
 @pytest.mark.asyncio
 async def test_list_modification_requests_empty(db_session: AsyncSession) -> None:
-    """List modification requests returns empty list when none."""
+    """List modification requests for existing project without any returns []."""
+    cust = Customer(org_id="innexar", name="C", email="mre@example.com")
+    db_session.add(cust)
+    await db_session.flush()
+    proj = Project(customer_id=cust.id, name="P", status="active")
+    db_session.add(proj)
+    await db_session.flush()
     svc = ProjectWorkspaceService(db_session)
-    result = await svc.list_modification_requests(1)
+    result = await svc.list_modification_requests(proj.id)
     assert result == []
+
+
+async def test_list_modification_requests_missing_project_returns_none(
+    db_session: AsyncSession,
+) -> None:
+    """Missing project returns None (router maps to 404)."""
+    svc = ProjectWorkspaceService(db_session)
+    assert await svc.list_modification_requests(999999) is None
 
 
 @pytest.mark.asyncio

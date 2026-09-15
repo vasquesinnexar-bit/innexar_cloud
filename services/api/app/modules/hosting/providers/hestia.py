@@ -14,6 +14,7 @@ class HestiaHostingProtocol(Protocol):
 
 class HostingProviderProtocol(HestiaHostingProtocol):
     """Backward-compat alias (do not use in new code)."""
+
     """Protocol for hosting providers (create account, domain, mail, suspend/unsuspend)."""
 
     def create_user(

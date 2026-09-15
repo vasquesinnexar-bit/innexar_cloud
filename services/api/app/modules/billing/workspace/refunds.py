@@ -59,10 +59,14 @@ async def create_refund_endpoint(
 ):
     try:
         return await create_refund(
-            db, invoice_id=body.invoice_id, amount=body.amount,
+            db,
+            invoice_id=body.invoice_id,
+            amount=body.amount,
             reason=(body.reason or "").strip()[:300] or None,
-            actor_type="staff", actor_id=str(current.id),
+            actor_type="staff",
+            actor_id=str(current.id),
         )
     except PayMethodError as e:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT,
-                            {"code": e.code, "message": e.detail})
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT, {"code": e.code, "message": e.detail}
+        ) from e

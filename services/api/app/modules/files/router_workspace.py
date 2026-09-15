@@ -29,9 +29,7 @@ async def list_project_files_workspace(
     org_id: str | None = None,
 ):
     """List files for a project (workspace staff)."""
-    files = await service.list_files(
-        project_id, org_id=router_org_list_filter(org_id)
-    )
+    files = await service.list_files(project_id, org_id=router_org_list_filter(org_id))
     if files is None:
         raise HTTPException(status_code=404, detail="Project not found")
     return [ProjectFileResponse.model_validate(f) for f in files]

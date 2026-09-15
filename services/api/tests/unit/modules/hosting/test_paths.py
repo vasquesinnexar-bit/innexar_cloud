@@ -7,21 +7,24 @@ from app.modules.hosting import paths
 from app.modules.hosting.paths import PathError
 
 
-@pytest.mark.parametrize("evil", [
-    "../../etc/passwd",
-    "/etc/passwd",
-    "/root",
-    "/var/run/docker.sock",
-    "../other-client",
-    "..\\windows\\system32",
-    "%2e%2e/%2e%2e/etc/passwd",
-    "%252e%252e/%252e%252e/x",
-    "..%2f..%2fetc/passwd",
-    "a/../../b",
-    "\x00/etc/passwd",
-    "~/root",
-    "....//....//etc/passwd",
-])
+@pytest.mark.parametrize(
+    "evil",
+    [
+        "../../etc/passwd",
+        "/etc/passwd",
+        "/root",
+        "/var/run/docker.sock",
+        "../other-client",
+        "..\\windows\\system32",
+        "%2e%2e/%2e%2e/etc/passwd",
+        "%252e%252e/%252e%252e/x",
+        "..%2f..%2fetc/passwd",
+        "a/../../b",
+        "\x00/etc/passwd",
+        "~/root",
+        "....//....//etc/passwd",
+    ],
+)
 def test_traversal_blocked(evil):
     with pytest.raises(PathError):
         paths.validate(evil)
@@ -33,20 +36,42 @@ def test_valid_paths(ok):
     assert ".." not in out and not out.startswith("/")
 
 
-@pytest.mark.parametrize("blocked", [
-    ".env", ".env.production", "Dockerfile", "docker-compose.yml",
-    "app.pem", "key.key", "id_rsa", "config.secret.json", ".git/config",
-    "app.exe", "run.sh", "photo.png",
-])
+@pytest.mark.parametrize(
+    "blocked",
+    [
+        ".env",
+        ".env.production",
+        "Dockerfile",
+        "docker-compose.yml",
+        "app.pem",
+        "key.key",
+        "id_rsa",
+        "config.secret.json",
+        ".git/config",
+        "app.exe",
+        "run.sh",
+        "photo.png",
+    ],
+)
 def test_blocklist_and_edit_ext(blocked):
     with pytest.raises(PathError):
         paths.validate(blocked, for_edit=True)
 
 
-@pytest.mark.parametrize("editable", [
-    "index.html", "style.css", "app.js", "data.json", "post.php",
-    "README.md", "notes.txt", "config.yml", "feed.xml",
-])
+@pytest.mark.parametrize(
+    "editable",
+    [
+        "index.html",
+        "style.css",
+        "app.js",
+        "data.json",
+        "post.php",
+        "README.md",
+        "notes.txt",
+        "config.yml",
+        "feed.xml",
+    ],
+)
 def test_editable_ok(editable):
     assert paths.validate(editable, for_edit=True) == editable
 
@@ -81,8 +106,10 @@ def test_container_symlink_escape_blocked():
     from app.modules.hosting.provider import DockerHostingProvider
 
     # /root-do-cliente/public/link -> /etc ; Portal pede public/link/hostname
-    assert DockerHostingProvider._cjoin("/srv", "public/link/hostname") == \
-        "/srv/public/link/hostname"  # lexical ok aqui...
+    assert (
+        DockerHostingProvider._cjoin("/srv", "public/link/hostname")
+        == "/srv/public/link/hostname"
+    )  # lexical ok aqui...
     # ...mas o escape real acontece no readlink -f pós-escrita/leitura.
     # Simulação fiel com root real:
     import os

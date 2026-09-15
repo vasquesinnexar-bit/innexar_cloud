@@ -7,8 +7,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.router_org import router_org_list_filter, router_org_write
 from app.core.rbac import RequirePermission
+from app.core.router_org import router_org_list_filter, router_org_write
 from app.models.customer import Customer
 from app.models.user import User
 from app.modules.billing.dependencies import (
@@ -38,21 +38,21 @@ async def _subscriptions_to_responses(
     plan_ids = {s.price_plan_id for s in subs}
     customers = {
         c.id: c
-        for c in (
-            await db.execute(select(Customer).where(Customer.id.in_(cust_ids)))
-        ).scalars().all()
+        for c in (await db.execute(select(Customer).where(Customer.id.in_(cust_ids))))
+        .scalars()
+        .all()
     }
     products = {
         p.id: p
-        for p in (
-            await db.execute(select(Product).where(Product.id.in_(prod_ids)))
-        ).scalars().all()
+        for p in (await db.execute(select(Product).where(Product.id.in_(prod_ids))))
+        .scalars()
+        .all()
     }
     plans = {
         p.id: p
-        for p in (
-            await db.execute(select(PricePlan).where(PricePlan.id.in_(plan_ids)))
-        ).scalars().all()
+        for p in (await db.execute(select(PricePlan).where(PricePlan.id.in_(plan_ids))))
+        .scalars()
+        .all()
     }
     out: list[SubscriptionResponse] = []
     for s in subs:

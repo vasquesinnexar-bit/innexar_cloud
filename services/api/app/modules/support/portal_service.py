@@ -1,11 +1,11 @@
 """Portal support: list/create tickets, list/add messages. Uses SupportRepository + ProjectRepository."""
 
-from app.core.ops_notifications import send_ops_alert
-from app.repositories.customer_repository import CustomerRepository
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.ops_notifications import send_ops_alert
 from app.modules.support.models import Ticket, TicketMessage
 from app.modules.support.schemas import TicketCreate
+from app.repositories.customer_repository import CustomerRepository
 from app.repositories.project_repository import ProjectRepository
 from app.repositories.support_repository import SupportRepository
 

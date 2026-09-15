@@ -51,7 +51,9 @@ async def list_products_catalog(
         "all",
         description="Filter by plan interval: all, month (mensal), one_time (pagamento único)",
     ),
-    locale: str | None = Query(None, description="Preferred locale hint (pt for Brazil)"),
+    locale: str | None = Query(
+        None, description="Preferred locale hint (pt for Brazil)"
+    ),
 ) -> list[ProductCatalogOut]:
     """Return active products with their price plans. Use interval=one_time for pagamento único."""
     org_id = resolve_products_org(request, locale=locale)

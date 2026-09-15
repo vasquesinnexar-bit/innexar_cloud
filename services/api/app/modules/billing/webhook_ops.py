@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.audit import log_audit
+from app.core.org import ORG_INNEXAR_US
 from app.modules.billing._subscription_helpers import (
     set_subscription_next_due_if_recurring,
 )
@@ -15,7 +16,6 @@ from app.modules.billing.models import WebhookEvent
 from app.modules.billing.overdue import reactivate_subscription_after_payment
 from app.providers.payments.mercadopago import MercadoPagoProvider
 from app.providers.payments.stripe import StripeProvider
-from app.core.org import ORG_INNEXAR_US
 from app.repositories.billing_repository import BillingRepository
 from app.repositories.customer_repository import CustomerRepository
 
@@ -142,15 +142,25 @@ async def _record_provider_refund(
     inv.status = InvoiceStatus.REFUNDED.value
     db.add(
         Refund(
-            invoice_id=invoice_id, provider=provider,
-            provider_refund_id=event_id, amount=float(inv.total),
-            currency=inv.currency or "USD", status="approved",
-            reason="provider webhook", actor_type="webhook", actor_id=event_id,
+            invoice_id=invoice_id,
+            provider=provider,
+            provider_refund_id=event_id,
+            amount=float(inv.total),
+            currency=inv.currency or "USD",
+            status="approved",
+            reason="provider webhook",
+            actor_type="webhook",
+            actor_id=event_id,
         )
     )
     await log_audit(
-        db, entity="invoice", entity_id=str(invoice_id), action="refund_created",
-        actor_type="webhook", actor_id=event_id, payload={"provider": provider},
+        db,
+        entity="invoice",
+        entity_id=str(invoice_id),
+        action="refund_created",
+        actor_type="webhook",
+        actor_id=event_id,
+        payload={"provider": provider},
     )
 
 
@@ -190,12 +200,17 @@ async def process_webhook(
         elif result.invoice_id and result.event_action == "payment_failed":
             inv = await billing_repo.get_invoice_by_id(result.invoice_id)
             if inv and inv.status not in (
-                InvoiceStatus.PAID.value, InvoiceStatus.REFUNDED.value,
+                InvoiceStatus.PAID.value,
+                InvoiceStatus.REFUNDED.value,
             ):
                 inv.status = InvoiceStatus.FAILED.value
                 await _fail_matching_attempt(
-                    db, billing_repo, result.invoice_id, "stripe",
-                    external_id=None, event_id=event_id,
+                    db,
+                    billing_repo,
+                    result.invoice_id,
+                    "stripe",
+                    external_id=None,
+                    event_id=event_id,
                 )
                 await log_audit(
                     db,
@@ -271,8 +286,12 @@ async def process_webhook(
         elif result.event_action == "payment_failed" and result.invoice_id:
             # PIX/boleto expirado ou recusado: falha a tentativa, nunca a fatura paga.
             await _fail_matching_attempt(
-                db, billing_repo, result.invoice_id, "mercadopago",
-                external_id=result.message, event_id=event_id,
+                db,
+                billing_repo,
+                result.invoice_id,
+                "mercadopago",
+                external_id=result.message,
+                event_id=event_id,
             )
         elif result.invoice_id:
             paid_invoice_id = await _mark_invoice_paid(

@@ -11,7 +11,6 @@ import re
 import subprocess
 from dataclasses import dataclass
 
-
 MAIL_CONTAINER = os.environ.get("MAIL_CONTAINER", "innexar-mailserver")
 
 _ACCOUNT_RE = re.compile(
@@ -50,7 +49,9 @@ def _run(*args: str, timeout: int = 120) -> str:
             check=False,
         )
     except (subprocess.TimeoutExpired, FileNotFoundError) as e:
-        raise MailProviderError(f"mail provider unavailable ({type(e).__name__})") from e
+        raise MailProviderError(
+            f"mail provider unavailable ({type(e).__name__})"
+        ) from e
     if r.returncode != 0:
         # Never include argv (may contain password).
         raise MailProviderError((r.stderr or r.stdout or "setup failed").strip()[:300])
@@ -147,9 +148,17 @@ class DockerMailserverProvider:
                 domains.add(m.address.split("@", 1)[1].lower())
         try:
             r = subprocess.run(
-                ["docker", "exec", MAIL_CONTAINER, "ls",
-                 "/tmp/docker-mailserver/opendkim/keys"],
-                capture_output=True, text=True, timeout=30, check=False,
+                [
+                    "docker",
+                    "exec",
+                    MAIL_CONTAINER,
+                    "ls",
+                    "/tmp/docker-mailserver/opendkim/keys",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False,
             )
             if r.returncode == 0:
                 domains.update(d.strip().lower() for d in r.stdout.split() if "." in d)
@@ -162,13 +171,23 @@ class DockerMailserverProvider:
         import re as _re
 
         domain = (domain or "").strip().lower()
-        if not _re.fullmatch(r"(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}", domain):
+        if not _re.fullmatch(
+            r"(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}", domain
+        ):
             return None
         try:
             r = subprocess.run(
-                ["docker", "exec", MAIL_CONTAINER, "cat",
-                 f"/tmp/docker-mailserver/opendkim/keys/{domain}/mail.txt"],
-                capture_output=True, text=True, timeout=30, check=False,
+                [
+                    "docker",
+                    "exec",
+                    MAIL_CONTAINER,
+                    "cat",
+                    f"/tmp/docker-mailserver/opendkim/keys/{domain}/mail.txt",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False,
             )
         except (subprocess.TimeoutExpired, FileNotFoundError):
             return None

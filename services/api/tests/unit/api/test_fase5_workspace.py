@@ -19,7 +19,9 @@ async def test_audit_list_empty(client: AsyncClient, staff_user: User):
 
 @pytest.mark.asyncio
 async def test_audit_filter_q(client: AsyncClient, staff_user: User):
-    r = await client.get("/api/workspace/audit?q=zzz-nao-existe", headers=_h(staff_user))
+    r = await client.get(
+        "/api/workspace/audit?q=zzz-nao-existe", headers=_h(staff_user)
+    )
     assert r.status_code == 200
     assert r.json() == []
 
@@ -41,8 +43,11 @@ async def test_search_short_query(client: AsyncClient, staff_user: User):
 @pytest.mark.asyncio
 async def test_search_finds_customer(client: AsyncClient, staff_user: User):
     h = _h(staff_user)
-    c = await client.post("/api/workspace/customers", headers=h,
-                          json={"name": "Busca Total", "email": "busca-total@teste.innexar"})
+    c = await client.post(
+        "/api/workspace/customers",
+        headers=h,
+        json={"name": "Busca Total", "email": "busca-total@teste.innexar"},
+    )
     assert c.status_code == 201
     r = await client.get("/api/workspace/search?q=busca-total", headers=h)
     assert r.status_code == 200

@@ -101,12 +101,12 @@ class SupportRepository:
         )
         return r.scalar() or 0
 
-    async def get_ticket_counts(
-        self, org_id: str | None = None
-    ) -> tuple[int, int]:
+    async def get_ticket_counts(self, org_id: str | None = None) -> tuple[int, int]:
         """Returns (open_count, closed_count) for dashboard summary."""
         open_q = select(func.count()).select_from(Ticket).where(Ticket.status == "open")
-        closed_q = select(func.count()).select_from(Ticket).where(Ticket.status == "closed")
+        closed_q = (
+            select(func.count()).select_from(Ticket).where(Ticket.status == "closed")
+        )
         if org_id is not None:
             open_q = open_q.where(Ticket.org_id == org_id)
             closed_q = closed_q.where(Ticket.org_id == org_id)

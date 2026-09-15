@@ -99,7 +99,11 @@ class HestiaClient:
                 continue
             v = args[k]
             payload[k] = "yes" if v is True else "no" if v is False else str(v)
-        verify_ssl = os.environ.get("HESTIA_SSL_VERIFY", "true").lower() in ("true", "1", "yes")
+        verify_ssl = os.environ.get("HESTIA_SSL_VERIFY", "true").lower() in (
+            "true",
+            "1",
+            "yes",
+        )
         with httpx.Client(timeout=30.0, verify=verify_ssl) as client:
             resp = client.post(f"{self.base_url}/api/", data=payload)
         resp.raise_for_status()

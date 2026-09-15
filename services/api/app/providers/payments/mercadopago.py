@@ -362,7 +362,9 @@ class MercadoPagoProvider:
                 except (ValueError, TypeError):
                     invoice_id = None
                 return WebhookResult(
-                    processed=True, invoice_id=invoice_id, message=payment_id,
+                    processed=True,
+                    invoice_id=invoice_id,
+                    message=payment_id,
                     event_action="payment_failed",
                 )
             return WebhookResult(processed=True, message=payment_id)
@@ -560,7 +562,9 @@ class MercadoPagoProvider:
                 "zip_code": addr.get("postal_code") or addr.get("zip_code") or "",
                 "street_name": addr.get("street") or "",
                 "street_number": addr.get("number") or "",
-                "neighborhood": addr.get("neighborhood") or addr.get("complement") or "",
+                "neighborhood": addr.get("neighborhood")
+                or addr.get("complement")
+                or "",
                 "city": addr.get("city") or "",
                 "federal_unit": addr.get("state") or "",
             },

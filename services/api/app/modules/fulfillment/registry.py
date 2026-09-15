@@ -68,8 +68,9 @@ class Provisioner(Protocol):
 
     key: str
 
-    async def provision(self, ctx: ProvisionContext) -> ProvisionResult:
-        ...  # pragma: no cover
+    async def provision(
+        self, ctx: ProvisionContext
+    ) -> ProvisionResult: ...  # pragma: no cover
 
 
 DEFAULT_STRATEGY: dict[str, str] = {
@@ -80,8 +81,14 @@ DEFAULT_STRATEGY: dict[str, str] = {
 }
 
 _LEGACY_BY_TYPE: dict[str, tuple[str, str]] = {
-    "hestia_hosting": (FulfillmentStrategy.GUIDED.value, FulfillmentHandler.HESTIA.value),
-    "site_delivery": (FulfillmentStrategy.PROJECT.value, FulfillmentHandler.PROJECT.value),
+    "hestia_hosting": (
+        FulfillmentStrategy.GUIDED.value,
+        FulfillmentHandler.HESTIA.value,
+    ),
+    "site_delivery": (
+        FulfillmentStrategy.PROJECT.value,
+        FulfillmentHandler.PROJECT.value,
+    ),
 }
 
 

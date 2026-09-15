@@ -7,8 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.router_org import router_org_id, router_org_list_filter, router_org_write
 from app.core.rbac import RequirePermission
+from app.core.router_org import router_org_id, router_org_list_filter, router_org_write
 from app.models.user import User
 from app.modules.customers.schemas import (
     CleanupTestResponse,
@@ -93,9 +93,7 @@ async def get_customer(
     org_id: str | None = None,
 ) -> CustomerResponse:
     """Get customer by id."""
-    result = await service.get_customer(
-        customer_id, router_org_list_filter(org_id)
-    )
+    result = await service.get_customer(customer_id, router_org_list_filter(org_id))
     if result is None:
         raise HTTPException(status_code=404, detail="Customer not found")
     return result
@@ -143,9 +141,7 @@ async def delete_customer(
     org_id: str | None = None,
 ) -> None:
     """Delete customer and related data: invoices, subscriptions, portal user."""
-    existed = await service.delete_customer(
-        customer_id, router_org_list_filter(org_id)
-    )
+    existed = await service.delete_customer(customer_id, router_org_list_filter(org_id))
     if not existed:
         raise HTTPException(status_code=404, detail="Customer not found")
 

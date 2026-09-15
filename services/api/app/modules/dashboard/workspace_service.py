@@ -4,7 +4,6 @@ from collections import defaultdict
 from datetime import UTC, datetime, timedelta
 from typing import Literal
 
-from app.core.org import staff_org_id
 from app.modules.dashboard.schemas import (
     DashboardCustomersSummary,
     DashboardInvoicesSummary,
@@ -55,7 +54,9 @@ class DashboardWorkspaceService:
         sub_active, sub_canceled, sub_total = (
             await self._billing.get_dashboard_subscription_summary(org_id=org_id)
         )
-        tickets_open, tickets_closed = await self._support.get_ticket_counts(org_id=org_id)
+        tickets_open, tickets_closed = await self._support.get_ticket_counts(
+            org_id=org_id
+        )
         by_status, projects_total = await self._projects.get_project_counts_by_status(
             org_id=org_id
         )

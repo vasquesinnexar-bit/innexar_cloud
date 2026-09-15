@@ -18,7 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 async def test_list_customers_empty(db_session: AsyncSession) -> None:
     """List when no customers returns empty list."""
     svc = CustomerService(db_session)
-    result = await svc.list_customers()
+    result = await svc.list_customers(None)
     assert result == []
 
 
@@ -27,7 +27,7 @@ async def test_create_customer(db_session: AsyncSession) -> None:
     """Create customer returns CustomerResponse."""
     svc = CustomerService(db_session)
     body = CustomerCreate(name="New", email="new@example.com")
-    resp = await svc.create_customer(body)
+    resp = await svc.create_customer(body, "innexar")
     assert resp.name == "New"
     assert resp.email == "new@example.com"
     assert resp.id is not None
@@ -39,16 +39,16 @@ async def test_create_customer_duplicate_email_raises(db_session: AsyncSession) 
     """Create with existing email raises ValueError."""
     svc = CustomerService(db_session)
     body = CustomerCreate(name="A", email="dup@example.com")
-    await svc.create_customer(body)
+    await svc.create_customer(body, "innexar")
     with pytest.raises(ValueError, match="already exists"):
-        await svc.create_customer(body)
+        await svc.create_customer(body, "innexar")
 
 
 @pytest.mark.asyncio
 async def test_get_customer_not_found(db_session: AsyncSession) -> None:
     """Get non-existent customer returns None."""
     svc = CustomerService(db_session)
-    assert await svc.get_customer(999) is None
+    assert await svc.get_customer(999, None) is None
 
 
 @pytest.mark.asyncio

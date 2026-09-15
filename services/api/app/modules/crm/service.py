@@ -92,9 +92,7 @@ class ContactService:
             return None
         return _to_response(c)
 
-    async def create_contact(
-        self, body: ContactCreate, org_id: str
-    ) -> ContactResponse:
+    async def create_contact(self, body: ContactCreate, org_id: str) -> ContactResponse:
         """Create contact for the given org."""
         contact = Contact(
             org_id=org_id,

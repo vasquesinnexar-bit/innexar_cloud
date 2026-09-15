@@ -134,10 +134,8 @@ class PublicService:
                 or getattr(settings, "FRONTEND_URL", "http://localhost:3000")
             ).rstrip("/")
             reset_link = f"{base_url}/{loc}/reset-password?token={token}"
-            customer = await self._customer.get_by_id(cu.customer_id)
-            org_id = (
-                customer.org_id if customer and customer.org_id else ORG_INNEXAR_US
-            )
+            customer = await self._customer.get_by_id_with_users(cu.customer_id)
+            org_id = customer.org_id if customer and customer.org_id else ORG_INNEXAR_US
             background_tasks.add_task(
                 _send_reset_email, email_lower, reset_link, org_id, loc
             )
@@ -220,9 +218,7 @@ class PublicService:
         lead_source = source or "website"
         extra_lines = ""
         if extra_data:
-            extra_lines = "\n".join(
-                f"{k}: {v}" for k, v in extra_data.items() if v
-            )
+            extra_lines = "\n".join(f"{k}: {v}" for k, v in extra_data.items() if v)
         from app.core.org import region_label_for_org
 
         region = region_label_for_org(org_id)
@@ -237,7 +233,7 @@ class PublicService:
         )
         if extra_lines:
             body += f"\nDetalhes:\n{extra_lines}\n"
-        body += f"\nVer no workspace: CRM > Leads"
+        body += "\nVer no workspace: CRM > Leads"
         await send_ops_alert(
             self._db,
             subject=f"[Lead] {name} — {lead_source}",

@@ -9,8 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
-from app.core.router_org import router_org_list_filter
 from app.core.rbac import RequirePermission
+from app.core.router_org import router_org_list_filter
 from app.models.customer import Customer
 from app.models.user import User
 from app.modules.billing.dependencies import (
@@ -19,7 +19,6 @@ from app.modules.billing.dependencies import (
 )
 from app.modules.billing.enums import InvoiceStatus
 from app.modules.billing.models import Invoice, Subscription
-from app.modules.mail.models import Service
 from app.modules.billing.overdue import (
     process_overdue_invoices,
     reactivate_subscription_after_payment,
@@ -43,6 +42,7 @@ from app.modules.billing.service import (
     send_invoice_reminders,
 )
 from app.modules.billing.workspace_service import BillingWorkspaceService
+from app.modules.mail.models import Service
 from app.modules.notifications.service import create_notification_and_maybe_send_email
 from app.providers.payments.mercadopago import MercadoPagoProvider
 
@@ -184,7 +184,9 @@ async def delete_invoice(
     )
     from sqlalchemy import delete as sa_delete
 
-    await db.execute(sa_delete(PaymentAttempt).where(PaymentAttempt.invoice_id == invoice_id))
+    await db.execute(
+        sa_delete(PaymentAttempt).where(PaymentAttempt.invoice_id == invoice_id)
+    )
     await db.delete(inv)
     await db.flush()
 
@@ -196,7 +198,9 @@ async def invoice_payment_link(
     cancel_url: str,
     coupon_code: str | None = None,
     db: Annotated[AsyncSession, Depends(get_db)] = None,
-    service: Annotated[BillingWorkspaceService, Depends(get_billing_workspace_service)] = None,
+    service: Annotated[
+        BillingWorkspaceService, Depends(get_billing_workspace_service)
+    ] = None,
     _: Annotated[User, Depends(RequirePermission("billing:write"))] = None,
     __: Annotated[None, Depends(require_billing_enabled)] = None,
     org_id: str | None = None,
@@ -436,16 +440,25 @@ async def billing_overview(
     invs = (await db.execute(inv_q)).scalars().all()
     now = datetime.now(UTC)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    open_statuses = {InvoiceStatus.PENDING.value, InvoiceStatus.PAST_DUE.value,
-                     InvoiceStatus.FAILED.value}
+    open_statuses = {
+        InvoiceStatus.PENDING.value,
+        InvoiceStatus.PAST_DUE.value,
+        InvoiceStatus.FAILED.value,
+    }
     open_invs = [i for i in invs if i.status in open_statuses]
     past_due = [i for i in invs if i.status == InvoiceStatus.PAST_DUE.value]
-    paid_month = [i for i in invs
-                  if i.status == InvoiceStatus.PAID.value and i.paid_at
-                  and i.paid_at >= month_start]
+    paid_month = [
+        i
+        for i in invs
+        if i.status == InvoiceStatus.PAID.value
+        and i.paid_at
+        and i.paid_at >= month_start
+    ]
     failed_7d = (
         await db.execute(
-            select(func.count()).select_from(PaymentAttempt).where(
+            select(func.count())
+            .select_from(PaymentAttempt)
+            .where(
                 PaymentAttempt.status == "failed",
                 PaymentAttempt.created_at >= now - timedelta(days=7),
             )
@@ -453,9 +466,9 @@ async def billing_overview(
     ).scalar_one()
     suspended = (
         await db.execute(
-            select(func.count()).select_from(Service).where(
-                Service.status == "suspended"
-            )
+            select(func.count())
+            .select_from(Service)
+            .where(Service.status == "suspended")
         )
     ).scalar_one()
     return {

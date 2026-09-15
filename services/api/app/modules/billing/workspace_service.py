@@ -1,21 +1,24 @@
 """Billing workspace service: CRUD and link-hestia via repository. No payment logic here."""
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.audit import log_audit
-from app.modules.billing._subscription_helpers import set_subscription_next_due_if_recurring
-from app.modules.billing.enums import InvoiceStatus, SubscriptionStatus
+from app.core.org import staff_org_id
 from app.models.customer import Customer
+from app.modules.billing._subscription_helpers import (
+    set_subscription_next_due_if_recurring,
+)
+from app.modules.billing.enums import InvoiceStatus, SubscriptionStatus
 from app.modules.billing.models import (
+    Invoice,
+    PaymentAttempt,
     PricePlan,
     Product,
     ProvisioningRecord,
-    PaymentAttempt,
-    Invoice,
     Subscription,
 )
 from app.modules.billing.overdue import (
@@ -34,7 +37,6 @@ from app.modules.billing.schemas import (
 )
 from app.modules.billing.service import create_manual_invoice
 from app.providers.payments.stripe import StripeProvider
-from app.core.org import staff_org_id
 from app.repositories.billing_repository import BillingRepository
 
 
@@ -68,7 +70,9 @@ class BillingWorkspaceService:
             by_product.setdefault(pp.product_id, []).append(pp)
         return [{"product": p, "plans": by_product.get(p.id, [])} for p in products]
 
-    async def get_product(self, product_id: int, org_id: str | None = None) -> Product | None:
+    async def get_product(
+        self, product_id: int, org_id: str | None = None
+    ) -> Product | None:
         return await self._repo.get_product_by_id(product_id, org_id=org_id)
 
     async def create_product(self, body: ProductCreate, org_id: str) -> Product:
@@ -116,7 +120,9 @@ class BillingWorkspaceService:
     ) -> list[PricePlan]:
         return await self._repo.list_price_plans(org_id=org_id, product_id=product_id)
 
-    async def get_price_plan(self, plan_id: int, org_id: str | None = None) -> PricePlan | None:
+    async def get_price_plan(
+        self, plan_id: int, org_id: str | None = None
+    ) -> PricePlan | None:
         return await self._repo.get_price_plan_by_id(plan_id, org_id=org_id)
 
     async def create_price_plan(self, body: PricePlanCreate) -> PricePlan:
@@ -219,7 +225,9 @@ class BillingWorkspaceService:
         )
         if not sub:
             return None
-        hestia_org = org_id if org_id is not None else await self._customer_org_for_sub(sub)
+        hestia_org = (
+            org_id if org_id is not None else await self._customer_org_for_sub(sub)
+        )
         if body.status is not None:
             sub.status = body.status
             await sync_subscription_status_to_hestia(
@@ -246,7 +254,9 @@ class BillingWorkspaceService:
         )
         if not sub:
             return None
-        hestia_org = org_id if org_id is not None else await self._customer_org_for_sub(sub)
+        hestia_org = (
+            org_id if org_id is not None else await self._customer_org_for_sub(sub)
+        )
         if sub.status == SubscriptionStatus.CANCELED.value:
             return sub
         sub.status = SubscriptionStatus.CANCELED.value
@@ -346,17 +356,21 @@ class BillingWorkspaceService:
         If webhook processing is delayed/missed, read APIs still reflect paid status.
         """
         pending_invoices = (
-            await self._db.execute(
-                select(Invoice)
-                .where(
-                    Invoice.customer_id == customer_id,
-                    Invoice.status == InvoiceStatus.PENDING.value,
-                    Invoice.external_id.is_not(None),
+            (
+                await self._db.execute(
+                    select(Invoice)
+                    .where(
+                        Invoice.customer_id == customer_id,
+                        Invoice.status == InvoiceStatus.PENDING.value,
+                        Invoice.external_id.is_not(None),
+                    )
+                    .order_by(Invoice.id.desc())
+                    .limit(10)
                 )
-                .order_by(Invoice.id.desc())
-                .limit(10)
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         if not pending_invoices:
             return
 
@@ -380,7 +394,9 @@ class BillingWorkspaceService:
                 continue
 
             try:
-                session = await asyncio.to_thread(stripe_provider.get_checkout_session, session_id)
+                session = await asyncio.to_thread(
+                    stripe_provider.get_checkout_session, session_id
+                )
             except Exception:
                 continue
 
@@ -399,7 +415,7 @@ class BillingWorkspaceService:
                 sub = await self._repo.get_subscription_by_id(inv.subscription_id)
                 if sub:
                     sub.status = SubscriptionStatus.ACTIVE.value
-                    sub.start_date = sub.start_date or datetime.now(timezone.utc)
+                    sub.start_date = sub.start_date or datetime.now(UTC)
                     await set_subscription_next_due_if_recurring(self._db, sub)
                     await reactivate_subscription_after_payment(
                         self._db,

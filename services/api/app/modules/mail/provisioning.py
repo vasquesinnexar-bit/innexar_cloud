@@ -22,17 +22,19 @@ async def trigger_mail_provisioning_if_needed(
 ) -> None:
     """Process PENDING mail jobs linked to a paid invoice (idempotent)."""
     rows = (
-        await db.execute(
-            select(MailProvisioningJob).where(
-                MailProvisioningJob.invoice_id == invoice_id,
-                MailProvisioningJob.status == "pending",
+        (
+            await db.execute(
+                select(MailProvisioningJob).where(
+                    MailProvisioningJob.invoice_id == invoice_id,
+                    MailProvisioningJob.status == "pending",
+                )
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     if not rows:
         return
     svc = MailService(db)
     result = await svc.process_pending_jobs(limit=50)
-    logger.info(
-        "mail provisioning for invoice %s: %s", invoice_id, result
-    )
+    logger.info("mail provisioning for invoice %s: %s", invoice_id, result)

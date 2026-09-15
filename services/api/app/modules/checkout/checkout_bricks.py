@@ -4,14 +4,14 @@ import logging
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 
+from app.core.config import settings
+from app.core.email_templates import invoice_paid_email, normalize_locale
 from app.models.customer import Customer
 from app.models.customer_user import CustomerUser
 from app.modules.billing.enums import InvoiceStatus, SubscriptionStatus
 from app.modules.billing.models import Invoice, PricePlan, Subscription
 from app.modules.billing.overdue import reactivate_subscription_after_payment
 from app.modules.billing.service import _get_payment_provider
-from app.core.email_templates import invoice_paid_email, normalize_locale
-from app.core.config import settings
 from app.providers.payments.mercadopago import MercadoPagoProvider
 from fastapi import HTTPException, status
 from sqlalchemy import select
@@ -126,12 +126,18 @@ async def process_bricks_payment(
         cu = cu_r.scalar_one_or_none()
         if cu:
             locale = "en"
-            if isinstance(inv.line_items, list) and inv.line_items and isinstance(inv.line_items[0], dict):
-                locale = normalize_locale(str(inv.line_items[0].get("preferred_locale") or "en"))
-            portal_base = (
-                str(getattr(settings, "PORTAL_URL", None) or getattr(settings, "FRONTEND_URL", "http://localhost:3000"))
-                .rstrip("/")
-            )
+            if (
+                isinstance(inv.line_items, list)
+                and inv.line_items
+                and isinstance(inv.line_items[0], dict)
+            ):
+                locale = normalize_locale(
+                    str(inv.line_items[0].get("preferred_locale") or "en")
+                )
+            portal_base = str(
+                getattr(settings, "PORTAL_URL", None)
+                or getattr(settings, "FRONTEND_URL", "http://localhost:3000")
+            ).rstrip("/")
             billing_url = f"{portal_base}/{locale}/billing"
             email_subject, email_plain, email_html = invoice_paid_email(
                 invoice_id=inv.id,

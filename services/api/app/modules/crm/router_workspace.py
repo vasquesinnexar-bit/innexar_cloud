@@ -42,7 +42,9 @@ async def _resolve_rep_scope(
     """If the current staff user is a sales rep, return their rep id so lead
     lists get scoped to only their own leads. Admin/back-office staff (no
     linked Representative row) get None, i.e. unfiltered by rep."""
-    rep = await rep_service.get_representative_for_user(current.id, router_org_id(current))
+    rep = await rep_service.get_representative_for_user(
+        current.id, router_org_id(current)
+    )
     return rep.id if rep else None
 
 

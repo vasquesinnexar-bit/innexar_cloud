@@ -189,7 +189,9 @@ class StripeProvider:
         ) as e:
             return WebhookResult(processed=False, message=str(e))
         # Convert StripeObject to plain dict so .get() works reliably
-        event: dict[str, Any] = event_obj.to_dict() if hasattr(event_obj, "to_dict") else dict(event_obj)
+        event: dict[str, Any] = (
+            event_obj.to_dict() if hasattr(event_obj, "to_dict") else dict(event_obj)
+        )
         event_id = event.get("id", "")
         event_type = event.get("type", "")
 

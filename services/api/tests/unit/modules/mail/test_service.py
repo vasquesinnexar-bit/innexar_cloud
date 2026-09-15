@@ -55,29 +55,51 @@ class FakeProvider:
 
 
 async def _customer(db, **kw):
-    c = Customer(org_id="innexar", name="C", email=kw.pop("email", "c@example.com"),
-                 currency="BRL", **kw)
+    c = Customer(
+        org_id="innexar",
+        name="C",
+        email=kw.pop("email", "c@example.com"),
+        currency="BRL",
+        **kw,
+    )
     db.add(c)
     await db.flush()
     return c
 
 
 async def _email_setup(db, customer, contracted=3, price=25.0):
-    p = Product(org_id="innexar", name="E-mail Profissional", slug="professional-email",
-                category="email", is_active=True)
+    p = Product(
+        org_id="innexar",
+        name="E-mail Profissional",
+        slug="professional-email",
+        category="email",
+        is_active=True,
+    )
     db.add(p)
     await db.flush()
-    plan = PricePlan(product_id=p.id, name="Mensal", interval="monthly",
-                     amount=price, currency="BRL")
+    plan = PricePlan(
+        product_id=p.id, name="Mensal", interval="monthly", amount=price, currency="BRL"
+    )
     db.add(plan)
     await db.flush()
     ct = Contract(customer_id=customer.id, org_id="innexar", status="active")
     db.add(ct)
     await db.flush()
-    db.add(ContractItem(contract_id=ct.id, product_id=p.id, price_plan_id=plan.id,
-                        quantity=contracted, unit_amount=price))
-    d = EmailDomain(customer_id=customer.id, org_id="innexar",
-                    domain="cliente.com.br", status="active")
+    db.add(
+        ContractItem(
+            contract_id=ct.id,
+            product_id=p.id,
+            price_plan_id=plan.id,
+            quantity=contracted,
+            unit_amount=price,
+        )
+    )
+    d = EmailDomain(
+        customer_id=customer.id,
+        org_id="innexar",
+        domain="cliente.com.br",
+        status="active",
+    )
     db.add(d)
     await db.flush()
     return d
@@ -89,9 +111,16 @@ async def test_create_list_mailbox(db_session: AsyncSession):
     c = await _customer(db_session)
     await _email_setup(db_session, c)
     m = await svc.create_mailbox(
-        customer_id=c.id, org_id="innexar", domain="cliente.com.br",
-        local_part="contato", display_name=None, password="SenhaForte1",
-        quota="2G", actor_type="staff", actor_id="1")
+        customer_id=c.id,
+        org_id="innexar",
+        domain="cliente.com.br",
+        local_part="contato",
+        display_name=None,
+        password="SenhaForte1",
+        quota="2G",
+        actor_type="staff",
+        actor_id="1",
+    )
     assert m.address == "contato@cliente.com.br"
     boxes = await svc.list_mailboxes(c.id, "innexar")
     assert [b.address for b in boxes] == ["contato@cliente.com.br"]
@@ -105,18 +134,42 @@ async def test_duplicate_and_limit(db_session: AsyncSession):
     svc = MailService(db_session, provider=FakeProvider())
     c = await _customer(db_session, email="d@example.com")
     await _email_setup(db_session, c, contracted=1)
-    await svc.create_mailbox(customer_id=c.id, org_id="innexar",
-        domain="cliente.com.br", local_part="a", display_name=None,
-        password="SenhaForte1", quota=None, actor_type="staff", actor_id="1")
+    await svc.create_mailbox(
+        customer_id=c.id,
+        org_id="innexar",
+        domain="cliente.com.br",
+        local_part="a",
+        display_name=None,
+        password="SenhaForte1",
+        quota=None,
+        actor_type="staff",
+        actor_id="1",
+    )
     with pytest.raises(MailError) as e:
-        await svc.create_mailbox(customer_id=c.id, org_id="innexar",
-            domain="cliente.com.br", local_part="a", display_name=None,
-            password="SenhaForte1", quota=None, actor_type="staff", actor_id="1")
+        await svc.create_mailbox(
+            customer_id=c.id,
+            org_id="innexar",
+            domain="cliente.com.br",
+            local_part="a",
+            display_name=None,
+            password="SenhaForte1",
+            quota=None,
+            actor_type="staff",
+            actor_id="1",
+        )
     assert e.value.code == "mailbox_limit_reached"
     with pytest.raises(MailError):
-        await svc.create_mailbox(customer_id=c.id, org_id="innexar",
-            domain="cliente.com.br", local_part="###", display_name=None,
-            password="SenhaForte1", quota=None, actor_type="staff", actor_id="1")
+        await svc.create_mailbox(
+            customer_id=c.id,
+            org_id="innexar",
+            domain="cliente.com.br",
+            local_part="###",
+            display_name=None,
+            password="SenhaForte1",
+            quota=None,
+            actor_type="staff",
+            actor_id="1",
+        )
 
 
 @pytest.mark.asyncio
@@ -125,13 +178,26 @@ async def test_tenant_isolation(db_session: AsyncSession):
     a = await _customer(db_session, email="a@example.com")
     b = await _customer(db_session, email="b@example.com")
     await _email_setup(db_session, a)
-    m = await svc.create_mailbox(customer_id=a.id, org_id="innexar",
-        domain="cliente.com.br", local_part="x", display_name=None,
-        password="SenhaForte1", quota=None, actor_type="staff", actor_id="1")
+    m = await svc.create_mailbox(
+        customer_id=a.id,
+        org_id="innexar",
+        domain="cliente.com.br",
+        local_part="x",
+        display_name=None,
+        password="SenhaForte1",
+        quota=None,
+        actor_type="staff",
+        actor_id="1",
+    )
     with pytest.raises(MailError) as e:
-        await svc.change_password(mailbox_id=m.id, customer_id=b.id,
-            org_id="innexar", password="OutraSenha1",
-            actor_type="customer", actor_id="9")
+        await svc.change_password(
+            mailbox_id=m.id,
+            customer_id=b.id,
+            org_id="innexar",
+            password="OutraSenha1",
+            actor_type="customer",
+            actor_id="9",
+        )
     assert e.value.code == "unauthorized_mailbox_access"
 
 
@@ -140,25 +206,70 @@ async def test_password_quota_disable_enable_delete(db_session: AsyncSession):
     svc = MailService(db_session, provider=FakeProvider())
     c = await _customer(db_session, email="e@example.com")
     await _email_setup(db_session, c)
-    m = await svc.create_mailbox(customer_id=c.id, org_id="innexar",
-        domain="cliente.com.br", local_part="fin", display_name=None,
-        password="SenhaForte1", quota=None, actor_type="staff", actor_id="1")
+    m = await svc.create_mailbox(
+        customer_id=c.id,
+        org_id="innexar",
+        domain="cliente.com.br",
+        local_part="fin",
+        display_name=None,
+        password="SenhaForte1",
+        quota=None,
+        actor_type="staff",
+        actor_id="1",
+    )
     with pytest.raises(MailError) as e:
-        await svc.change_password(mailbox_id=m.id, customer_id=c.id,
-            org_id="innexar", password="curta", actor_type="staff", actor_id="1")
+        await svc.change_password(
+            mailbox_id=m.id,
+            customer_id=c.id,
+            org_id="innexar",
+            password="curta",
+            actor_type="staff",
+            actor_id="1",
+        )
     assert e.value.code == "invalid_email_password"
-    await svc.change_password(mailbox_id=m.id, customer_id=c.id, org_id="innexar",
-        password="NovaSenha22", actor_type="staff", actor_id="1")
-    await svc.set_quota(mailbox_id=m.id, customer_id=c.id, org_id="innexar",
-        quota="5G", actor_type="staff", actor_id="1")
+    await svc.change_password(
+        mailbox_id=m.id,
+        customer_id=c.id,
+        org_id="innexar",
+        password="NovaSenha22",
+        actor_type="staff",
+        actor_id="1",
+    )
+    await svc.set_quota(
+        mailbox_id=m.id,
+        customer_id=c.id,
+        org_id="innexar",
+        quota="5G",
+        actor_type="staff",
+        actor_id="1",
+    )
     assert (await svc._require_mailbox(m.id, c.id, "innexar")).quota == "5G"
-    await svc.set_disabled(mailbox_id=m.id, customer_id=c.id, org_id="innexar",
-        disabled=True, actor_type="staff", actor_id="1")
-    assert (await svc._require_mailbox(m.id, c.id, "innexar")).status == MailboxStatus.DISABLED.value
-    await svc.set_disabled(mailbox_id=m.id, customer_id=c.id, org_id="innexar",
-        disabled=False, actor_type="staff", actor_id="1")
-    await svc.delete_mailbox(mailbox_id=m.id, customer_id=c.id, org_id="innexar",
-        actor_type="staff", actor_id="1")
+    await svc.set_disabled(
+        mailbox_id=m.id,
+        customer_id=c.id,
+        org_id="innexar",
+        disabled=True,
+        actor_type="staff",
+        actor_id="1",
+    )
+    assert (
+        await svc._require_mailbox(m.id, c.id, "innexar")
+    ).status == MailboxStatus.DISABLED.value
+    await svc.set_disabled(
+        mailbox_id=m.id,
+        customer_id=c.id,
+        org_id="innexar",
+        disabled=False,
+        actor_type="staff",
+        actor_id="1",
+    )
+    await svc.delete_mailbox(
+        mailbox_id=m.id,
+        customer_id=c.id,
+        org_id="innexar",
+        actor_type="staff",
+        actor_id="1",
+    )
     assert await svc.list_mailboxes(c.id, "innexar") == []
 
 
@@ -169,13 +280,26 @@ async def test_sync_and_jobs(db_session: AsyncSession):
     c = await _customer(db_session, email="s@example.com")
     await _email_setup(db_session, c)
     prov.boxes["externo@cliente.com.br"] = {"quota": None, "disabled": False}
-    rep = await svc.sync_domain(customer_id=c.id, org_id="innexar",
-        domain="cliente.com.br", actor_type="staff", actor_id="1")
+    rep = await svc.sync_domain(
+        customer_id=c.id,
+        org_id="innexar",
+        domain="cliente.com.br",
+        actor_type="staff",
+        actor_id="1",
+    )
     assert rep["created"] == 1
-    job = await svc.enqueue_job(job_type="create_mailbox", org_id="innexar",
-        payload={"address": "job@cliente.com.br"}, idempotency_key="k1")
-    job2 = await svc.enqueue_job(job_type="create_mailbox", org_id="innexar",
-        payload={"address": "job@cliente.com.br"}, idempotency_key="k1")
+    job = await svc.enqueue_job(
+        job_type="create_mailbox",
+        org_id="innexar",
+        payload={"address": "job@cliente.com.br"},
+        idempotency_key="k1",
+    )
+    job2 = await svc.enqueue_job(
+        job_type="create_mailbox",
+        org_id="innexar",
+        payload={"address": "job@cliente.com.br"},
+        idempotency_key="k1",
+    )
     assert job.id == job2.id
     res = await svc.process_pending_jobs()
     assert res == {"done": 1, "failed": 0}

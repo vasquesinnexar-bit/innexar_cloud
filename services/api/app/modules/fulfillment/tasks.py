@@ -16,19 +16,21 @@ logger = logging.getLogger(__name__)
 
 
 async def fulfillment_after_payment(
-    invoice_id: int, *, actor_type: str = "system",
+    invoice_id: int,
+    *,
+    actor_type: str = "system",
     actor_id: str | None = None,
 ) -> None:
     """Background: ensure contract/item/fulfillment + run handlers (1 sessão)."""
     async with AsyncSessionLocal() as db:
         try:
             await facade.after_payment(
-                db, invoice_id, actor_type=actor_type, actor_id=actor_id)
+                db, invoice_id, actor_type=actor_type, actor_id=actor_id
+            )
             await db.commit()
         except Exception:
             await db.rollback()
-            logger.exception("fulfillment_after_payment failed invoice %s",
-                             invoice_id)
+            logger.exception("fulfillment_after_payment failed invoice %s", invoice_id)
             raise
 
 

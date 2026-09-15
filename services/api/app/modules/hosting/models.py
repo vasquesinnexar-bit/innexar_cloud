@@ -110,7 +110,8 @@ class HostingService(Base):
         "HostingStack", back_populates="services"
     )
     backups: Mapped[list["HostingBackup"]] = relationship(
-        "HostingBackup", back_populates="hosting_service",
+        "HostingBackup",
+        back_populates="hosting_service",
         cascade="all, delete-orphan",
     )
 
@@ -167,7 +168,8 @@ class HostingStack(Base):
 
     server: Mapped["HostingServer | None"] = relationship("HostingServer")
     components: Mapped[list["HostingComponent"]] = relationship(
-        "HostingComponent", back_populates="stack",
+        "HostingComponent",
+        back_populates="stack",
         cascade="all, delete-orphan",
     )
     services: Mapped[list["HostingService"]] = relationship(
@@ -183,11 +185,10 @@ class HostingComponent(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     stack_id: Mapped[int] = mapped_column(
         ForeignKey("hosting_stacks.id", ondelete="CASCADE"),
-        nullable=False, index=True,
+        nullable=False,
+        index=True,
     )
-    container_name: Mapped[str] = mapped_column(
-        String(128), nullable=False, index=True
-    )
+    container_name: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     container_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     role: Mapped[str] = mapped_column(
         String(32), default=ComponentRole.OTHER.value, index=True
@@ -218,7 +219,8 @@ class HostingBackup(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     hosting_service_id: Mapped[int] = mapped_column(
         ForeignKey("hosting_services.id", ondelete="CASCADE"),
-        nullable=False, index=True,
+        nullable=False,
+        index=True,
     )
     provider: Mapped[str] = mapped_column(String(32), default="docker")
     backup_type: Mapped[str] = mapped_column(String(32), default="files")
@@ -255,7 +257,8 @@ class FileRevision(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     hosting_service_id: Mapped[int] = mapped_column(
         ForeignKey("hosting_services.id", ondelete="CASCADE"),
-        nullable=False, index=True,
+        nullable=False,
+        index=True,
     )
     path: Mapped[str] = mapped_column(String(512), nullable=False)
     checksum_before: Mapped[str | None] = mapped_column(String(128), nullable=True)
@@ -276,7 +279,8 @@ class HostingJob(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     hosting_service_id: Mapped[int] = mapped_column(
         ForeignKey("hosting_services.id", ondelete="CASCADE"),
-        nullable=False, index=True,
+        nullable=False,
+        index=True,
     )
     invoice_id: Mapped[int | None] = mapped_column(
         ForeignKey("billing_invoices.id"), nullable=True, index=True

@@ -6,8 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.router_org import router_org_write
 from app.core.rbac import RequirePermission
+from app.core.router_org import router_org_write
 from app.models.user import User
 from app.modules.hestia.schemas import (
     HestiaDomainCreate,
@@ -22,9 +22,7 @@ from app.providers.hestia.loader import get_hestia_client
 router = APIRouter(prefix="/hestia", tags=["workspace-hestia"])
 
 
-async def _hestia_client(
-    db: AsyncSession, current: User, org_id: str | None = None
-):
+async def _hestia_client(db: AsyncSession, current: User, org_id: str | None = None):
     return await get_hestia_client(db, org_id=router_org_write(current, org_id))
 
 

@@ -14,9 +14,8 @@ import sys
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import AsyncSessionLocal
-
 import app.main  # noqa: F401 (registra todos os models p/ o mapper)
+from app.core.database import AsyncSessionLocal
 
 logger = logging.getLogger("hosting_cron")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -47,13 +46,20 @@ async def cmd_process() -> dict:
     from app.modules.hosting.service import HostingServiceLayer
 
     async with AsyncSessionLocal() as db:
+
         async def run():
             rows = (
-                await db.execute(
-                    select(HostingJob).where(HostingJob.status == "pending")
-                    .order_by(HostingJob.id).limit(20)
+                (
+                    await db.execute(
+                        select(HostingJob)
+                        .where(HostingJob.status == "pending")
+                        .order_by(HostingJob.id)
+                        .limit(20)
+                    )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
             layer = HostingServiceLayer(db)
             done, failed = 0, 0
             for job in rows:
@@ -69,19 +75,25 @@ async def cmd_process() -> dict:
 
 async def cmd_ssl_check() -> dict:
     """Avisa certificados <14 dias (sem enforce)."""
+    from app.models.customer import Customer
     from app.modules.billing.lifecycle import notify_customer
     from app.modules.hosting.models import HostingService
     from app.modules.hosting.service import _ssl_info
-    from app.models.customer import Customer
 
     async with AsyncSessionLocal() as db:
+
         async def run():
             rows = (
-                await db.execute(
-                    select(HostingService).where(
-                        HostingService.primary_domain.is_not(None))
+                (
+                    await db.execute(
+                        select(HostingService).where(
+                            HostingService.primary_domain.is_not(None)
+                        )
+                    )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
             warned = 0
             for svc in rows:
                 info = _ssl_info(svc.primary_domain or "")
@@ -90,8 +102,13 @@ async def cmd_ssl_check() -> dict:
                     cust = await db.get(Customer, svc.customer_id)
                     if cust:
                         await notify_customer(
-                            db, cust, "ssl_expiring", org_id=svc.org_id,
-                            domain=svc.primary_domain, days=days)
+                            db,
+                            cust,
+                            "ssl_expiring",
+                            org_id=svc.org_id,
+                            domain=svc.primary_domain,
+                            days=days,
+                        )
                         warned += 1
             return {"warned": warned}
 
