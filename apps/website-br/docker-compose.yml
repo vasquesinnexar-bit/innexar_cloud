@@ -1,5 +1,51 @@
+name: innexar-brasil-2-0
+
 services:
-  web:
-    build: .
+  innexar-br-website:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_CRM_BASE_URL: https://crm.innexar.com.br
+        NEXT_PUBLIC_CRM_API_URL: https://api-crm.innexar.com.br
+        NEXT_PUBLIC_CRM_WEBSITE_TOKEN: HeoBP9Ma63TE3Q8Qtv19XyCZ
+    container_name: innexar-brasil-2-0-website
+    restart: unless-stopped
+    env_file:
+      - path: .env.example
+        required: true
+      - path: .env
+        required: false
     environment:
-      - NODE_ENV=production
+      NODE_ENV: production
+      PORT: 3003
+      WORKSPACE_BACKEND_URL: https://api3.innexar.app
+      NEXT_PUBLIC_WORKSPACE_API_URL: https://api3.innexar.app
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://innexar.com.br}
+      NEXT_PUBLIC_SITE_NAME: ${NEXT_PUBLIC_SITE_NAME:-Innexar}
+      NEXT_PUBLIC_COLOR_PRIMARY: ${NEXT_PUBLIC_COLOR_PRIMARY:-teal}
+      NEXT_PUBLIC_CRM_BASE_URL: https://crm.innexar.com.br
+      NEXT_PUBLIC_CRM_API_URL: https://api-crm.innexar.com.br
+      NEXT_PUBLIC_CRM_WEBSITE_TOKEN: HeoBP9Ma63TE3Q8Qtv19XyCZ
+      NEXT_TELEMETRY_DISABLED: 1
+    networks:
+      - internal
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK:-fixelo_fixelo-network}"
+      - "traefik.http.routers.innexar-br20-website.rule=Host(`innexar.com.br`) || Host(`www.innexar.com.br`)"
+      - "traefik.http.routers.innexar-br20-website.entrypoints=websecure"
+      - "traefik.http.routers.innexar-br20-website.tls.certresolver=cloudflare"
+      - "traefik.http.routers.innexar-br20-website.service=innexar-br20-website-service"
+      - "traefik.http.routers.innexar-br20-website.middlewares=innexar-br20-website-compress"
+      - "traefik.http.middlewares.innexar-br20-website-compress.compress=true"
+      - "traefik.http.services.innexar-br20-website-service.loadbalancer.server.port=3003"
+      - "traefik.http.services.innexar-br20-website-service.loadbalancer.passHostHeader=true"
+
+networks:
+  internal:
+    driver: bridge
+  traefik:
+    name: ${TRAEFIK_NETWORK:-fixelo_fixelo-network}
+    external: true
