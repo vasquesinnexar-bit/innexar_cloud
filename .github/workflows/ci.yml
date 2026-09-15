@@ -21,11 +21,11 @@ jobs:
         id: filter
         with:
           filters: |
-            portal: ['apps/portal/**', 'packages/**']
-            website-us: ['apps/website-us/**', 'packages/**']
-            website-br: ['apps/website-br/**', 'packages/**']
-            workspace: ['apps/workspace/**', 'packages/**']
-            api: ['services/api/**']
+            portal: ['apps/portal/**', 'packages/**', '.github/**', 'Makefile', 'package.json]
+            website-us: ['apps/website-us/**', 'packages/**', '.github/**', 'Makefile', 'package.json]
+            website-br: ['apps/website-br/**', 'packages/**', '.github/**', 'Makefile', 'package.json]
+            workspace: ['apps/workspace/**', 'packages/**', '.github/**', 'Makefile', 'package.json]
+            api: ['services/api/**', '.github/**', 'Makefile', 'package.json]
 
   gitleaks:
     runs-on: ubuntu-latest
