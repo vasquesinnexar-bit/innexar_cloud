@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { CalendarClock, AlertCircle } from "lucide-react";
 import { workspaceFetch, getCustomerToken } from "@/lib/workspace-api";
@@ -35,16 +35,19 @@ export function BillingSummaryCard({ locale }: { locale: string }) {
   const intlLocale = getIntlLocale(locale);
   const [summary, setSummary] = useState<Summary | null>(null);
 
-  const load = useCallback(async () => {
-    const token = getCustomerToken();
-    if (!token) return;
-    const res = await workspaceFetch(API_PATHS.INVOICES.SUMMARY, { token });
-    if (res.ok) setSummary(await res.json());
-  }, []);
-
   useEffect(() => {
-    load();
-  }, [load]);
+    let alive = true;
+    (async () => {
+      const token = getCustomerToken();
+      if (!token) return;
+      const res = await workspaceFetch(API_PATHS.INVOICES.SUMMARY, { token });
+      if (!alive) return;
+      if (res.ok) setSummary(await res.json());
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   if (!summary?.next_charge && (summary?.open_count ?? 0) === 0) return null;
 
