@@ -2,15 +2,25 @@
 
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Mail, Plus, KeyRound, Smartphone, ExternalLink, Power, PowerOff, Globe, ShieldCheck, ShieldAlert } from "lucide-react";
+import {
+  Mail,
+  Plus,
+  KeyRound,
+  Smartphone,
+  ExternalLink,
+  Power,
+  PowerOff,
+  Globe,
+  ShieldCheck,
+  ShieldAlert,
+} from "lucide-react";
 import { useEmailService } from "@/hooks/use-email-service";
 import { SkeletonCard } from "@/components/ui/Skeleton";
 import { getIntlLocale } from "@/lib/intl-locale";
 import { workspaceFetch, getCustomerToken } from "@/lib/workspace-api";
 import { API_PATHS } from "@/lib/api-paths";
 
-const WEBMAIL_URL =
-  process.env.NEXT_PUBLIC_WEBMAIL_URL ?? "https://webmail.innexar.com.br";
+const WEBMAIL_URL = process.env.NEXT_PUBLIC_WEBMAIL_URL ?? "https://webmail.innexar.com.br";
 
 import { formatMoney } from "@/lib/format";
 
@@ -21,8 +31,18 @@ export default function EmailServicePage() {
   const locale = useLocale();
   const t = useTranslations("emailPage");
   const intlLocale = getIntlLocale(locale);
-  const { overview, domains, loading, error, actionLoading, load, createMailbox, requestMailbox, changePassword, toggleDisabled } =
-    useEmailService();
+  const {
+    overview,
+    domains,
+    loading,
+    error,
+    actionLoading,
+    load,
+    createMailbox,
+    requestMailbox,
+    changePassword,
+    toggleDisabled,
+  } = useEmailService();
 
   const [showNew, setShowNew] = useState(false);
   const [localPart, setLocalPart] = useState("");
@@ -53,7 +73,9 @@ export default function EmailServicePage() {
       <div className="space-y-4">
         <h1 className="text-3xl font-bold text-theme-primary">{t("pageTitle")}</h1>
         <p className="text-theme-secondary">{t("noService")}</p>
-        <button onClick={load} className="btn">{t("retry")}</button>
+        <button onClick={load} className="btn">
+          {t("retry")}
+        </button>
       </div>
     );
   }
@@ -70,7 +92,11 @@ export default function EmailServicePage() {
       setFormError(t("pwMismatch"));
       return;
     }
-    const input = { local_part: localPart.trim(), display_name: displayName.trim() || undefined, password: pw1 };
+    const input = {
+      local_part: localPart.trim(),
+      display_name: displayName.trim() || undefined,
+      password: pw1,
+    };
     if (!full) {
       const err = await createMailbox(input);
       if (err) setFormError(err);
@@ -89,7 +115,11 @@ export default function EmailServicePage() {
       return;
     }
     if (data && (data as { charged?: boolean }).charged) {
-      setUpgradeMsg(t("upgradeCreated", { total: money((data as { total: number }).total, ent.currency, intlLocale) }));
+      setUpgradeMsg(
+        t("upgradeCreated", {
+          total: money((data as { total: number }).total, ent.currency, intlLocale),
+        })
+      );
     }
     setShowNew(false);
     setLocalPart("");
@@ -153,7 +183,9 @@ export default function EmailServicePage() {
               aria-label="Domínio"
             >
               {domains.map((d) => (
-                <option key={d.id} value={d.domain}>{d.domain}</option>
+                <option key={d.id} value={d.domain}>
+                  {d.domain}
+                </option>
               ))}
             </select>
           </label>
@@ -161,7 +193,9 @@ export default function EmailServicePage() {
       </div>
 
       {upgradeMsg && (
-        <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl text-sm">{upgradeMsg}</div>
+        <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl text-sm">
+          {upgradeMsg}
+        </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -187,10 +221,21 @@ export default function EmailServicePage() {
           </p>
         </div>
         <div className="card-base rounded-2xl p-5 flex flex-col gap-2">
-          <a href={WEBMAIL_URL} target="_blank" rel="noopener" className="btn flex items-center gap-2 justify-center">
+          <a
+            href={WEBMAIL_URL}
+            target="_blank"
+            rel="noopener"
+            className="btn flex items-center gap-2 justify-center"
+          >
             <ExternalLink className="w-4 h-4" /> {t("openWebmail")}
           </a>
-          <button onClick={() => { setShowNew(true); setFormError(null); }} className="btn ghost flex items-center gap-2 justify-center">
+          <button
+            onClick={() => {
+              setShowNew(true);
+              setFormError(null);
+            }}
+            className="btn ghost flex items-center gap-2 justify-center"
+          >
             <Plus className="w-4 h-4" /> {full ? t("requestAccount") : t("newAccount")}
           </button>
         </div>
@@ -209,7 +254,11 @@ export default function EmailServicePage() {
       )}
 
       {wizard && (
-        <div className="card-base rounded-2xl p-6 space-y-4" role="dialog" aria-label="Configurar E-mail">
+        <div
+          className="card-base rounded-2xl p-6 space-y-4"
+          role="dialog"
+          aria-label="Configurar E-mail"
+        >
           <h2 className="text-lg font-bold">Configurar E-mail — passo {wizard.step} de 4</h2>
           {wizard.step === 1 && (
             <div className="space-y-3">
@@ -226,12 +275,17 @@ export default function EmailServicePage() {
               >
                 <option value="">Selecionar…</option>
                 {domains.map((d) => (
-                  <option key={d.id} value={d.domain}>{d.domain}</option>
+                  <option key={d.id} value={d.domain}>
+                    {d.domain}
+                  </option>
                 ))}
               </select>
               <div>
                 <button
-                  onClick={() => { setWizard({ step: 2, domain: wizard.domain }); fetchWizardDns(wizard.domain); }}
+                  onClick={() => {
+                    setWizard({ step: 2, domain: wizard.domain });
+                    fetchWizardDns(wizard.domain);
+                  }}
                   disabled={!wizard.domain}
                   className="btn sm disabled:opacity-50"
                 >
@@ -248,8 +302,16 @@ export default function EmailServicePage() {
                 <>
                   <div className="flex flex-wrap gap-2">
                     {Object.entries(wizardDns.checks).map(([k, v]) => (
-                      <span key={k} title={v.hint} className={`badge ${v.ok ? "ok" : "warn"} flex items-center gap-1`}>
-                        {v.ok ? <ShieldCheck className="w-3 h-3" /> : <ShieldAlert className="w-3 h-3" />}
+                      <span
+                        key={k}
+                        title={v.hint}
+                        className={`badge ${v.ok ? "ok" : "warn"} flex items-center gap-1`}
+                      >
+                        {v.ok ? (
+                          <ShieldCheck className="w-3 h-3" />
+                        ) : (
+                          <ShieldAlert className="w-3 h-3" />
+                        )}
                         {k.toUpperCase()}
                       </span>
                     ))}
@@ -262,18 +324,39 @@ export default function EmailServicePage() {
                 </>
               )}
               <div className="flex gap-2">
-                <button onClick={() => setWizard({ step: 1, domain: wizard.domain })} className="btn ghost sm">Voltar</button>
-                <button onClick={() => setWizard({ step: 3, domain: wizard.domain })} className="btn sm">Continuar</button>
+                <button
+                  onClick={() => setWizard({ step: 1, domain: wizard.domain })}
+                  className="btn ghost sm"
+                >
+                  Voltar
+                </button>
+                <button
+                  onClick={() => setWizard({ step: 3, domain: wizard.domain })}
+                  className="btn sm"
+                >
+                  Continuar
+                </button>
               </div>
             </div>
           )}
           {wizard.step === 3 && (
             <div className="space-y-3">
-              <p className="text-sm text-theme-secondary">3. Crie a primeira conta em {wizard.domain}</p>
+              <p className="text-sm text-theme-secondary">
+                3. Crie a primeira conta em {wizard.domain}
+              </p>
               <div className="flex gap-2">
-                <button onClick={() => setWizard({ step: 2, domain: wizard.domain })} className="btn ghost sm">Voltar</button>
                 <button
-                  onClick={() => { setWizard({ step: 4, domain: wizard.domain }); setShowNew(true); setFormError(null); }}
+                  onClick={() => setWizard({ step: 2, domain: wizard.domain })}
+                  className="btn ghost sm"
+                >
+                  Voltar
+                </button>
+                <button
+                  onClick={() => {
+                    setWizard({ step: 4, domain: wizard.domain });
+                    setShowNew(true);
+                    setFormError(null);
+                  }}
                   className="btn sm"
                 >
                   Criar conta
@@ -287,12 +370,29 @@ export default function EmailServicePage() {
                 4. Configure seu app de e-mail (ou use o webmail) e conclua
               </p>
               <div className="text-sm text-theme-secondary space-y-1">
-                <p><strong>IMAP:</strong> mail.{wizard.domain} · 993 · SSL/TLS</p>
-                <p><strong>SMTP:</strong> mail.{wizard.domain} · 465 SSL ou 587 STARTTLS</p>
+                <p>
+                  <strong>IMAP:</strong> mail.{wizard.domain} · 993 · SSL/TLS
+                </p>
+                <p>
+                  <strong>SMTP:</strong> mail.{wizard.domain} · 465 SSL ou 587 STARTTLS
+                </p>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => setWizard({ step: 3, domain: wizard.domain })} className="btn ghost sm">Voltar</button>
-                <button onClick={() => { setWizard(null); load(wizard.domain); }} className="btn sm">Concluir</button>
+                <button
+                  onClick={() => setWizard({ step: 3, domain: wizard.domain })}
+                  className="btn ghost sm"
+                >
+                  Voltar
+                </button>
+                <button
+                  onClick={() => {
+                    setWizard(null);
+                    load(wizard.domain);
+                  }}
+                  className="btn sm"
+                >
+                  Concluir
+                </button>
               </div>
             </div>
           )}
@@ -313,7 +413,9 @@ export default function EmailServicePage() {
             </div>
             {(m.usage_used || m.quota) && (
               <p className="text-xs text-theme-secondary">
-                {m.usage_used ? `${m.usage_used}${m.usage_pct ? ` (${m.usage_pct}%)` : ""} em uso` : ""}
+                {m.usage_used
+                  ? `${m.usage_used}${m.usage_pct ? ` (${m.usage_pct}%)` : ""} em uso`
+                  : ""}
                 {m.usage_used && m.quota ? " · " : ""}
                 {m.quota ? `quota ${m.quota}` : ""}
               </p>
@@ -322,7 +424,15 @@ export default function EmailServicePage() {
               <a href={WEBMAIL_URL} target="_blank" rel="noopener" className="btn ghost sm">
                 {t("webmail")}
               </a>
-              <button onClick={() => { setPwFor(m.id); setPw1(""); setPw2(""); setFormError(null); }} className="btn ghost sm flex items-center gap-1">
+              <button
+                onClick={() => {
+                  setPwFor(m.id);
+                  setPw1("");
+                  setPw2("");
+                  setFormError(null);
+                }}
+                className="btn ghost sm flex items-center gap-1"
+              >
                 <KeyRound className="w-4 h-4" /> {t("changePassword")}
               </button>
               <button
@@ -330,7 +440,11 @@ export default function EmailServicePage() {
                 disabled={actionLoading === `t-${m.id}`}
                 className="btn ghost sm flex items-center gap-1"
               >
-                {m.status === "active" ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
+                {m.status === "active" ? (
+                  <PowerOff className="w-4 h-4" />
+                ) : (
+                  <Power className="w-4 h-4" />
+                )}
                 {m.status === "active" ? t("disable") : t("enable")}
               </button>
             </div>
@@ -354,7 +468,9 @@ export default function EmailServicePage() {
                 />
                 {formError && <p className="text-red-400 text-sm">{formError}</p>}
                 <div className="flex gap-2">
-                  <button type="submit" className="btn sm">{t("save")}</button>
+                  <button type="submit" className="btn sm">
+                    {t("save")}
+                  </button>
                   <button type="button" onClick={() => setPwFor(null)} className="btn ghost sm">
                     {t("cancel")}
                   </button>
@@ -420,12 +536,16 @@ export default function EmailServicePage() {
           <Smartphone className="w-5 h-5" /> {t("howTo")}
         </h2>
         <div className="text-sm text-theme-secondary space-y-1">
-          <p><strong>IMAP:</strong> mail.{domain} · 993 · SSL/TLS</p>
-          <p><strong>SMTP:</strong> mail.{domain} · 465 SSL · {t("or")} 587 STARTTLS</p>
-          <p><strong>{t("username")}:</strong> {t("fullAddress")}</p>
           <p>
-            {t("apps")}: Webmail · iPhone · Android · Gmail · Outlook · Apple Mail
+            <strong>IMAP:</strong> mail.{domain} · 993 · SSL/TLS
           </p>
+          <p>
+            <strong>SMTP:</strong> mail.{domain} · 465 SSL · {t("or")} 587 STARTTLS
+          </p>
+          <p>
+            <strong>{t("username")}:</strong> {t("fullAddress")}
+          </p>
+          <p>{t("apps")}: Webmail · iPhone · Android · Gmail · Outlook · Apple Mail</p>
         </div>
       </div>
     </div>

@@ -93,25 +93,22 @@ export function useEmailService() {
     [overview?.domain, load]
   );
 
-  const changePassword = useCallback(
-    async (id: number, password: string) => {
-      const token = getCustomerToken();
-      if (!token) return "no-token";
-      setActionLoading(`pw-${id}`);
-      try {
-        const res = await workspaceFetch(API_PATHS.EMAIL.PASSWORD(id), {
-          token,
-          method: "POST",
-          body: JSON.stringify({ password }),
-        });
-        if (!res.ok) return await apiError(res);
-        return null;
-      } finally {
-        setActionLoading(null);
-      }
-    },
-    []
-  );
+  const changePassword = useCallback(async (id: number, password: string) => {
+    const token = getCustomerToken();
+    if (!token) return "no-token";
+    setActionLoading(`pw-${id}`);
+    try {
+      const res = await workspaceFetch(API_PATHS.EMAIL.PASSWORD(id), {
+        token,
+        method: "POST",
+        body: JSON.stringify({ password }),
+      });
+      if (!res.ok) return await apiError(res);
+      return null;
+    } finally {
+      setActionLoading(null);
+    }
+  }, []);
 
   const toggleDisabled = useCallback(
     async (id: number, disabled: boolean) => {
@@ -119,10 +116,10 @@ export function useEmailService() {
       if (!token) return;
       setActionLoading(`t-${id}`);
       try {
-        await workspaceFetch(
-          disabled ? API_PATHS.EMAIL.DISABLE(id) : API_PATHS.EMAIL.ENABLE(id),
-          { token, method: "POST" }
-        );
+        await workspaceFetch(disabled ? API_PATHS.EMAIL.DISABLE(id) : API_PATHS.EMAIL.ENABLE(id), {
+          token,
+          method: "POST",
+        });
         await load();
       } finally {
         setActionLoading(null);
