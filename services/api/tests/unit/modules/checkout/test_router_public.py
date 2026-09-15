@@ -291,6 +291,10 @@ async def test_checkout_bricks_approved(
             "app.modules.billing.post_payment.create_project_and_notify_after_payment",
             new_callable=AsyncMock,
         ),
+        patch(
+            "app.modules.fulfillment.tasks.fulfillment_after_payment",
+            new_callable=AsyncMock,
+        ),
     ):
         r = await client.post(
             "/api/public/checkout/start",
