@@ -11,6 +11,8 @@ from app.core.database import get_db
 from app.models.customer import Customer
 from app.models.customer_user import CustomerUser
 from app.modules.mail.schemas import (
+    DomainDNSResponse,
+    EmailDomainResponse,
     EntitlementResponse,
     MailboxCreate,
     MailboxPasswordChange,
@@ -53,6 +55,45 @@ async def _ctx(
     return MailService(db), cust.id, str(cust.org_id)
 
 
+def _box_dict(svc: MailService, m) -> dict:
+    usage = (svc.mailbox_usage().get((m.address or "").lower()) or {})
+    return {"id": m.id, "address": m.address, "display_name": m.display_name,
+            "quota": m.quota, "status": m.status, "created_at": m.created_at,
+            "usage_used": usage.get("used"), "usage_pct": usage.get("pct"),
+            "last_activity": None}
+
+
+@router.get("/services/email/domains", response_model=list[EmailDomainResponse])
+async def list_own_domains(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current: Annotated[CustomerUser, Depends(get_current_customer)],
+):
+    """Somente os domínios do próprio cliente (sem infra)."""
+    svc, customer_id, org_id = await _ctx(db, current)
+    return await svc.list_domains(customer_id, org_id)
+
+
+@router.get("/services/email/domains/{domain}/dns", response_model=DomainDNSResponse)
+async def own_domain_dns(
+    domain: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current: Annotated[CustomerUser, Depends(get_current_customer)],
+):
+    """DNS do próprio domínio (onboarding; sem infra)."""
+    from app.modules.mail.service import check_domain_dns
+
+    svc, customer_id, org_id = await _ctx(db, current)
+    own = {d.domain for d in await svc.list_domains(customer_id, org_id)}
+    if domain.strip().lower() not in own:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Domínio não encontrado")
+    result = check_domain_dns(domain)
+    expected = svc.expected_dns_records(domain)
+    return {"domain": result["domain"],
+            "all_ok": result["checks"].pop("all_ok", False),
+            "checks": result["checks"],
+            "expected_records": expected["records"]}
+
+
 @router.get("/services/email", response_model=ServiceSummaryResponse)
 async def email_overview(
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -77,11 +118,7 @@ async def email_overview(
             "domain": dom.domain if dom else None,
             "status": dom.status if dom else "pending",
             "entitlement": ent,
-            "mailboxes": [
-                {"id": m.id, "address": m.address, "display_name": m.display_name,
-                 "quota": m.quota, "status": m.status, "created_at": m.created_at}
-                for m in boxes
-            ],
+            "mailboxes": [_box_dict(svc, m) for m in boxes],
         }
     except MailError as e:
         raise _http_error(e)
@@ -95,11 +132,7 @@ async def list_boxes(
 ):
     svc, customer_id, org_id = await _ctx(db, current)
     boxes = await svc.list_mailboxes(customer_id, org_id, domain)
-    return [
-        {"id": m.id, "address": m.address, "display_name": m.display_name,
-         "quota": m.quota, "status": m.status, "created_at": m.created_at}
-        for m in boxes
-    ]
+    return [_box_dict(svc, m) for m in boxes]
 
 
 @router.post("/services/email/mailboxes", response_model=MailboxResponse, status_code=201)
@@ -118,8 +151,7 @@ async def create_box(
         )
     except MailError as e:
         raise _http_error(e)
-    return {"id": m.id, "address": m.address, "display_name": m.display_name,
-            "quota": m.quota, "status": m.status, "created_at": m.created_at}
+    return _box_dict(svc, m)
 
 
 @router.post("/services/email/mailboxes/request", status_code=201)

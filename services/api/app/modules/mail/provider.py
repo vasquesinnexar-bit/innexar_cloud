@@ -156,3 +156,22 @@ class DockerMailserverProvider:
         except (subprocess.TimeoutExpired, FileNotFoundError):
             pass
         return sorted(domains)
+
+    def read_dkim_txt(self, domain: str) -> str | None:
+        """Chave pública DKIM (mail.txt) para colar no DNS. Sem segredos."""
+        import re as _re
+
+        domain = (domain or "").strip().lower()
+        if not _re.fullmatch(r"(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}", domain):
+            return None
+        try:
+            r = subprocess.run(
+                ["docker", "exec", MAIL_CONTAINER, "cat",
+                 f"/tmp/docker-mailserver/opendkim/keys/{domain}/mail.txt"],
+                capture_output=True, text=True, timeout=30, check=False,
+            )
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            return None
+        if r.returncode != 0:
+            return None
+        return r.stdout.strip() or None

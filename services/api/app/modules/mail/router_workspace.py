@@ -11,6 +11,7 @@ from app.models.user import User
 from app.modules.billing.dependencies import require_billing_enabled
 from app.modules.mail.router_portal import _http_error
 from app.modules.mail.schemas import (
+    DomainDNSResponse,
     DomainRegister,
     EmailDomainResponse,
     EntitlementResponse,
@@ -20,7 +21,7 @@ from app.modules.mail.schemas import (
     MailboxResponse,
     SyncResponse,
 )
-from app.modules.mail.service import MailError, MailService
+from app.modules.mail.service import MailError, MailService, check_domain_dns
 
 router = APIRouter()
 
@@ -30,6 +31,14 @@ WRITE = RequirePermission("billing:write")
 
 def _actor(current: User) -> tuple[str, str]:
     return ("staff", str(current.id))
+
+
+def _box_dict(svc: MailService, m) -> dict:
+    usage = (svc.mailbox_usage().get((m.address or "").lower()) or {})
+    return {"id": m.id, "address": m.address, "display_name": m.display_name,
+            "quota": m.quota, "status": m.status, "created_at": m.created_at,
+            "usage_used": usage.get("used"), "usage_pct": usage.get("pct"),
+            "last_activity": None}
 
 
 @router.post("/mail/domains", response_model=EmailDomainResponse, status_code=201)
@@ -49,12 +58,46 @@ async def register_domain(
         d = await svc.register_domain(
             customer_id=customer_id,
             org_id=router_org_write(current, org_id),
-            domain=body.domain, actor_type=actor_type, actor_id=actor_id,
+            domain=body.domain, contract_item_id=body.contract_item_id,
+            actor_type=actor_type, actor_id=actor_id,
         )
     except MailError as e:
         raise _http_error(e)
     return {"id": d.id, "domain": d.domain, "status": d.status,
             "verified_at": d.verified_at}
+
+
+@router.get("/mail/domains", response_model=list[EmailDomainResponse])
+async def list_domains(
+    customer_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current: Annotated[User, Depends(READ)],
+    __: Annotated[None, Depends(require_billing_enabled)],
+    org_id: str | None = None,
+):
+    """Domínios de e-mail do cliente (gerência; sem infra)."""
+    from app.core.router_org import router_org_list_filter
+
+    svc = MailService(db)
+    org_filter = router_org_list_filter(org_id) or current.org_id
+    return await svc.list_domains(customer_id, str(org_filter))
+
+
+@router.get("/mail/domains/{domain}/dns", response_model=DomainDNSResponse)
+async def domain_dns(
+    domain: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current: Annotated[User, Depends(READ)],
+    __: Annotated[None, Depends(require_billing_enabled)],
+):
+    """MX/SPF/DKIM/DMARC + registros esperados (leitura DNS pública)."""
+    svc = MailService(db)
+    result = check_domain_dns(domain)
+    expected = svc.expected_dns_records(domain)
+    return {"domain": result["domain"],
+            "all_ok": result["checks"].pop("all_ok", False),
+            "checks": result["checks"],
+            "expected_records": expected["records"]}
 
 
 @router.get("/mail/customers/{customer_id}/entitlement", response_model=EntitlementResponse)
@@ -87,9 +130,7 @@ async def list_boxes(
     svc = MailService(db)
     org_filter = router_org_list_filter(org_id) or current.org_id
     boxes = await svc.list_mailboxes(customer_id, str(org_filter), domain)
-    return [{"id": m.id, "address": m.address, "display_name": m.display_name,
-             "quota": m.quota, "status": m.status, "created_at": m.created_at}
-            for m in boxes]
+    return [_box_dict(svc, m) for m in boxes]
 
 
 @router.post("/mail/customers/{customer_id}/mailboxes", response_model=MailboxResponse,
@@ -115,8 +156,7 @@ async def create_box(
         )
     except MailError as e:
         raise _http_error(e)
-    return {"id": m.id, "address": m.address, "display_name": m.display_name,
-            "quota": m.quota, "status": m.status, "created_at": m.created_at}
+    return _box_dict(svc, m)
 
 
 @router.post("/mail/mailboxes/{mailbox_id}/password")

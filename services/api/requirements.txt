@@ -17,6 +17,7 @@ stripe>=5.0.0
 cryptography>=42.0.0
 minio>=7.2.0
 slowapi>=0.1.9
+dnspython>=2.6.0
 
 # Dev / Testing
 pytest>=7.4.0

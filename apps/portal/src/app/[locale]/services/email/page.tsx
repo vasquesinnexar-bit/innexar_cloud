@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Mail, Plus, KeyRound, Smartphone, ExternalLink, Power, PowerOff } from "lucide-react";
+import { Mail, Plus, KeyRound, Smartphone, ExternalLink, Power, PowerOff, Globe, ShieldCheck, ShieldAlert } from "lucide-react";
 import { useEmailService } from "@/hooks/use-email-service";
 import { SkeletonCard } from "@/components/ui/Skeleton";
 import { getIntlLocale } from "@/lib/intl-locale";
+import { workspaceFetch, getCustomerToken } from "@/lib/workspace-api";
+import { API_PATHS } from "@/lib/api-paths";
 
 const WEBMAIL_URL =
   process.env.NEXT_PUBLIC_WEBMAIL_URL ?? "https://webmail.innexar.com.br";
@@ -19,7 +21,7 @@ export default function EmailServicePage() {
   const locale = useLocale();
   const t = useTranslations("emailPage");
   const intlLocale = getIntlLocale(locale);
-  const { overview, loading, error, actionLoading, load, createMailbox, requestMailbox, changePassword, toggleDisabled } =
+  const { overview, domains, loading, error, actionLoading, load, createMailbox, requestMailbox, changePassword, toggleDisabled } =
     useEmailService();
 
   const [showNew, setShowNew] = useState(false);
@@ -30,6 +32,12 @@ export default function EmailServicePage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [pwFor, setPwFor] = useState<number | null>(null);
   const [upgradeMsg, setUpgradeMsg] = useState<string | null>(null);
+  const [wizard, setWizard] = useState<null | { step: number; domain: string }>(null);
+  const [wizardDns, setWizardDns] = useState<null | {
+    all_ok: boolean;
+    checks: Record<string, { ok: boolean; hint: string }>;
+  }>(null);
+  const [wizardDnsLoading, setWizardDnsLoading] = useState(false);
 
   if (loading) {
     return (
@@ -107,6 +115,26 @@ export default function EmailServicePage() {
 
   const domain = overview.domain!;
 
+  const fetchWizardDns = async (d: string) => {
+    setWizardDnsLoading(true);
+    setWizardDns(null);
+    try {
+      const token = getCustomerToken();
+      if (!token) return;
+      const res = await workspaceFetch(API_PATHS.EMAIL.DOMAIN_DNS(d), { token });
+      if (res.ok) setWizardDns(await res.json());
+    } finally {
+      setWizardDnsLoading(false);
+    }
+  };
+
+  const startWizard = () => {
+    const d = overview.domain ?? domains[0]?.domain ?? "";
+    if (d && d !== overview.domain) load(d);
+    setWizard({ step: 1, domain: d });
+    setWizardDns(null);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -115,6 +143,21 @@ export default function EmailServicePage() {
           {domain} · {ent.used}/{ent.contracted} · {money(monthly, ent.currency, intlLocale)}
           {t("perMonth")}
         </p>
+        {domains.length > 1 && (
+          <label className="mt-2 inline-flex items-center gap-2 text-sm text-theme-secondary">
+            <Globe className="w-4 h-4" />
+            <select
+              value={domain}
+              onChange={(e) => load(e.target.value)}
+              className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-theme-primary"
+              aria-label="Domínio"
+            >
+              {domains.map((d) => (
+                <option key={d.id} value={d.domain}>{d.domain}</option>
+              ))}
+            </select>
+          </label>
+        )}
       </div>
 
       {upgradeMsg && (
@@ -159,6 +202,103 @@ export default function EmailServicePage() {
         </div>
       )}
 
+      {overview.mailboxes.length === 0 && !wizard && (
+        <button onClick={startWizard} className="btn flex items-center gap-2">
+          <Mail className="w-4 h-4" /> Configurar E-mail
+        </button>
+      )}
+
+      {wizard && (
+        <div className="card-base rounded-2xl p-6 space-y-4" role="dialog" aria-label="Configurar E-mail">
+          <h2 className="text-lg font-bold">Configurar E-mail — passo {wizard.step} de 4</h2>
+          {wizard.step === 1 && (
+            <div className="space-y-3">
+              <p className="text-sm text-theme-secondary">1. Escolha o domínio</p>
+              <select
+                value={wizard.domain}
+                onChange={(e) => {
+                  const d = e.target.value;
+                  setWizard({ step: 1, domain: d });
+                  setWizardDns(null);
+                  load(d);
+                }}
+                className="w-full max-w-md px-4 py-2 rounded-xl bg-white/5 border border-white/10"
+              >
+                <option value="">Selecionar…</option>
+                {domains.map((d) => (
+                  <option key={d.id} value={d.domain}>{d.domain}</option>
+                ))}
+              </select>
+              <div>
+                <button
+                  onClick={() => { setWizard({ step: 2, domain: wizard.domain }); fetchWizardDns(wizard.domain); }}
+                  disabled={!wizard.domain}
+                  className="btn sm disabled:opacity-50"
+                >
+                  Continuar
+                </button>
+              </div>
+            </div>
+          )}
+          {wizard.step === 2 && (
+            <div className="space-y-3">
+              <p className="text-sm text-theme-secondary">2. Verifique o DNS de {wizard.domain}</p>
+              {wizardDnsLoading && <p className="text-sm">Verificando…</p>}
+              {wizardDns && (
+                <>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(wizardDns.checks).map(([k, v]) => (
+                      <span key={k} title={v.hint} className={`badge ${v.ok ? "ok" : "warn"} flex items-center gap-1`}>
+                        {v.ok ? <ShieldCheck className="w-3 h-3" /> : <ShieldAlert className="w-3 h-3" />}
+                        {k.toUpperCase()}
+                      </span>
+                    ))}
+                  </div>
+                  {!wizardDns.all_ok && (
+                    <p className="text-sm text-theme-secondary">
+                      Algum registro pendente — peça ao suporte os valores ou aguarde a propagação.
+                    </p>
+                  )}
+                </>
+              )}
+              <div className="flex gap-2">
+                <button onClick={() => setWizard({ step: 1, domain: wizard.domain })} className="btn ghost sm">Voltar</button>
+                <button onClick={() => setWizard({ step: 3, domain: wizard.domain })} className="btn sm">Continuar</button>
+              </div>
+            </div>
+          )}
+          {wizard.step === 3 && (
+            <div className="space-y-3">
+              <p className="text-sm text-theme-secondary">3. Crie a primeira conta em {wizard.domain}</p>
+              <div className="flex gap-2">
+                <button onClick={() => setWizard({ step: 2, domain: wizard.domain })} className="btn ghost sm">Voltar</button>
+                <button
+                  onClick={() => { setWizard({ step: 4, domain: wizard.domain }); setShowNew(true); setFormError(null); }}
+                  className="btn sm"
+                >
+                  Criar conta
+                </button>
+              </div>
+            </div>
+          )}
+          {wizard.step === 4 && (
+            <div className="space-y-3">
+              <p className="text-sm text-theme-secondary">
+                4. Configure seu app de e-mail (ou use o webmail) e conclua
+              </p>
+              <div className="text-sm text-theme-secondary space-y-1">
+                <p><strong>IMAP:</strong> mail.{wizard.domain} · 993 · SSL/TLS</p>
+                <p><strong>SMTP:</strong> mail.{wizard.domain} · 465 SSL ou 587 STARTTLS</p>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => setWizard({ step: 3, domain: wizard.domain })} className="btn ghost sm">Voltar</button>
+                <button onClick={() => { setWizard(null); load(wizard.domain); }} className="btn sm">Concluir</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {overview.mailboxes.map((m) => (
           <div key={m.id} className="card-base rounded-2xl p-5 space-y-3">
@@ -171,6 +311,13 @@ export default function EmailServicePage() {
                 {m.status === "active" ? t("active") : t("disabled")}
               </span>
             </div>
+            {(m.usage_used || m.quota) && (
+              <p className="text-xs text-theme-secondary">
+                {m.usage_used ? `${m.usage_used}${m.usage_pct ? ` (${m.usage_pct}%)` : ""} em uso` : ""}
+                {m.usage_used && m.quota ? " · " : ""}
+                {m.quota ? `quota ${m.quota}` : ""}
+              </p>
+            )}
             <div className="flex flex-wrap gap-2">
               <a href={WEBMAIL_URL} target="_blank" rel="noopener" className="btn ghost sm">
                 {t("webmail")}

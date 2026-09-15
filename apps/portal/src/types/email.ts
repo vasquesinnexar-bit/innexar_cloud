@@ -14,6 +14,16 @@ export interface EmailMailboxItem {
   quota: string | null;
   status: string;
   created_at: string;
+  usage_used: string | null;
+  usage_pct: string | null;
+  last_activity: string | null;
+}
+
+export interface EmailDomainItem {
+  id: number;
+  domain: string;
+  status: string;
+  verified_at: string | null;
 }
 
 export interface EmailOverview {

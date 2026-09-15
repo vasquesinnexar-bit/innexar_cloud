@@ -47,7 +47,10 @@ logger = logging.getLogger(__name__)
 EMAIL_PRODUCT_SLUGS = ("professional-email",)
 EMAIL_PRODUCT_CATEGORIES = ("email",)
 LOCAL_PART_RE = re.compile(r"^[a-z0-9](?:[a-z0-9._-]{0,62}[a-z0-9])?$")
+DOMAIN_RE = re.compile(r"^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$")
 MIN_PASSWORD_LEN = 8
+DKIM_SELECTOR = "mail"
+MAIL_IPV4 = "173.212.248.236"
 
 
 class MailError(Exception):
@@ -58,6 +61,73 @@ class MailError(Exception):
         self.code = code
         self.detail = detail or code
         self.extra = extra or {}
+
+
+def check_domain_dns(domain: str) -> dict:
+    """Valida MX/SPF/DKIM/DMARC via DNS público (nunca levanta exceção).
+
+    Tolerante: verifica presença + conteúdo plausível, não igualdade exata
+    (cliente pode ter outros TXT como google-site-verification).
+    """
+    domain = _norm_domain(domain)
+    checks: dict[str, dict] = {}
+
+    def _txt(name: str) -> list[str]:
+        try:
+            import dns.resolver
+            res = dns.resolver.Resolver()
+            res.lifetime = res.timeout = 8
+            out = []
+            for r in res.resolve(name, "TXT"):
+                out.append("".join(
+                    p.decode() if isinstance(p, bytes) else str(p)
+                    for p in r.strings))
+            return out
+        except Exception:  # noqa: BLE001 (DNS ausente = check falho, não erro)
+            return []
+
+    def _mx() -> list[str]:
+        try:
+            import dns.resolver
+            res = dns.resolver.Resolver()
+            res.lifetime = res.timeout = 8
+            return sorted(str(r.exchange).rstrip(".").lower()
+                          for r in res.resolve(domain, "MX"))
+        except Exception:  # noqa: BLE001
+            return []
+
+    mx = _mx()
+    mx_ok = any(m == f"mail.{domain}" or m.endswith(f".{domain}") for m in mx)
+    checks["mx"] = {
+        "ok": mx_ok, "found": mx,
+        "expected": f"10 mail.{domain}",
+        "hint": "MX deve apontar para mail." + domain,
+    }
+    txts = _txt(domain)
+    spf = [t for t in txts if t.lower().startswith("v=spf1")]
+    spf_ok = any(("mx" in t.lower() and (MAIL_IPV4 in t or f"mail.{domain}" in t.lower()))
+                 for t in spf)
+    checks["spf"] = {
+        "ok": spf_ok, "found": spf,
+        "expected": f"v=spf1 mx a:mail.{domain} ip4:{MAIL_IPV4} -all",
+        "hint": "SPF precisa autorizar nosso MX/IP",
+    }
+    dkim = _txt(f"{DKIM_SELECTOR}._domainkey.{domain}")
+    dkim_ok = any("v=dkim1" in t.lower().replace(" ", "") for t in dkim)
+    checks["dkim"] = {
+        "ok": dkim_ok, "found": [t[:80] + ("…" if len(t) > 80 else "") for t in dkim],
+        "expected": f"{DKIM_SELECTOR}._domainkey.{domain} TXT (chave do mailserver)",
+        "hint": "DKIM é gerado no mailserver (mail-admin)",
+    }
+    dmarc = _txt(f"_dmarc.{domain}")
+    dmarc_ok = any("v=dmarc1" in t.lower().replace(" ", "") for t in dmarc)
+    checks["dmarc"] = {
+        "ok": dmarc_ok, "found": dmarc,
+        "expected": f"v=DMARC1; p=quarantine; rua=mailto:postmaster@{domain}",
+        "hint": "DMARC protege contra spoofing",
+    }
+    checks["all_ok"] = all(c["ok"] for c in checks.values() if isinstance(c, dict))
+    return {"domain": domain, "checks": checks}
 
 
 def _norm_domain(domain: str) -> str:
@@ -224,6 +294,7 @@ class MailService:
     # -- domains ----------------------------------------------------------
     async def register_domain(
         self, *, customer_id: int, org_id: str, domain: str,
+        contract_item_id: int | None = None,
         actor_type: str, actor_id: str | None,
     ) -> EmailDomain:
         domain = _norm_domain(domain)
@@ -231,6 +302,11 @@ class MailService:
             raise MailError("email_domain_not_configured", "Domínio inválido")
         existing = await self._get_domain(customer_id, org_id, domain)
         if existing:
+            if contract_item_id and not existing.service_id:
+                svc = await self._get_or_create_service(
+                    customer_id, org_id, contract_item_id)
+                existing.service_id = svc.id
+                await self._db.flush()
             return existing
         try:
             known = self._provider.list_domains()
@@ -248,15 +324,47 @@ class MailService:
         self._db.add(d)
         await self._db.flush()
         d.verified_at = utc_now()
-        svc = await self._get_or_create_service(customer_id, org_id, None)
+        svc = await self._get_or_create_service(
+            customer_id, org_id, contract_item_id)
         d.service_id = svc.id
         await self._audit(
             entity="email_domain", entity_id=str(d.id), action="email_domain_added",
             actor_type=actor_type, actor_id=actor_id, org_id=org_id,
-            payload={"domain": domain},
+            payload={"domain": domain, "contract_item_id": contract_item_id},
         )
         await self._db.flush()
         return d
+
+    def expected_dns_records(self, domain: str) -> dict:
+        """Registros DNS que o cliente deve ter (chave DKIM real do mailserver)."""
+        domain = _norm_domain(domain)
+        try:
+            dkim_txt = self._provider.read_dkim_txt(domain)
+        except MailProviderError:
+            dkim_txt = None
+        return {
+            "domain": domain,
+            "records": [
+                {"type": "MX", "host": "@", "value": f"10 mail.{domain}"},
+                {"type": "TXT", "host": "@",
+                 "value": f"v=spf1 mx a:mail.{domain} ip4:{MAIL_IPV4} -all"},
+                {"type": "TXT", "host": f"{DKIM_SELECTOR}._domainkey",
+                 "value": dkim_txt or "(gerar DKIM no mail-admin primeiro)"},
+                {"type": "TXT", "host": "_dmarc",
+                 "value": f"v=DMARC1; p=quarantine; rua=mailto:postmaster@{domain}"},
+                {"type": "A", "host": "mail", "value": MAIL_IPV4},
+            ],
+            "auto_provision": "supported_when_dns_credentials",
+        }
+
+    def mailbox_usage(self) -> dict[str, dict]:
+        """Uso live por endereço {address: {used, quota, pct}}. Sem exceção."""
+        try:
+            infos = self._provider.list_mailboxes()
+        except MailProviderError:
+            return {}
+        return {i.address.lower(): {"used": i.used, "quota": i.quota,
+                                    "pct": i.pct} for i in infos}
 
     async def _get_or_create_service(
         self, customer_id: int, org_id: str, contract_item_id: int | None

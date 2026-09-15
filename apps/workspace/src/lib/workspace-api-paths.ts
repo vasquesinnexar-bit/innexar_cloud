@@ -151,6 +151,8 @@ export const WORKSPACE_API_PATHS = {
       `${PREFIX}/mail/mailboxes/${encodeURIComponent(String(id))}?customer_id=${encodeURIComponent(String(customerId))}`,
     DOMAINS: (customerId: string | number) =>
       `${PREFIX}/mail/domains?customer_id=${encodeURIComponent(String(customerId))}`,
+    DOMAIN_DNS: (domain: string) =>
+      `${PREFIX}/mail/domains/${encodeURIComponent(domain)}/dns`,
   },
   SUPPORT: {
     TICKETS: (query?: string) =>

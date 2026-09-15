@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, field_validator
 
 class DomainRegister(BaseModel):
     domain: str
+    contract_item_id: int | None = None
 
 
 class EmailDomainResponse(BaseModel):
@@ -16,6 +17,20 @@ class EmailDomainResponse(BaseModel):
     domain: str
     status: str
     verified_at: datetime | None
+
+
+class DNSCheckItem(BaseModel):
+    ok: bool
+    found: list[str] = []
+    expected: str = ""
+    hint: str = ""
+
+
+class DomainDNSResponse(BaseModel):
+    domain: str
+    all_ok: bool
+    checks: dict[str, DNSCheckItem]
+    expected_records: list[dict]
 
 
 class MailboxCreate(BaseModel):
@@ -43,6 +58,9 @@ class MailboxResponse(BaseModel):
     quota: str | None
     status: str
     created_at: datetime
+    usage_used: str | None = None
+    usage_pct: str | None = None
+    last_activity: str | None = None  # indisponível no mailserver atual
 
 
 class EntitlementResponse(BaseModel):

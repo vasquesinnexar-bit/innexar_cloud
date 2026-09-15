@@ -3,15 +3,16 @@
 import { useState, useCallback } from "react";
 import { workspaceFetch, getCustomerToken } from "@/lib/workspace-api";
 import { API_PATHS } from "@/lib/api-paths";
-import type { EmailOverview } from "@/types/email";
+import type { EmailOverview, EmailDomainItem } from "@/types/email";
 
 export function useEmailService() {
   const [overview, setOverview] = useState<EmailOverview | null>(null);
+  const [domains, setDomains] = useState<EmailDomainItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (domain?: string) => {
     const token = getCustomerToken();
     if (!token) {
       setLoading(false);
@@ -20,9 +21,18 @@ export function useEmailService() {
     setLoading(true);
     setError("");
     try {
-      const res = await workspaceFetch(API_PATHS.EMAIL.OVERVIEW, { token });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setOverview((await res.json()) as EmailOverview);
+      const [oRes, dRes] = await Promise.all([
+        workspaceFetch(
+          domain
+            ? `${API_PATHS.EMAIL.OVERVIEW}?domain=${encodeURIComponent(domain)}`
+            : API_PATHS.EMAIL.OVERVIEW,
+          { token }
+        ),
+        workspaceFetch(API_PATHS.EMAIL.DOMAINS, { token }),
+      ]);
+      if (!oRes.ok) throw new Error(`HTTP ${oRes.status}`);
+      setOverview((await oRes.json()) as EmailOverview);
+      if (dRes.ok) setDomains((await dRes.json()) as EmailDomainItem[]);
     } catch {
       setError("load");
     } finally {
@@ -123,6 +133,7 @@ export function useEmailService() {
 
   return {
     overview,
+    domains,
     loading,
     error,
     actionLoading,

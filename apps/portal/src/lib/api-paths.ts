@@ -58,6 +58,9 @@ export const API_PATHS = {
   },
   EMAIL: {
     OVERVIEW: "/api/portal/services/email",
+    DOMAINS: "/api/portal/services/email/domains",
+    DOMAIN_DNS: (domain: string) =>
+      `/api/portal/services/email/domains/${encodeURIComponent(domain)}/dns`,
     MAILBOXES: "/api/portal/services/email/mailboxes",
     REQUEST: "/api/portal/services/email/mailboxes/request",
     PASSWORD: (id: string | number) => `/api/portal/services/email/mailboxes/${id}/password`,
