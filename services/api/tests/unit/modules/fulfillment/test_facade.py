@@ -3,11 +3,6 @@
 from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
-import pytest
-from httpx import AsyncClient
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.security import create_token_staff
 from app.models.customer import Customer
 from app.models.user import User
@@ -23,6 +18,9 @@ from app.modules.fulfillment import facade
 from app.modules.fulfillment.enums import FulfillmentStatus
 from app.modules.fulfillment.models import Fulfillment
 from app.modules.fulfillment.registry import resolve_handler
+from httpx import AsyncClient
+from sqlalchemy import insert, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def _customer(db: AsyncSession, tag: str) -> Customer:
@@ -345,7 +343,6 @@ async def test_caso10_retry_forbidden_without_permission(client: AsyncClient,
     from app.core.security import hash_password
     from app.models.permission import Permission
     from app.models.role import Role, role_permissions, user_roles
-    from sqlalchemy import insert
 
     db = db_session
     pread = (await db.execute(
