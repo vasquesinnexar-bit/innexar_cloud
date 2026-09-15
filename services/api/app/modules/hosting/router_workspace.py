@@ -5,6 +5,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.audit import log_audit
 from app.core.database import get_db
@@ -17,10 +18,12 @@ from app.modules.hosting.models import (
     HostingJob,
     HostingServer,
     HostingService,
+    HostingStack,
 )
 from app.modules.hosting.provider import HostingError
 from app.modules.hosting.schemas import (
     BackupCreateBody,
+    ComponentResponse,
     DiffResponse,
     FileEntry,
     FileRenameBody,
@@ -31,6 +34,9 @@ from app.modules.hosting.schemas import (
     MkdirBody,
     RevisionResponse,
     ServerResponse,
+    StackLinkCreate,
+    StackResponse,
+    StackUpdate,
 )
 from app.modules.hosting.service import HostingServiceLayer
 
@@ -55,6 +61,8 @@ def _err(e: Exception) -> HTTPException:
         "unauthorized_hosting_access": status.HTTP_404_NOT_FOUND,
         "invalid_path": status.HTTP_422_UNPROCESSABLE_CONTENT,
         "job_conflict": status.HTTP_409_CONFLICT,
+        "platform_infra": status.HTTP_409_CONFLICT,
+        "empty_stack": status.HTTP_422_UNPROCESSABLE_CONTENT,
         "job_failed": status.HTTP_502_BAD_GATEWAY,
     }
     return HTTPException(mapping.get(code, status.HTTP_502_BAD_GATEWAY),
@@ -81,6 +89,131 @@ async def discovery(
 ):
     """Containers existentes (somente leitura, sem vincular)."""
     return _layer(db).discovery()
+
+
+@router.get("/hosting/discovery/stacks")
+async def discovery_stacks(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current: Annotated[User, Depends(ADMIN)],
+    org_id: str | None = None,
+):
+    """Stacks agrupadas por projeto compose + estado de vínculo (leitura)."""
+    from app.core.router_org import router_org_list_filter
+
+    layer = _layer(db)
+    groups = layer.discovery_stacks()
+    linked = await layer.stack_link_state(router_org_list_filter(org_id))
+    for g in groups:
+        g["linked"] = linked.get(g["key"])
+    return groups
+
+
+@router.get("/hosting/stacks", response_model=list[StackResponse])
+async def list_stacks(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current: Annotated[User, Depends(READ)],
+    org_id: str | None = None,
+    customer_id: int | None = None,
+    stack_type: str | None = None,
+):
+    from app.core.router_org import router_org_list_filter
+
+    of = router_org_list_filter(org_id)
+    q = select(HostingStack).order_by(HostingStack.id.desc())
+    if of is not None:
+        q = q.where(HostingStack.org_id == of)
+    if customer_id is not None:
+        q = q.where(HostingStack.customer_id == customer_id)
+    if stack_type:
+        q = q.where(HostingStack.stack_type == stack_type)
+    q = q.options(selectinload(HostingStack.components))
+    return list((await db.execute(q)).scalars().all())
+
+
+@router.get("/hosting/stacks/{stack_id}", response_model=StackResponse)
+async def get_stack(
+    stack_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current: Annotated[User, Depends(READ)],
+    org_id: str | None = None,
+):
+    from app.core.router_org import router_org_list_filter
+
+    of = router_org_list_filter(org_id)
+    q = select(HostingStack).where(HostingStack.id == stack_id)
+    if of is not None:
+        q = q.where(HostingStack.org_id == of)
+    q = q.options(selectinload(HostingStack.components))
+    stack = (await db.execute(q)).scalar_one_or_none()
+    if not stack:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Stack não encontrada")
+    return stack
+
+
+@router.post("/hosting/stacks/link", response_model=StackResponse,
+             status_code=201)
+async def link_stack(
+    body: StackLinkCreate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current: Annotated[User, Depends(ADMIN)],
+    __: Annotated[None, Depends(require_billing_enabled)],
+    org_id: str | None = None,
+):
+    """Vincula a STACK inteira ao cliente (gerência; não toca containers)."""
+    from app.core.router_org import router_org_write
+
+    try:
+        stack = await _layer(db).link_stack(
+            customer_id=body.customer_id,
+            org_id=router_org_write(current, org_id),
+            compose_project=(body.compose_project or "").strip() or None,
+            container_names=[c.strip() for c in body.container_names if c.strip()],
+            contract_item_id=body.contract_item_id,
+            name=(body.name or "").strip() or None,
+            primary_domain=(body.primary_domain or "").strip() or None,
+            actor_type="staff", actor_id=str(current.id),
+        )
+    except HostingError as e:
+        raise _err(e)
+    return stack
+
+
+@router.patch("/hosting/stacks/{stack_id}", response_model=StackResponse)
+async def update_stack(
+    stack_id: int,
+    body: StackUpdate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current: Annotated[User, Depends(ADMIN)],
+    org_id: str | None = None,
+):
+    from app.core.router_org import router_org_write
+    from app.modules.hosting.enums import StackType
+
+    org = router_org_write(current, org_id)
+    stack = await db.get(HostingStack, stack_id)
+    if not stack or stack.org_id != org:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Stack não encontrada")
+    if body.name is not None:
+        stack.name = body.name.strip() or stack.name
+    if body.description is not None:
+        stack.description = body.description
+    if body.primary_domain is not None:
+        stack.primary_domain = body.primary_domain.strip().lower() or None
+    if body.contract_item_id is not None:
+        stack.contract_item_id = body.contract_item_id
+    if body.stack_type is not None:
+        allowed = {StackType.CUSTOMER_SERVICE.value, StackType.PLATFORM_INFRA.value}
+        if body.stack_type not in allowed:
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT,
+                                "stack_type inválido")
+        stack.stack_type = body.stack_type
+    await db.flush()
+    await log_audit(db, entity="hosting_stack", entity_id=str(stack.id),
+                    action="hosting_stack_updated", actor_type="staff",
+                    actor_id=str(current.id), org_id=org)
+    await db.flush()
+    await db.refresh(stack, ["components"])
+    return stack
 
 
 @router.get("/hosting/servers/overview")

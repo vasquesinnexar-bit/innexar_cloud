@@ -10,8 +10,10 @@ from app.core.database import Base
 from app.core.datetime_utils import utc_now
 from app.modules.hosting.enums import (
     BackupStatus,
+    ComponentRole,
     HostingJobStatus,
     HostingServiceStatus,
+    StackType,
 )
 
 
@@ -55,6 +57,9 @@ class HostingService(Base):
     )
     server_id: Mapped[int | None] = mapped_column(
         ForeignKey("hosting_servers.id"), nullable=True, index=True
+    )
+    stack_id: Mapped[int | None] = mapped_column(
+        ForeignKey("hosting_stacks.id"), nullable=True, index=True
     )
     org_id: Mapped[str] = mapped_column(String(64), default="innexar", index=True)
     runtime_type: Mapped[str] = mapped_column(String(32), default="docker")
@@ -101,9 +106,107 @@ class HostingService(Base):
     server: Mapped["HostingServer | None"] = relationship(
         "HostingServer", back_populates="services"
     )
+    stack: Mapped["HostingStack | None"] = relationship(
+        "HostingStack", back_populates="services"
+    )
     backups: Mapped[list["HostingBackup"]] = relationship(
         "HostingBackup", back_populates="hosting_service",
         cascade="all, delete-orphan",
+    )
+
+
+class HostingStack(Base):
+    """Aplicação/stack do cliente: UM vínculo comercial, N componentes.
+
+    Containers são componentes técnicos internos (HostingComponent);
+    o cliente se relaciona com a STACK, nunca com o container isolado.
+    """
+
+    __tablename__ = "hosting_stacks"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    customer_id: Mapped[int | None] = mapped_column(
+        ForeignKey("customers.id"), nullable=True, index=True
+    )
+    contract_item_id: Mapped[int | None] = mapped_column(
+        ForeignKey("billing_contract_items.id"), nullable=True, index=True
+    )
+    server_id: Mapped[int | None] = mapped_column(
+        ForeignKey("hosting_servers.id"), nullable=True, index=True
+    )
+    org_id: Mapped[str] = mapped_column(String(64), default="innexar", index=True)
+    name: Mapped[str] = mapped_column(String(128), nullable=False)
+    slug: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(
+        String(32), default=HostingServiceStatus.PENDING.value, index=True
+    )
+    stack_type: Mapped[str] = mapped_column(
+        String(32), default=StackType.CUSTOMER_SERVICE.value, index=True
+    )
+    primary_domain: Mapped[str | None] = mapped_column(
+        String(255), nullable=True, index=True
+    )
+    # Identidade Docker Compose (somente leitura/gerência, nunca recria stack).
+    compose_project: Mapped[str | None] = mapped_column(
+        String(128), nullable=True, index=True
+    )
+    working_dir: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    root_path: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    environment: Mapped[str] = mapped_column(String(32), default="production")
+    activated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    meta: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now
+    )
+
+    server: Mapped["HostingServer | None"] = relationship("HostingServer")
+    components: Mapped[list["HostingComponent"]] = relationship(
+        "HostingComponent", back_populates="stack",
+        cascade="all, delete-orphan",
+    )
+    services: Mapped[list["HostingService"]] = relationship(
+        "HostingService", back_populates="stack"
+    )
+
+
+class HostingComponent(Base):
+    """Componente técnico interno de uma stack (1 container = 1 componente)."""
+
+    __tablename__ = "hosting_stack_components"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    stack_id: Mapped[int] = mapped_column(
+        ForeignKey("hosting_stacks.id", ondelete="CASCADE"),
+        nullable=False, index=True,
+    )
+    container_name: Mapped[str] = mapped_column(
+        String(128), nullable=False, index=True
+    )
+    container_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    role: Mapped[str] = mapped_column(
+        String(32), default=ComponentRole.OTHER.value, index=True
+    )
+    image: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    status: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    is_public: Mapped[bool] = mapped_column(default=False, nullable=False)
+    internal_only: Mapped[bool] = mapped_column(default=True, nullable=False)
+    ports: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    meta: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now
+    )
+
+    stack: Mapped["HostingStack"] = relationship(
+        "HostingStack", back_populates="components"
     )
 
 

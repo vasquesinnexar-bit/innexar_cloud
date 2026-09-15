@@ -45,3 +45,24 @@ class BackupStatus(enum.StrEnum):
     COMPLETED = "completed"
     FAILED = "failed"
     EXPIRED = "expired"
+
+
+class StackType(enum.StrEnum):
+    """Classificação da stack: serviço de cliente vs infra da plataforma."""
+
+    CUSTOMER_SERVICE = "customer_service"
+    PLATFORM_INFRA = "platform_infra"
+
+
+class ComponentRole(enum.StrEnum):
+    """Papel técnico de um componente dentro da stack."""
+
+    WEB = "web"
+    API = "api"
+    DATABASE = "database"
+    STORAGE = "storage"
+    CACHE = "cache"
+    WORKER = "worker"
+    QUEUE = "queue"
+    PROXY = "proxy"
+    OTHER = "other"

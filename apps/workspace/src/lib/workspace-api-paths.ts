@@ -125,6 +125,14 @@ export const WORKSPACE_API_PATHS = {
       `${PREFIX}/hosting/services/${encodeURIComponent(String(id))}/backups`,
     BACKUP_RESTORE: (id: string | number) =>
       `${PREFIX}/hosting/backups/${encodeURIComponent(String(id))}/restore`,
+    STACKS_DISCOVERY: `${PREFIX}/hosting/discovery/stacks`,
+    STACKS: (customerId?: string | number) =>
+      customerId
+        ? `${PREFIX}/hosting/stacks?customer_id=${encodeURIComponent(String(customerId))}`
+        : `${PREFIX}/hosting/stacks`,
+    STACK_DETAIL: (id: string | number) =>
+      `${PREFIX}/hosting/stacks/${encodeURIComponent(String(id))}`,
+    STACK_LINK: `${PREFIX}/hosting/stacks/link`,
   },
   MAIL: {
     ENTITLEMENT: (customerId: string | number) =>

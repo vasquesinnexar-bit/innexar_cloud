@@ -23,17 +23,21 @@ from app.models.customer import Customer
 from app.modules.hosting import paths
 from app.modules.hosting.enums import (
     BackupStatus,
+    ComponentRole,
     HostingJobStatus,
     HostingJobType,
     HostingServiceStatus,
     RuntimeStatus,
+    StackType,
 )
 from app.modules.hosting.models import (
     FileRevision,
     HostingBackup,
+    HostingComponent,
     HostingJob,
     HostingServer,
     HostingService,
+    HostingStack,
 )
 from app.modules.hosting.provider import DockerHostingProvider, HostingError
 
@@ -147,6 +151,267 @@ class HostingServiceLayer:
                 "service": labels.get("com.docker.compose.service"),
             })
         return rows
+
+    # -- stacks (TAREFA 1: aplicação = N containers) ------------------------
+    # Projetos compose que são infra da própria plataforma (nunca vinculáveis).
+    PLATFORM_PROJECTS = frozenset({
+        "traefik", "observability", "innexar-platform", "innexar-mail",
+        "innexar-usa", "innexar-usa-workspace", "innexar-brasil-2-0", "portainer",
+    })
+    # Containers avulsos (sem compose) que são infra da plataforma.
+    PLATFORM_CONTAINERS = frozenset({
+        "portainer", "fixelo-traefik", "fixelo-attack-block",
+        "innexar-mailserver", "innexar-mail-admin", "innexar-roundcube",
+        "innexar-mail-autoconfig",
+    })
+
+    @staticmethod
+    def _label_value(raw, key: str) -> str | None:
+        """Extrai UM label de forma robusta (regex; valores traefik têm vírgula)."""
+        if isinstance(raw, dict):
+            v = raw.get(key)
+            return str(v) if v is not None else None
+        m = re.search(rf"{re.escape(key)}=([^,]+)", str(raw or ""))
+        return m.group(1).strip() if m else None
+
+    @classmethod
+    def _is_platform(cls, project: str | None, container: str) -> bool:
+        if project and project in cls.PLATFORM_PROJECTS:
+            return True
+        return container in cls.PLATFORM_CONTAINERS
+
+    @staticmethod
+    def infer_role(service: str | None, image: str | None) -> str:
+        """Papel técnico do componente (heurística determinística)."""
+        s = (service or "").lower()
+        img = (image or "").lower()
+        if any(k in img for k in ("postgres", "mysql", "mariadb", "mongo",
+                                  "libsql", "sqlite", "pgbouncer")) \
+                or s in ("db", "database", "postgres", "mysql", "pg",
+                         "sqld", "pgbouncer"):
+            return ComponentRole.DATABASE.value
+        if any(k in img for k in ("redis", "memcached", "dragonfly")) \
+                or s in ("redis", "cache", "valkey"):
+            return ComponentRole.CACHE.value
+        if any(k in img for k in ("minio/minio", "minio/mc", "seaweed", "s3")) \
+                or s in ("minio", "storage", "s3", "minio-init"):
+            return ComponentRole.STORAGE.value
+        if any(k in img for k in ("rabbitmq", "nats", "kafka")) \
+                or s in ("queue", "rabbitmq", "nats", "kafka"):
+            return ComponentRole.QUEUE.value
+        if any(k in img for k in ("traefik", "nginx", "caddy", "haproxy")) \
+                or s in ("proxy", "traefik", "nginx", "lb"):
+            return ComponentRole.PROXY.value
+        if any(k in s for k in ("worker", "celery", "cron", "scheduler",
+                                "evolution")) or "evolution-api" in img:
+            return ComponentRole.WORKER.value
+        if any(k in s for k in ("api", "backend", "server")) \
+                or any(k in img for k in ("fastapi", "uvicorn", "gunicorn")):
+            return ComponentRole.API.value
+        if any(k in s for k in ("web", "frontend", "site", "app", "www")):
+            return ComponentRole.WEB.value
+        return ComponentRole.OTHER.value
+
+    @classmethod
+    def group_stacks(cls, rows: list[dict]) -> list[dict]:
+        """Agrupa containers (discovery flat) por projeto compose.
+
+        Sem label compose → stack standalone de 1 container (chave explícita,
+        NUNCA por prefixo de nome).
+        """
+        groups: dict[str, dict] = {}
+        for c in rows:
+            raw_labels = c.get("_labels_raw")
+            project = c.get("project") or cls._label_value(raw_labels, "com.docker.compose.project")
+            cname = c.get("name", "?")
+            if project:
+                key = f"compose:{project}"
+            else:
+                key = f"standalone:{cname}"
+            g = groups.get(key)
+            if g is None:
+                g = groups[key] = {
+                    "key": key, "compose_project": project,
+                    "name": project or cname, "containers": [],
+                    "workdir": c.get("workdir"),
+                }
+                if not g["workdir"] and raw_labels is not None:
+                    g["workdir"] = cls._label_value(
+                        raw_labels, "com.docker.compose.project.working_dir")
+            g["containers"].append(c)
+        out = []
+        for g in groups.values():
+            domains = sorted({d for c in g["containers"]
+                              for d in _traefik_hosts(
+                                  cls._parse_ps_labels(c.get("_labels_raw")))})
+            comp_rows = []
+            for c in g["containers"]:
+                role = cls.infer_role(c.get("service"), c.get("image"))
+                if role == ComponentRole.OTHER.value and domains:
+                    # Expõe domínio público mas papel desconhecido → é web.
+                    role = ComponentRole.WEB.value
+                comp_rows.append(
+                    {"name": c.get("name"), "image": c.get("image"),
+                     "status": c.get("status"), "ports": c.get("ports"),
+                     "service": c.get("service"), "role": role})
+            roles = sorted({c["role"] for c in comp_rows})
+            states = [str(c.get("status") or "").lower()
+                      for c in g["containers"]]
+            running = sum(1 for s in states if s == "running")
+            health = ("healthy" if running == len(states) and states
+                      else "degraded" if running else "stopped")
+            platform = cls._is_platform(
+                g["compose_project"],
+                g["containers"][0]["name"] if g["containers"] else "")
+            # standalone: cada container decide sozinho
+            if not g["compose_project"]:
+                platform = all(cls._is_platform(
+                    None, c["name"]) for c in g["containers"])
+            out.append({
+                "key": g["key"], "compose_project": g["compose_project"],
+                "name": g["name"], "workdir": g["workdir"],
+                "containers_total": len(g["containers"]),
+                "containers_running": running, "health": health,
+                "roles": roles, "domains": domains,
+                "stack_type": (StackType.PLATFORM_INFRA.value if platform
+                               else StackType.CUSTOMER_SERVICE.value),
+                "containers": comp_rows,
+            })
+        return sorted(out, key=lambda g: (g["stack_type"], g["name"]))
+
+    def discovery_stacks(self) -> list[dict]:
+        """Discovery agrupado por stack + estado de vínculo (somente leitura)."""
+        rows = []
+        for c in self._provider.list_containers():
+            raw = c.get("Labels")
+            rows.append({
+                "name": (c.get("Names") or "?").lstrip("/"),
+                "image": c.get("Image"),
+                "status": c.get("State"),
+                "ports": c.get("Ports"),
+                "project": self._label_value(raw, "com.docker.compose.project"),
+                "workdir": self._label_value(
+                    raw, "com.docker.compose.project.working_dir"),
+                "service": self._label_value(raw, "com.docker.compose.service"),
+                "_labels_raw": raw if isinstance(raw, dict) else raw,
+            })
+        return self.group_stacks(rows)
+
+    async def stack_link_state(self, org_id: str | None = None) -> dict[str, dict]:
+        """{(server,compose_project|standalone:name) -> vínculo} para o discovery."""
+        server = await self._ensure_server(org_id or "innexar")
+        q = select(HostingStack).where(HostingStack.server_id == server.id)
+        if org_id:
+            q = q.where(HostingStack.org_id == org_id)
+        out: dict[str, dict] = {}
+        for st in (await self._db.execute(q)).scalars().all():
+            if st.compose_project:
+                out[f"compose:{st.compose_project}"] = {
+                    "stack_id": st.id, "customer_id": st.customer_id,
+                    "name": st.name, "status": st.status,
+                }
+            else:
+                for comp in st.components:
+                    out[f"standalone:{comp.container_name}"] = {
+                        "stack_id": st.id, "customer_id": st.customer_id,
+                        "name": st.name, "status": st.status,
+                    }
+        return out
+
+    async def link_stack(
+        self, *, customer_id: int, org_id: str, compose_project: str | None,
+        container_names: list[str], contract_item_id: int | None = None,
+        name: str | None = None, primary_domain: str | None = None,
+        stack_type: str = StackType.CUSTOMER_SERVICE.value,
+        actor_type: str, actor_id: str | None,
+    ) -> HostingStack:
+        """Vincula a STACK inteira (gerência/metadados; não toca containers)."""
+        names = sorted(set(c.strip() for c in container_names if c.strip()))
+        if self._is_platform(compose_project, names[0] if names else ""):
+            raise HostingError("platform_infra",
+                               "Infra da plataforma não é vinculável a clientes")
+        if stack_type == StackType.PLATFORM_INFRA.value:
+            raise HostingError("platform_infra",
+                               "Infra da plataforma não é vinculável a clientes")
+        if not names:
+            raise HostingError("empty_stack", "stack sem containers")
+        server = await self._ensure_server(org_id)
+        # Idempotência: mesma (server, compose_project) ou standalone.
+        if compose_project:
+            dup = (await self._db.execute(
+                select(HostingStack).where(
+                    HostingStack.server_id == server.id,
+                    HostingStack.compose_project == compose_project,
+                ))).scalar_one_or_none()
+            if dup:
+                await self._db.refresh(dup, ["components", "services"])
+                return dup
+            slug = compose_project
+        else:
+            slug = f"standalone-{container_names[0]}"
+            dup = (await self._db.execute(
+                select(HostingStack).where(
+                    HostingStack.server_id == server.id,
+                    HostingStack.slug == slug,
+                ))).scalar_one_or_none()
+            if dup:
+                await self._db.refresh(dup, ["components", "services"])
+                return dup
+        stack = HostingStack(
+            customer_id=customer_id, contract_item_id=contract_item_id,
+            server_id=server.id, org_id=org_id,
+            name=(name or compose_project or container_names[0]).strip(),
+            slug=slug, compose_project=compose_project,
+            primary_domain=(primary_domain or "").strip().lower() or None,
+            status=HostingServiceStatus.ACTIVE.value, stack_type=stack_type,
+            activated_at=utc_now(),
+            meta={"containers": names},
+        )
+        self._db.add(stack)
+        await self._db.flush()
+        for cname in names:
+            try:
+                info = self._provider.inspect(cname)
+            except HostingError:
+                continue  # container sumiu entre discovery e link: ignora
+            labels = (info.get("Config") or {}).get("Labels", {}) or {}
+            svc_name = labels.get("com.docker.compose.service")
+            image = (info.get("Config") or {}).get("Image")
+            hosts = _traefik_hosts(labels)
+            role = self.infer_role(svc_name, image)
+            if role == ComponentRole.OTHER.value and hosts:
+                role = ComponentRole.WEB.value
+            comp = HostingComponent(
+                stack_id=stack.id, container_name=info.get("Name", "").lstrip("/"),
+                container_id=info.get("Id"), role=role, image=image,
+                status=(info.get("State") or {}).get("Status"),
+                is_public=bool(hosts), internal_only=not hosts,
+                ports=None,
+                meta={"compose_service": svc_name, "domains": hosts},
+            )
+            self._db.add(comp)
+            await self._db.flush()
+            svc = HostingService(
+                customer_id=customer_id, contract_item_id=contract_item_id,
+                server_id=server.id, stack_id=stack.id, org_id=org_id,
+                container_name=comp.container_name, container_id=comp.container_id,
+                project_name=compose_project, root_path="/app",
+                path_mode="container", primary_domain=stack.primary_domain,
+                environment="production",
+                status=HostingServiceStatus.ACTIVE.value,
+                activated_at=utc_now(),
+            )
+            self._db.add(svc)
+        await self._db.flush()
+        await self._audit(entity="hosting_stack", entity_id=str(stack.id),
+                          action="hosting_stack_linked", actor_type=actor_type,
+                          actor_id=actor_id, org_id=org_id,
+                          payload={"project": compose_project,
+                                   "containers": names,
+                                   "contract_item_id": contract_item_id})
+        await self._db.flush()
+        await self._db.refresh(stack, ["components", "services"])
+        return stack
 
     # -- link (admin) -------------------------------------------------------
     async def link_service(

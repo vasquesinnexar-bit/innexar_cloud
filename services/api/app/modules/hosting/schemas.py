@@ -107,3 +107,50 @@ class DiffResponse(BaseModel):
     before: str | None
     after: str | None
     diff: list[str]
+
+
+class StackLinkCreate(BaseModel):
+    """Vincula a STACK inteira (containers vão juntos, automaticamente)."""
+
+    customer_id: int
+    compose_project: str | None = None
+    container_names: list[str]
+    contract_item_id: int | None = None
+    name: str | None = None
+    primary_domain: str | None = None
+
+
+class StackUpdate(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    primary_domain: str | None = None
+    contract_item_id: int | None = None
+    stack_type: str | None = None
+
+
+class ComponentResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    container_name: str
+    role: str
+    image: str | None
+    status: str | None
+    is_public: bool
+    internal_only: bool
+
+
+class StackResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    customer_id: int | None
+    contract_item_id: int | None
+    name: str
+    slug: str
+    description: str | None
+    status: str
+    stack_type: str
+    primary_domain: str | None
+    compose_project: str | None
+    components: list[ComponentResponse] = []
