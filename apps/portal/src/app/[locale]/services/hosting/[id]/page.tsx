@@ -111,10 +111,20 @@ export default function HostingDetailPage() {
     if (isDir) {
       setPath(next);
       await loadFiles(id, next);
-    } else {
+      return;
+    }
+    // Carrega o conteúdo real antes de editar (nunca edita em branco).
+    try {
+      const token = getCustomerToken();
+      const res = await workspaceFetch(API_PATHS.HOSTING.FILE_READ(id, next), { token });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.binary) return;
       setEditing(next);
-      setEditContent("");
+      setEditContent(data.content ?? "");
       setEditDirty(false);
+    } catch {
+      /* mantém editor fechado em erro */
     }
   };
 

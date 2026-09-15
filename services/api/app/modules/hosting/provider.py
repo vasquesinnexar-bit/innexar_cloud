@@ -225,11 +225,34 @@ class DockerHostingProvider:
                             "mtime": f"{mon} {day} {timeyear}", "perms": perms})
         return entries
 
+    def _resolve_container(self, container: str, base: str, rel: str) -> str:
+        """readlink -f + contenção ANTES de operar (anti-symlink-escape)."""
+        full = self._cjoin(base, rel)
+        base_n = "/" + (base or "").strip("/")
+        try:
+            resolved = _docker("exec", container, "readlink", "-f", "--",
+                               full, timeout=30).strip()
+        except HostingError:
+            # alvo inexistente (ex. novo arquivo): valida o pai existente
+            parent = full.rsplit("/", 1)[0] or "/"
+            if parent == base_n:
+                return full
+            resolved_parent = _docker("exec", container, "readlink", "-f", "--",
+                                      parent, timeout=30).strip()
+            if resolved_parent != base_n and not resolved_parent.startswith(
+                    base_n.rstrip("/") + "/"):
+                raise HostingError("invalid_path", "escape do root bloqueado")
+            return full
+        if resolved != base_n and not resolved.startswith(base_n.rstrip("/") + "/"):
+            raise HostingError("invalid_path",
+                               "escape do root bloqueado (symlink)")
+        return resolved
+
     def list_files(self, container: str, base: str, rel: str) -> list[dict]:
         return self._exec_ls(container, self._cjoin(base, rel or "."))
 
     def read_file(self, container: str, base: str, rel: str) -> bytes:
-        data = self._read_cp(container, self._cjoin(base, rel))
+        data = self._read_cp(container, self._resolve_container(container, base, rel))
         if len(data) > paths.MAX_READ_BYTES:
             raise HostingError("arquivo excede 2MB")
         return data
@@ -250,7 +273,7 @@ class DockerHostingProvider:
             raise HostingError("leitura falhou") from e
 
     def write_file(self, container: str, base: str, rel: str, data: bytes) -> None:
-        full = self._cjoin(base, rel)
+        full = self._resolve_container(container, base, rel)
         paths.validate(rel, for_edit=True)
         if len(data) > paths.MAX_READ_BYTES:
             raise HostingError("arquivo excede 2MB")
@@ -276,17 +299,17 @@ class DockerHostingProvider:
 
     def make_dir(self, container: str, base: str, rel: str) -> None:
         _docker("exec", container, "mkdir", "-p", "--",
-                self._cjoin(base, rel), timeout=30)
+                self._resolve_container(container, base, rel), timeout=30)
 
     def rename(self, container: str, base: str, old_rel: str, new_rel: str) -> None:
-        old = self._cjoin(base, old_rel)
+        old = self._resolve_container(container, base, old_rel)
         new = self._cjoin(base, new_rel)
         paths.validate(new_rel, for_edit=True)
         _docker("exec", container, "mv", "--", old, new, timeout=30)
 
     def delete_path(self, container: str, base: str, rel: str,
                     recursive: bool = False) -> None:
-        full = self._cjoin(base, rel)
+        full = self._resolve_container(container, base, rel)
         base_n = "/" + (base or "").strip("/")
         if full == base_n:
             raise HostingError("recusa: apagar o root")

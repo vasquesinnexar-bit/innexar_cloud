@@ -1,6 +1,6 @@
 # Innexar Cloud — plataforma única (workspace, portal, sites, API)
 
-Monorepo oficial da plataforma Innexar: `innexar-plat/innexar_cloud`.
+Monorepo oficial da plataforma Innexar: `vasquesinnexar-bit/innexar_cloud`.
 
 ## Apps e serviços
 
