@@ -12,22 +12,22 @@ export function useNewProject() {
   const [timeline, setTimeline] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
       setSubmitting(true);
+      setFormError(null);
       try {
         if (!isWorkspaceApi) {
-          alert(
-            "Portal requer Workspace API. Configure NEXT_PUBLIC_USE_WORKSPACE_API e NEXT_PUBLIC_WORKSPACE_API_URL."
-          );
+          setFormError("Portal sem conexão com a API. Tente novamente.");
           setSubmitting(false);
           return;
         }
         const token = getCustomerToken();
         if (!token) {
-          alert("Faça login para enviar a solicitação.");
+          setFormError("Sessão expirada. Faça login novamente.");
           setSubmitting(false);
           return;
         }
@@ -44,15 +44,15 @@ export function useNewProject() {
         });
         if (!response.ok) {
           const data = await response.json().catch(() => ({}));
-          alert(
-            `Erro ao submeter: ${typeof data.detail === "string" ? data.detail : "Erro desconhecido"}`
+          setFormError(
+            `Erro ao enviar: ${typeof data.detail === "string" ? data.detail : "tente novamente"}`
           );
           setSubmitting(false);
           return;
         }
         setSubmitted(true);
       } catch {
-        alert("Erro de conexão. Tente novamente.");
+        setFormError("Erro de conexão. Tente novamente.");
       } finally {
         setSubmitting(false);
       }
@@ -75,6 +75,7 @@ export function useNewProject() {
     setTimeline,
     submitting,
     submitted,
+    formError,
     handleSubmit,
   };
 }

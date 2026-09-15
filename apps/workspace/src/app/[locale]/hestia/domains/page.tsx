@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Plus, Loader2, AlertCircle, Server, Trash2 } from 'lucide-react';
@@ -15,7 +15,10 @@ interface DomainItem {
 
 export default function WorkspaceHestiaDomainsPage() {
   const orgFilter = useOrgFilter();
-  const apiPath = (path: string) => withOrgQuery(path, orgFilter);
+  const apiPath = useCallback(
+    (path: string) => withOrgQuery(path, orgFilter),
+    [orgFilter]
+  );
   const searchParams = useSearchParams();
   const userParam = searchParams.get('user') ?? '';
   const [users, setUsers] = useState<{ name: string }[]>([]);

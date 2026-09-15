@@ -59,7 +59,7 @@ export function PortalHeaderBar({
           <ThemeToggle />
           <LocaleSwitcher />
           <a
-            href="https://wa.me/5513991821557"
+            href={process.env.NEXT_PUBLIC_WHATSAPP_URL ?? "https://wa.me/5513991821557"}
             target="_blank"
             rel="noopener noreferrer"
             className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#25D366]/20 hover:bg-[#25D366]/30 transition-colors text-[#25D366] flex-shrink-0 hidden sm:flex"

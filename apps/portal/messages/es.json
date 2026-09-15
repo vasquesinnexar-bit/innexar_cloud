@@ -562,7 +562,20 @@
     "company": "Empresa",
     "companyPlaceholder": "Nombre de la empresa",
     "accountInfo": "Tu cuenta",
-    "notInformed": "No informado"
+    "notInformed": "No informado",
+    "errorMinLength": "Mínimo 6 caracteres",
+    "errorLogin": "Error de acceso",
+    "errorChange": "Error al cambiar contraseña",
+    "errorConnection": "Error de conexión",
+    "security": "Seguridad",
+    "securityUnavailable": "Cambio disponible al conectar al Workspace.",
+    "passwordChanged": "¡Contraseña cambiada!",
+    "currentPassword": "Contraseña actual",
+    "newPassword": "Nueva contraseña (mín. 6)",
+    "changePassword": "Cambiar contraseña",
+    "saving": "Guardando…",
+    "saved": "¡Guardado!",
+    "saveChanges": "Guardar cambios"
   },
   "faqPage": {
     "title": "FAQ del Portal",

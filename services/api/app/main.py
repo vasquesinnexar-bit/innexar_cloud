@@ -55,7 +55,6 @@ from app.modules.crm.router_workspace import router as crm_workspace_router
 from app.modules.customers.router_workspace import router as customers_workspace_router
 from app.modules.dashboard.router_workspace import router as dashboard_workspace_router
 from app.modules.files.models import ProjectFile  # noqa: F401
-from app.modules.files.router_portal import router as files_portal_router
 from app.modules.hosting.models import (  # noqa: F401
     FileRevision, HostingBackup, HostingJob, HostingServer, HostingService,
 )
@@ -70,6 +69,10 @@ from app.modules.mail.router_workspace import router as mail_workspace_router
 from app.modules.hestia.router_workspace import router as hestia_workspace_router
 from app.modules.reps.models import Representative  # noqa: F401
 from app.modules.reps.router_workspace import router as reps_workspace_router
+from app.modules.search.router_workspace import router as search_workspace_router
+from app.modules.notifications.router_workspace import (
+    router as notifications_workspace_router,
+)
 from app.modules.notifications.router_portal import (
     router as notifications_portal_router,
 )
@@ -158,6 +161,7 @@ app.include_router(workspace_router, prefix="/api/workspace", tags=["workspace"]
 app.include_router(billing_workspace_router, prefix="/api/workspace")
 app.include_router(crm_workspace_router, prefix="/api/workspace")
 app.include_router(reps_workspace_router, prefix="/api/workspace")
+app.include_router(search_workspace_router, prefix="/api/workspace")
 app.include_router(customers_workspace_router, prefix="/api/workspace")
 app.include_router(mail_workspace_router, prefix="/api/workspace")
 app.include_router(projects_workspace_router, prefix="/api/workspace")
@@ -165,6 +169,7 @@ app.include_router(files_workspace_router, prefix="/api/workspace")
 app.include_router(hosting_workspace_router, prefix="/api/workspace")
 app.include_router(support_workspace_router, prefix="/api/workspace")
 app.include_router(dashboard_workspace_router, prefix="/api/workspace")
+app.include_router(notifications_workspace_router, prefix="/api/workspace")
 app.include_router(orders_workspace_router, prefix="/api/workspace")
 app.include_router(system_integrations_router, prefix="/api/workspace")
 app.include_router(system_hestia_config_router, prefix="/api/workspace")
@@ -174,7 +179,6 @@ app.include_router(portal_router, prefix="/api/portal", tags=["portal"])
 app.include_router(billing_portal_router, prefix="/api/portal")
 app.include_router(mail_portal_router, prefix="/api/portal")
 app.include_router(projects_portal_router, prefix="/api/portal")
-app.include_router(files_portal_router, prefix="/api/portal")
 app.include_router(hosting_portal_router, prefix="/api/portal")
 app.include_router(support_portal_router, prefix="/api/portal")
 app.include_router(notifications_portal_router, prefix="/api/portal")

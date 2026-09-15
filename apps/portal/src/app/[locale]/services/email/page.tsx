@@ -4,19 +4,16 @@ import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Mail, Plus, KeyRound, Smartphone, ExternalLink, Power, PowerOff } from "lucide-react";
 import { useEmailService } from "@/hooks/use-email-service";
+import { SkeletonCard } from "@/components/ui/Skeleton";
 import { getIntlLocale } from "@/lib/intl-locale";
 
 const WEBMAIL_URL =
   process.env.NEXT_PUBLIC_WEBMAIL_URL ?? "https://webmail.innexar.com.br";
 
-function money(amount: number | null, currency: string, intl: string) {
-  if (amount === null || amount === undefined) return "—";
-  return Number(amount).toLocaleString(intl, {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 2,
-  });
-}
+import { formatMoney } from "@/lib/format";
+
+const money = (amount: number | null, currency: string, intl: string) =>
+  formatMoney(amount, currency, intl);
 
 export default function EmailServicePage() {
   const locale = useLocale();
@@ -36,8 +33,9 @@ export default function EmailServicePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      <div className="space-y-4" role="status" aria-label="Carregando e-mail">
+        <SkeletonCard />
+        <SkeletonCard />
       </div>
     );
   }

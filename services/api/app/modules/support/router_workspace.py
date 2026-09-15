@@ -82,6 +82,23 @@ async def get_ticket(
     return TicketResponse.model_validate(t)
 
 
+@router.get(
+    "/tickets/{ticket_id}/messages",
+    response_model=list[TicketMessageResponse],
+)
+async def list_ticket_messages(
+    ticket_id: int,
+    service: Annotated[SupportWorkspaceService, Depends(get_support_workspace_service)],
+    _: Annotated[User, Depends(RequirePermission("support:read"))],
+    org_id: str | None = None,
+):
+    """List messages of a ticket (Fase 5: faltava o GET)."""
+    msgs = await service.list_messages(ticket_id, org_id=router_org_list_filter(org_id))
+    if msgs is None:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    return [TicketMessageResponse.model_validate(m) for m in msgs]
+
+
 @router.post(
     "/tickets/{ticket_id}/messages",
     response_model=TicketMessageResponse,

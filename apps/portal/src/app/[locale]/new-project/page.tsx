@@ -22,6 +22,7 @@ export default function NewProjectPage() {
     setTimeline,
     submitting,
     submitted,
+    formError,
     handleSubmit,
   } = useNewProject();
 
@@ -45,6 +46,7 @@ export default function NewProjectPage() {
       setTimeline={setTimeline}
       submitting={submitting}
       onSubmit={handleSubmit}
+      formError={formError}
     />
   );
 }

@@ -45,7 +45,7 @@ class PolicyResponse(BaseModel):
     is_active: bool
 
 
-@router.get("/billing/policies", response_model=list[PolicyResponse])
+@router.get("/policies", response_model=list[PolicyResponse])
 async def list_policies(
     db: Annotated[AsyncSession, Depends(get_db)],
     current: Annotated[User, Depends(RequirePermission("billing:read"))],
@@ -57,7 +57,7 @@ async def list_policies(
     return list(rows)
 
 
-@router.get("/billing/policies/effective")
+@router.get("/policies/effective")
 async def effective_policy(
     db: Annotated[AsyncSession, Depends(get_db)],
     current: Annotated[User, Depends(RequirePermission("billing:read"))],
@@ -71,7 +71,7 @@ async def effective_policy(
     )
 
 
-@router.post("/billing/policies", response_model=PolicyResponse, status_code=201)
+@router.post("/policies", response_model=PolicyResponse, status_code=201)
 async def upsert_policy(
     body: PolicyUpsert,
     db: Annotated[AsyncSession, Depends(get_db)],

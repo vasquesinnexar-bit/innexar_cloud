@@ -28,7 +28,10 @@ interface Svc {
 
 export default function HostingSitesPage() {
   const orgFilter = useOrgFilter();
-  const apiPath = (p: string) => withOrgQuery(p, orgFilter);
+  const apiPath = useCallback(
+    (p: string) => withOrgQuery(p, orgFilter),
+    [orgFilter]
+  );
   const [disc, setDisc] = useState<Discovered[]>([]);
   const [services, setServices] = useState<Svc[]>([]);
   const [filter, setFilter] = useState("");

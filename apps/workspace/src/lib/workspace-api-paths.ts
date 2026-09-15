@@ -99,6 +99,9 @@ export const WORKSPACE_API_PATHS = {
         ? `${PREFIX}/billing/refunds?invoice_id=${encodeURIComponent(String(invoiceId))}`
         : `${PREFIX}/billing/refunds`,
   },
+  SEARCH: `${PREFIX}/search`,
+  AUDIT: `${PREFIX}/audit`,
+  NOTIFICATIONS: `${PREFIX}/notifications`,
   HOSTING: {
     SERVERS: `${PREFIX}/hosting/servers`,
     SERVERS_OVERVIEW: `${PREFIX}/hosting/servers/overview`,

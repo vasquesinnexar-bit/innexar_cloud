@@ -11,7 +11,8 @@ import { LoginForm } from "@/components/auth/LoginForm";
 import { ThemeToggle } from "@/components/header/ThemeToggle";
 import { LocaleSwitcher } from "@/components/header/LocaleSwitcher";
 
-const SUPPORT_EMAIL = "support@innexar.app";
+const SUPPORT_EMAIL =
+  process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "support@innexar.app";
 
 function LoginContent() {
   const { theme } = useTheme();

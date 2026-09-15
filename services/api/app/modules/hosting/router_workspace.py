@@ -40,8 +40,12 @@ READ = RequirePermission("hosting.view")
 ADMIN = RequirePermission("hosting.admin")
 FILES_VIEW = RequirePermission("hosting.files.view")
 FILES_EDIT = RequirePermission("hosting.files.edit")
+FILES_UPLOAD = RequirePermission("hosting.files.upload")
+FILES_DELETE = RequirePermission("hosting.files.delete")
 BACKUPS_VIEW = RequirePermission("hosting.backups.view")
 BACKUPS_CREATE = RequirePermission("hosting.backups.create")
+BACKUPS_RESTORE = RequirePermission("hosting.backups.restore")
+LOGS_VIEW = RequirePermission("hosting.logs.view")
 
 
 def _err(e: Exception) -> HTTPException:
@@ -216,6 +220,28 @@ async def deploy_info(
         svc = await layer._require_service(
             service_id, None, router_org_list_filter(org_id))
         return layer.deploy_info(svc)
+    except HostingError as e:
+        raise _err(e)
+
+
+@router.get("/hosting/services/{service_id}/logs")
+async def service_logs(
+    service_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current: Annotated[User, Depends(LOGS_VIEW)],
+    org_id: str | None = None,
+    tail: int = 200,
+):
+    from app.core.router_org import router_org_list_filter
+
+    layer = _layer(db)
+    try:
+        svc = await layer._require_service(
+            service_id, None, router_org_list_filter(org_id))
+        if not svc.container_name:
+            raise HostingError("job_failed", "sem container vinculado")
+        return {"logs": layer._provider.logs(  # noqa: SLF001
+            svc.container_name, tail=min(max(tail, 1), 1000))}
     except HostingError as e:
         raise _err(e)
 
@@ -401,7 +427,7 @@ async def make_dir(
 async def delete_file(
     service_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
-    current: Annotated[User, Depends(FILES_EDIT)],
+    current: Annotated[User, Depends(FILES_DELETE)],
     org_id: str | None = None,
     path: str = "",
     recursive: bool = False,
@@ -486,7 +512,7 @@ async def rename_file(
 async def upload_file(
     service_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
-    current: Annotated[User, Depends(FILES_EDIT)],
+    current: Annotated[User, Depends(FILES_UPLOAD)],
     org_id: str | None = None,
     path: str = "",
     file: UploadFile = File(...),
@@ -582,9 +608,9 @@ async def create_backup(
 async def restore_backup(
     backup_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
-    current: Annotated[User, Depends(ADMIN)],
+    current: Annotated[User, Depends(BACKUPS_RESTORE)],
 ):
-    """Restore: admin somente (confirmação forte no frontend)."""
+    """Restore: permissão backups.restore + confirmação forte no frontend."""
     from app.modules.hosting.models import HostingBackup as _Bak
 
     layer = _layer(db)

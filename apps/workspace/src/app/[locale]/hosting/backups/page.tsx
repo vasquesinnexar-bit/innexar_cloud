@@ -21,8 +21,12 @@ interface BackupRow {
 
 export default function HostingBackupsPage() {
   const orgFilter = useOrgFilter();
-  const apiPath = (p: string) => withOrgQuery(p, orgFilter);
+  const apiPath = useCallback(
+    (p: string) => withOrgQuery(p, orgFilter),
+    [orgFilter]
+  );
   const [rows, setRows] = useState<BackupRow[]>([]);
+  const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
     const res = await workspaceFetchStaff(apiPath(WORKSPACE_API_PATHS.HOSTING.BACKUPS_RECENT));
@@ -32,6 +36,20 @@ export default function HostingBackupsPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const restore = async (id: number) => {
+    if (!confirm(`RESTAURAR backup #${id}? Isso SOBRESCREVE os arquivos atuais.`)) return;
+    if (window.prompt("Digite RESTAURAR para confirmar:") !== "RESTAURAR") return;
+    setBusy(true);
+    try {
+      await workspaceFetchStaff(apiPath(WORKSPACE_API_PATHS.HOSTING.BACKUP_RESTORE(id)), {
+        method: "POST",
+      });
+      await load();
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -50,6 +68,7 @@ export default function HostingBackupsPage() {
                 <th className="text-left py-2 px-3 text-slate-400">Status</th>
                 <th className="text-left py-2 px-3 text-slate-400">Tamanho</th>
                 <th className="text-left py-2 px-3 text-slate-400">Criado em</th>
+                <th className="text-left py-2 px-3 text-slate-400">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -62,6 +81,18 @@ export default function HostingBackupsPage() {
                     {b.size_bytes !== null ? `${(b.size_bytes / 1024 ** 2).toFixed(1)} MB` : "—"}
                   </td>
                   <td className="py-2 px-3">{new Date(b.created_at).toLocaleString()}</td>
+                  <td className="py-2 px-3">
+                    {b.status === "completed" && (
+                      <button
+                        type="button"
+                        onClick={() => restore(b.id)}
+                        disabled={busy}
+                        className="px-2 py-1 rounded-lg bg-red-500/20 text-red-300 text-xs"
+                      >
+                        Restaurar
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

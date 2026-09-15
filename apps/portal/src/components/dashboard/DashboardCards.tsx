@@ -16,6 +16,7 @@ import {
   FolderOpen,
 } from "lucide-react";
 import { getDisplayInvoiceNumber } from "@/lib/invoice-format";
+import { getIntlLocale } from "@/lib/intl-locale";
 import type { DashboardData } from "@/types/dashboard";
 
 const FOCUS_RING =
@@ -88,12 +89,12 @@ export function DashboardCards({
               </p>
               {data.plan.since && (
                 <p className="text-theme-secondary text-xs mt-1">
-                  {labels.since}: {new Date(data.plan.since).toLocaleDateString(locale)}
+                  {labels.since}: {new Date(data.plan.since).toLocaleDateString(getIntlLocale(locale))}
                 </p>
               )}
               {data.plan.next_due_date && (
                 <p className="text-theme-secondary text-xs mt-1">
-                  {labels.nextDue}: {new Date(data.plan.next_due_date).toLocaleDateString(locale)}
+                  {labels.nextDue}: {new Date(data.plan.next_due_date).toLocaleDateString(getIntlLocale(locale))}
                 </p>
               )}
             </>
@@ -154,9 +155,13 @@ export function DashboardCards({
                 #{getDisplayInvoiceNumber(data.invoice.id)} – {data.invoice.status}
               </p>
               <p className="text-theme-secondary text-sm mt-1">
-                {data.invoice.currency} {data.invoice.total.toFixed(2)}
+                {Number(data.invoice.total).toLocaleString(getIntlLocale(locale), {
+                  style: "currency",
+                  currency: data.invoice.currency || "USD",
+                  minimumFractionDigits: 2,
+                })}
                 {data.invoice.due_date &&
-                  ` · ${labels.due} ${new Date(data.invoice.due_date).toLocaleDateString(locale)}`}
+                  ` · ${labels.due} ${new Date(data.invoice.due_date).toLocaleDateString(getIntlLocale(locale))}`}
               </p>
               {data.can_pay_invoice && (
                 <>

@@ -37,7 +37,7 @@ export function useBilling() {
           currency: inv.currency || "USD",
           status: (inv.status === "paid"
             ? "paid"
-            : inv.status === "overdue"
+            : inv.status === "past_due" || inv.status === "overdue"
               ? "overdue"
               : "pending") as Invoice["status"],
           date: inv.due_date || "",
@@ -62,12 +62,20 @@ export function useBilling() {
       : statusFilter === "paid"
         ? invoices.filter((i) => i.status === "paid")
         : invoices.filter((i) => i.status !== "paid");
-  const totalPaid = invoices
-    .filter((i) => i.status === "paid")
-    .reduce((sum, i) => sum + i.amount, 0);
-  const totalPending = invoices
-    .filter((i) => i.status !== "paid")
-    .reduce((sum, i) => sum + i.amount, 0);
+  // Totais agrupados por moeda (nunca somar moedas diferentes).
+  const totalsByCurrency: Record<string, { paid: number; pending: number }> = {};
+  for (const i of invoices) {
+    const cur = i.currency || "USD";
+    totalsByCurrency[cur] ??= { paid: 0, pending: 0 };
+    if (i.status === "paid") totalsByCurrency[cur].paid += i.amount;
+    else totalsByCurrency[cur].pending += i.amount;
+  }
+  const dominantCurrency =
+    Object.entries(totalsByCurrency).sort(
+      (a, b) => b[1].paid + b[1].pending - (a[1].paid + a[1].pending)
+    )[0]?.[0] ?? "USD";
+  const totalPaid = totalsByCurrency[dominantCurrency]?.paid ?? 0;
+  const totalPending = totalsByCurrency[dominantCurrency]?.pending ?? 0;
 
   return {
     invoices,
@@ -78,6 +86,8 @@ export function useBilling() {
     filteredInvoices,
     totalPaid,
     totalPending,
+    totalsByCurrency,
+    dominantCurrency,
     refresh: () => setRefreshTrigger((t) => t + 1),
   };
 }

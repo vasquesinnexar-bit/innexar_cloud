@@ -61,7 +61,9 @@ export function usePortalNav() {
         .catch(() => setUnreadCount(0));
 
     fetchUnread();
-    const interval = setInterval(fetchUnread, 30_000);
+    const interval = setInterval(() => {
+      if (!document.hidden) fetchUnread();
+    }, 30_000);
     return () => clearInterval(interval);
   }, [isWorkspaceApi]);
 
@@ -97,7 +99,6 @@ export function usePortalNav() {
       if (item.key === "support") return features.tickets !== false;
       if (item.key === "billing") return features.invoices !== false;
       if (item.key === "hosting") return features.hosting !== false;
-      if (item.key === "new-project") return false;
       return true;
     });
   }, [isWorkspaceApi, features, locale, t, unreadCount]);

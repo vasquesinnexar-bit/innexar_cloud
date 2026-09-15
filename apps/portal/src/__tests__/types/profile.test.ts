@@ -7,6 +7,7 @@ describe("profile types", () => {
       name: "",
       email: "",
       phone: null,
+      document: null,
       address: null,
     });
   });

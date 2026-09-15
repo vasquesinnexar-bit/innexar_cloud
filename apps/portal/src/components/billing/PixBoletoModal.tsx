@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { getIntlLocale } from "@/lib/intl-locale";
 import { QrCode, Barcode, Copy, Check, RefreshCw, X } from "lucide-react";
 import { workspaceFetch, getCustomerToken } from "@/lib/workspace-api";
 import { API_PATHS } from "@/lib/api-paths";
@@ -25,6 +26,8 @@ export function PixBoletoModal({
   invoice: Invoice;
   onClose: () => void;
 }) {
+  const locale = useLocale();
+  const intlLocale = getIntlLocale(locale);
   const t = useTranslations("billingPage");
   const [methods, setMethods] = useState<string[]>([]);
   const [attempt, setAttempt] = useState<AttemptView | null>(null);
@@ -45,6 +48,14 @@ export function PixBoletoModal({
   useEffect(() => {
     loadMethods();
   }, [loadMethods]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
 
   const create = async (kind: "pix" | "boleto") => {
     const token = getCustomerToken();
@@ -138,7 +149,7 @@ export function PixBoletoModal({
             )}
             {attempt.expires_at && (
               <p className="text-xs text-theme-secondary">
-                {t("expiresAt")}: {new Date(attempt.expires_at).toLocaleString()}
+                {t("expiresAt")}: {new Date(attempt.expires_at).toLocaleString(intlLocale)}
               </p>
             )}
             <p className="text-xs text-theme-secondary">{t("pixWaiting")}</p>
@@ -166,7 +177,7 @@ export function PixBoletoModal({
             )}
             {attempt.expires_at && (
               <p className="text-xs text-theme-secondary">
-                {t("expiresAt")}: {new Date(attempt.expires_at).toLocaleString()}
+                {t("expiresAt")}: {new Date(attempt.expires_at).toLocaleString(intlLocale)}
               </p>
             )}
           </div>

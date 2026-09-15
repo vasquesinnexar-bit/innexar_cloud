@@ -1,4 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocale } from "next-intl";
+import { getIntlLocale } from "@/lib/intl-locale";
+import { useTheme } from "@/contexts/theme-context";
 import { API_PATHS } from "@/lib/api-paths";
 
 const MP_SDK_URL = "https://sdk.mercadopago.com/js/v2";
@@ -53,6 +56,8 @@ export function usePaymentBrick({
   mpPublicKey,
   containerId,
 }: UsePaymentBrickParams) {
+  const locale = useLocale();
+  const { theme } = useTheme();
   const [sdkLoaded, setSdkLoaded] = useState(false);
   const [brickReady, setBrickReady] = useState(false);
   const [error, setError] = useState("");
@@ -116,18 +121,19 @@ export function usePaymentBrick({
       ).MercadoPago;
       if (!MercadoPago) return;
 
-      const mp = new MercadoPago(mpPublicKey, { locale: "pt-BR" });
+      const brickLocale = getIntlLocale(locale);
+      const mp = new MercadoPago(mpPublicKey, { locale: brickLocale });
       const bricksBuilder = mp.bricks();
 
       let controller: { unmount: () => void };
       try {
         controller = await bricksBuilder.create("payment", containerId, {
-          locale: "pt-BR",
+          locale: brickLocale,
           initialization: { amount: invoice.total },
           customization: {
             visual: {
               style: {
-                theme: "dark",
+                theme: theme === "light" ? "default" : "dark",
                 customVariables: { formBackgroundColor: "transparent", baseColor: "#0891b2" },
               },
             },

@@ -34,7 +34,10 @@ interface Invoice {
 
 export function ContractsSection({ customerId }: { customerId: string }) {
   const orgFilter = useOrgFilter();
-  const apiPath = (p: string) => withOrgQuery(p, orgFilter);
+  const apiPath = useCallback(
+    (p: string) => withOrgQuery(p, orgFilter),
+    [orgFilter]
+  );
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,6 +90,19 @@ export function ContractsSection({ customerId }: { customerId: string }) {
     }
   };
 
+  const setStatus = async (id: number, status: string) => {
+    setBusy(true);
+    try {
+      const res = await workspaceFetchStaff(
+        apiPath(`${WORKSPACE_API_PATHS.BILLING.CONTRACTS()}/${id}`),
+        { method: "PATCH", body: JSON.stringify({ status }) }
+      );
+      if (res.ok) await load();
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-6">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
@@ -125,6 +141,7 @@ export function ContractsSection({ customerId }: { customerId: string }) {
                     <th className="text-left py-3 px-4 text-slate-400 font-medium">Gateway</th>
                     <th className="text-left py-3 px-4 text-slate-400 font-medium">Intervalo</th>
                     <th className="text-left py-3 px-4 text-slate-400 font-medium">Itens</th>
+                    <th className="text-left py-3 px-4 text-slate-400 font-medium">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -135,6 +152,42 @@ export function ContractsSection({ customerId }: { customerId: string }) {
                       <td className="py-3 px-4">{c.billing_provider ?? "auto"}</td>
                       <td className="py-3 px-4">{c.billing_interval ?? "—"}</td>
                       <td className="py-3 px-4">{c.items.length}</td>
+                      <td className="py-3 px-4">
+                        <div className="flex gap-1">
+                          {(c.status === "pending" || c.status === "suspended") && (
+                            <button
+                              type="button"
+                              onClick={() => setStatus(c.id, "active")}
+                              disabled={busy}
+                              className="px-2 py-1 rounded-lg bg-green-500/20 text-green-300 text-xs"
+                            >
+                              Ativar
+                            </button>
+                          )}
+                          {c.status === "active" && (
+                            <button
+                              type="button"
+                              onClick={() => setStatus(c.id, "suspended")}
+                              disabled={busy}
+                              className="px-2 py-1 rounded-lg bg-yellow-500/20 text-yellow-300 text-xs"
+                            >
+                              Suspender
+                            </button>
+                          )}
+                          {c.status !== "cancelled" && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (confirm(`Cancelar contrato #${c.id}?`)) setStatus(c.id, "cancelled");
+                              }}
+                              disabled={busy}
+                              className="px-2 py-1 rounded-lg bg-red-500/20 text-red-300 text-xs"
+                            >
+                              Cancelar
+                            </button>
+                          )}
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

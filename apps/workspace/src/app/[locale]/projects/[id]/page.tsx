@@ -102,7 +102,10 @@ interface ModificationRequest {
 
 export default function WorkspaceProjectDetailPage() {
   const orgFilter = useOrgFilter();
-  const apiPath = (path: string) => withOrgQuery(path, orgFilter);
+  const apiPath = useCallback(
+    (path: string) => withOrgQuery(path, orgFilter),
+    [orgFilter]
+  );
   const params = useParams();
   const locale = useLocale();
   const id = typeof params.id === 'string' ? params.id : '';

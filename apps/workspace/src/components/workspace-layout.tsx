@@ -9,6 +9,8 @@ import {
   UserCircle,
   FolderOpen,
   MessageSquare,
+  Bell,
+  ScrollText,
   Receipt,
   Settings,
   Cloud,
@@ -26,6 +28,8 @@ import {
   Briefcase,
 } from "lucide-react";
 import { STAFF_TOKEN_KEY } from "@/lib/workspace-api";
+import { GlobalSearch } from "@/components/GlobalSearch";
+import { NotificationsBell } from "@/components/NotificationsBell";
 import { OrgSwitcher } from "@/components/org-switcher";
 
 interface NavItem {
@@ -114,6 +118,18 @@ export default function WorkspaceLayout({
         { key: "hestia-domains", label: "Domínios", href: "/hestia/domains" },
         { key: "hestia-packages", label: "Pacotes", href: "/hestia/packages" },
       ],
+    },
+    {
+      key: "notifications",
+      label: "Notificações",
+      icon: Bell,
+      href: "/notifications",
+    },
+    {
+      key: "audit",
+      label: "Auditoria",
+      icon: ScrollText,
+      href: "/audit",
     },
     {
       key: "config",
@@ -373,8 +389,12 @@ export default function WorkspaceLayout({
             >
               <Menu className="w-5 h-5 text-white" />
             </button>
-            <h1 className="text-xl font-bold text-white">Admin</h1>
-            <OrgSwitcher />
+            <h1 className="text-xl font-bold text-white hidden sm:block">Admin</h1>
+            <div className="flex items-center gap-2">
+              <GlobalSearch />
+              <NotificationsBell />
+              <OrgSwitcher />
+            </div>
           </div>
         </header>
         <main className="p-4 lg:p-8">{children}</main>

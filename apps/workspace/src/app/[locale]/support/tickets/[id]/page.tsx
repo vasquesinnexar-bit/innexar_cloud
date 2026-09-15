@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import Link from 'next/link';
@@ -29,7 +29,10 @@ interface Message {
 
 export default function WorkspaceTicketDetailPage() {
   const orgFilter = useOrgFilter();
-  const apiPath = (path: string) => withOrgQuery(path, orgFilter);
+  const apiPath = useCallback(
+    (path: string) => withOrgQuery(path, orgFilter),
+    [orgFilter]
+  );
   const params = useParams();
   const locale = useLocale();
   const id = typeof params.id === 'string' ? params.id : '';
@@ -53,13 +56,18 @@ export default function WorkspaceTicketDetailPage() {
     const token = getStaffToken();
     if (!token || !id) return;
     setLoading(true);
-    workspaceFetch(apiPath(`/api/workspace/support/tickets/${id}`), { token })
-      .then((r) => {
+    Promise.all([
+      workspaceFetch(apiPath(`/api/workspace/support/tickets/${id}`), { token }).then((r) => {
         if (!r.ok) throw new Error('Not found');
         return r.json();
-      })
-      .then((t: Ticket) => {
+      }),
+      workspaceFetch(apiPath(`/api/workspace/support/tickets/${id}/messages`), { token }).then((r) =>
+        r.ok ? r.json() : []
+      ),
+    ])
+      .then(([t, msgs]) => {
         setTicket(t);
+        setMessages(Array.isArray(msgs) ? msgs : []);
       })
       .catch(() => setError('Ticket nao encontrado'))
       .finally(() => setLoading(false));

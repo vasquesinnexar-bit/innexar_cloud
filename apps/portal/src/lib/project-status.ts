@@ -112,3 +112,20 @@ const COLOR_CLASSES: Record<
 export function getProjectColorClasses(color: string) {
   return COLOR_CLASSES[color] || COLOR_CLASSES.blue;
 }
+
+export const MOD_STATUS_LABELS: Record<string, { label: string; color: string }> = {
+  pending: { label: "Pendente", color: "amber" },
+  approved: { label: "Aprovada", color: "blue" },
+  in_progress: { label: "Em andamento", color: "purple" },
+  completed: { label: "Concluída", color: "green" },
+  rejected: { label: "Rejeitada", color: "red" },
+};
+
+export function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+/** Alias legado (unificação Fase 5): prefira getProjectColorClasses. */
+export const getStatusColorClasses = getProjectColorClasses;

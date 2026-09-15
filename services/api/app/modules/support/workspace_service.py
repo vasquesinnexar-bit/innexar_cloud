@@ -40,6 +40,14 @@ class SupportWorkspaceService:
     async def get_ticket(self, ticket_id: int, org_id: str | None = None) -> Ticket | None:
         return await self._repo.get_ticket_by_id(ticket_id, org_id=org_id)
 
+    async def list_messages(
+        self, ticket_id: int, org_id: str | None = None
+    ) -> list[TicketMessage] | None:
+        ticket = await self._repo.get_ticket_by_id(ticket_id, org_id=org_id)
+        if not ticket:
+            return None
+        return await self._repo.list_messages_by_ticket_id(ticket_id)
+
     async def create_ticket(
         self,
         body: TicketCreate,

@@ -10,6 +10,7 @@ type NewProjectStep3Props = {
   timeline: string;
   setTimeline: (v: string) => void;
   submitting: boolean;
+  formError?: string | null;
   onPrev: () => void;
   onSubmit: (e: React.FormEvent) => void;
 };
@@ -20,6 +21,7 @@ export function NewProjectStep3({
   timeline,
   setTimeline,
   submitting,
+  formError,
   onPrev,
   onSubmit,
 }: NewProjectStep3Props) {
@@ -107,6 +109,11 @@ export function NewProjectStep3({
           )}
         </motion.button>
       </div>
+      {formError && (
+        <p role="alert" className="text-red-400 text-sm">
+          {formError}
+        </p>
+      )}
     </form>
   );
 }

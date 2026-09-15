@@ -25,7 +25,10 @@ interface Mailbox {
 
 export function EmailServiceSection({ customerId }: { customerId: string }) {
   const orgFilter = useOrgFilter();
-  const apiPath = (p: string) => withOrgQuery(p, orgFilter);
+  const apiPath = useCallback(
+    (p: string) => withOrgQuery(p, orgFilter),
+    [orgFilter]
+  );
   const [ent, setEnt] = useState<Entitlement | null>(null);
   const [boxes, setBoxes] = useState<Mailbox[]>([]);
   const [loading, setLoading] = useState(true);

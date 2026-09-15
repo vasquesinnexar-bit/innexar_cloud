@@ -562,7 +562,20 @@
     "company": "Company",
     "companyPlaceholder": "Company name",
     "accountInfo": "Your account",
-    "notInformed": "Not provided"
+    "notInformed": "Not provided",
+    "errorMinLength": "Minimum 6 characters",
+    "errorLogin": "Login error",
+    "errorChange": "Error changing password",
+    "errorConnection": "Connection error",
+    "security": "Security",
+    "securityUnavailable": "Password change available when connected to Workspace.",
+    "passwordChanged": "Password changed!",
+    "currentPassword": "Current password",
+    "newPassword": "New password (min 6)",
+    "changePassword": "Change password",
+    "saving": "Saving…",
+    "saved": "Saved!",
+    "saveChanges": "Save changes"
   },
   "faqPage": {
     "title": "Portal FAQ",

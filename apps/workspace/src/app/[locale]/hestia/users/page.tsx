@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from "react";
 import Link from 'next/link';
 import { useLocale } from 'next-intl';
 import { motion } from 'framer-motion';
@@ -17,7 +17,10 @@ interface UserItem {
 export default function WorkspaceHestiaUsersPage() {
   const locale = useLocale();
   const orgFilter = useOrgFilter();
-  const apiPath = (path: string) => withOrgQuery(path, orgFilter);
+  const apiPath = useCallback(
+    (path: string) => withOrgQuery(path, orgFilter),
+    [orgFilter]
+  );
   const [users, setUsers] = useState<UserItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

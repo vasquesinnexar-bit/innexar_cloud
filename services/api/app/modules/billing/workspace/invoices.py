@@ -414,7 +414,7 @@ async def billing_generate_recurring_invoices(
     return GenerateRecurringResponse(generated=count, reminders_sent=reminded)
 
 
-@router.get("/billing/overview")
+@router.get("/overview")
 async def billing_overview(
     db: Annotated[AsyncSession, Depends(get_db)],
     current: Annotated[User, Depends(RequirePermission("billing:read"))],

@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { useLocale, useTranslations } from "next-intl";
 import { FileText, Upload, Loader2, Download, Trash2 } from "lucide-react";
 import type { ProjectFileItem } from "@/types/project";
-import { formatFileSize } from "@/lib/project-constants";
+import { formatFileSize } from "@/lib/project-status";
 import { getIntlLocale } from "@/lib/intl-locale";
 
 type ProjectFilesTabProps = {

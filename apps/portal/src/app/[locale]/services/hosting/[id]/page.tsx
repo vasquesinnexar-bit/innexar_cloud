@@ -13,27 +13,10 @@ import {
   Check,
 } from "lucide-react";
 import { useHostingService } from "@/hooks/use-hosting";
+import { API_PATHS } from "@/lib/api-paths";
+import { workspaceFetch, getCustomerToken } from "@/lib/workspace-api";
 
-function fmtBytes(v: number | null | undefined) {
-  if (v === null || v === undefined) return "—";
-  const u = ["B", "KB", "MB", "GB"];
-  let n = v;
-  let i = 0;
-  while (n >= 1024 && i < u.length - 1) {
-    n /= 1024;
-    i++;
-  }
-  return `${n.toFixed(1)} ${u[i]}`;
-}
-
-function fmtUptime(s: number | null | undefined) {
-  if (s === null || s === undefined) return "—";
-  const d = Math.floor(s / 86400);
-  const h = Math.floor((s % 86400) / 3600);
-  if (d > 0) return `${d}d ${h}h`;
-  const m = Math.floor((s % 3600) / 60);
-  return `${h}h ${m}m`;
-}
+import { formatBytes as fmtBytes, formatUptime as fmtUptime } from "@/lib/format";
 
 const TABS = ["overview", "files", "logs", "backups", "domains"] as const;
 
@@ -116,6 +99,7 @@ export default function HostingDetailPage() {
     // Carrega o conteúdo real antes de editar (nunca edita em branco).
     try {
       const token = getCustomerToken();
+      if (!token) return;
       const res = await workspaceFetch(API_PATHS.HOSTING.FILE_READ(id, next), { token });
       if (!res.ok) return;
       const data = await res.json();

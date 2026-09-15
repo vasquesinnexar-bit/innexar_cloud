@@ -217,6 +217,34 @@ export default function WorkspaceBillingInvoicesPage() {
     }
   };
 
+  const refundInvoice = async (inv: Invoice) => {
+    const reason = window.prompt(`Motivo do reembolso da fatura #${inv.id}?`);
+    if (reason === null) return;
+    if (!confirm(`Reembolsar ${inv.currency} ${inv.total.toFixed(2)} via gateway?`)) return;
+    const token = getStaffToken();
+    if (!token) return;
+    setProcessingId(inv.id);
+    setError('');
+    try {
+      const res = await workspaceFetch(withOrgQuery('/api/workspace/billing/refunds', orgFilter), {
+        token,
+        method: 'POST',
+        body: JSON.stringify({ invoice_id: inv.id, reason: reason.trim() || null }),
+      });
+      if (res.ok) {
+        setSuccessMsg(`Reembolso da fatura #${inv.id} registrado`);
+        load();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setError(typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail ?? 'Erro ao reembolsar'));
+      }
+    } catch {
+      setError('Erro ao reembolsar');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -384,6 +412,17 @@ export default function WorkspaceBillingInvoicesPage() {
                                 title="Excluir"
                               >
                                 {deletingId === inv.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                              </button>
+                            )}
+                            {inv.status === 'paid' && (
+                              <button
+                                type="button"
+                                onClick={() => refundInvoice(inv)}
+                                disabled={processingId === inv.id}
+                                className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 text-sm disabled:opacity-50"
+                                title="Reembolsar via gateway"
+                              >
+                                Reembolsar
                               </button>
                             )}
                             {inv.status !== 'paid' && (

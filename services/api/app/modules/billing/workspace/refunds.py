@@ -37,7 +37,7 @@ class RefundResponse(BaseModel):
     created_at: object
 
 
-@router.get("/billing/refunds", response_model=list[RefundResponse])
+@router.get("/refunds", response_model=list[RefundResponse])
 async def list_refunds(
     db: Annotated[AsyncSession, Depends(get_db)],
     current: Annotated[User, Depends(RequirePermission("billing:read"))],
@@ -50,7 +50,7 @@ async def list_refunds(
     return list((await db.execute(q)).scalars().all())
 
 
-@router.post("/billing/refunds", status_code=201)
+@router.post("/refunds", status_code=201)
 async def create_refund_endpoint(
     body: RefundCreate,
     db: Annotated[AsyncSession, Depends(get_db)],

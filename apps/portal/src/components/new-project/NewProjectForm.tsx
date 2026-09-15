@@ -22,7 +22,10 @@ type NewProjectFormProps = {
   setTimeline: (v: string) => void;
   submitting: boolean;
   onSubmit: (e: React.FormEvent) => void;
+  formError?: string | null;
 };
+
+
 
 export function NewProjectForm({
   step,
@@ -39,6 +42,7 @@ export function NewProjectForm({
   setTimeline,
   submitting,
   onSubmit,
+  formError,
 }: NewProjectFormProps) {
   const t = useTranslations("newProjectPage");
   return (

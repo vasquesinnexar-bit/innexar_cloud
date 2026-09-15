@@ -1,10 +1,11 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { getIntlLocale } from "@/lib/intl-locale";
 import { Wrench, Calendar, Paperclip, Send, Loader2 } from "lucide-react";
 import type { ModRequestItem, ModQuota } from "@/types/project";
-import { MOD_STATUS_LABELS, getStatusColorClasses } from "@/lib/project-constants";
+import { MOD_STATUS_LABELS, getProjectColorClasses as getStatusColorClasses } from "@/lib/project-status";
 
 type ProjectModificationsTabProps = {
   modRequests: ModRequestItem[];
@@ -36,6 +37,7 @@ export function ProjectModificationsTab({
   onSubmitMod,
 }: ProjectModificationsTabProps) {
   const t = useTranslations("projectDetails.modifications");
+  const intlLocale = getIntlLocale(useLocale());
   const tErrors = useTranslations("projectDetails");
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -205,7 +207,7 @@ export function ProjectModificationsTab({
                     </div>
                   )}
                   <p className="text-xs text-theme-muted mt-2">
-                    {new Date(r.created_at).toLocaleString("pt-BR")}
+                    {new Date(r.created_at).toLocaleString(intlLocale)}
                   </p>
                 </div>
               );

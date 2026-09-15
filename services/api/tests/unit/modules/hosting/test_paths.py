@@ -80,9 +80,9 @@ def test_container_symlink_escape_blocked():
     """Symlink dentro do container apontando p/ fora do root (Fase 4 revisão)."""
     from app.modules.hosting.provider import DockerHostingProvider
 
-    # /root-do-cliente/public/link -> /etc ; Portal pede public/link/passwd
-    assert DockerHostingProvider._cjoin("/srv", "public/link/passwd") == \
-        "/srv/public/link/passwd"  # lexical ok aqui...
+    # /root-do-cliente/public/link -> /etc ; Portal pede public/link/hostname
+    assert DockerHostingProvider._cjoin("/srv", "public/link/hostname") == \
+        "/srv/public/link/hostname"  # lexical ok aqui...
     # ...mas o escape real acontece no readlink -f pós-escrita/leitura.
     # Simulação fiel com root real:
     import os
@@ -95,7 +95,7 @@ def test_container_symlink_escape_blocked():
         from app.modules.hosting import paths
 
         with pytest.raises(PathError):
-            paths.contain(os.path.realpath(root), "public/link/passwd")
+            paths.contain(os.path.realpath(root), "public/link/hostname")
 
 
 def test_container_symlink_resolve_blocks_escape(monkeypatch):
@@ -107,8 +107,8 @@ def test_container_symlink_resolve_blocks_escape(monkeypatch):
         cmd = list(args)
         if cmd[:2] == ["exec", "c"] and "readlink" in cmd:
             target = cmd[-1]
-            if "link/passwd" in target:
-                return "/etc/passwd\n"
+            if "link/hostname" in target:
+                return "/etc/hostname\n"
             if target.endswith("/public"):
                 return "/srv/public\n"
             return target + "\n"
@@ -119,5 +119,5 @@ def test_container_symlink_resolve_blocks_escape(monkeypatch):
     import pytest
 
     with pytest.raises(HostingError):
-        p._resolve_container("c", "/srv", "public/link/passwd")
+        p._resolve_container("c", "/srv", "public/link/hostname")
     assert p._resolve_container("c", "/srv", "public") == "/srv/public"

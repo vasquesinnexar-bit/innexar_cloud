@@ -1,4 +1,5 @@
 "use client";
+import type { NotificationItem } from "@/types/notifications";
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -6,14 +7,9 @@ import { useLocale, useTranslations } from "next-intl";
 import { Bell, CheckCircle2, Loader2, ExternalLink } from "lucide-react";
 import { useWorkspaceApi, workspaceFetch, getCustomerToken } from "@/lib/workspace-api";
 import { API_PATHS } from "@/lib/api-paths";
+import { getIntlLocale } from "@/lib/intl-locale";
 
-interface NotificationItem {
-  id: number;
-  title: string;
-  body: string | null;
-  read_at: string | null;
-  created_at: string;
-}
+
 
 const FOCUS_RING =
   "focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--page-bg)]";
@@ -153,7 +149,7 @@ export function NotificationDropdown({ unreadCount, locale }: NotificationDropdo
                           </p>
                         )}
                         <p className="text-xs text-theme-muted mt-1">
-                          {new Date(n.created_at).toLocaleDateString(locale)}
+                          {new Date(n.created_at).toLocaleDateString(getIntlLocale(locale))}
                         </p>
                       </div>
                       {!n.read_at && (

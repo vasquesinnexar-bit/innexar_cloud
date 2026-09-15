@@ -3,9 +3,9 @@ import {
   formatFileSize,
   PROJECT_STATUS_CONFIG,
   MOD_STATUS_LABELS,
-} from "@/lib/project-constants";
+} from "@/lib/project-status";
 
-describe("project-constants", () => {
+describe("project-status (unificado)", () => {
   describe("getStatusColorClasses", () => {
     it("returns color classes for known color", () => {
       const c = getStatusColorClasses("blue");

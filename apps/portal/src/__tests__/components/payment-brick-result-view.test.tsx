@@ -5,8 +5,8 @@ describe("PaymentBrickResultView", () => {
   it("shows approved message when payment_status is approved", () => {
     const onClose = jest.fn();
     render(<PaymentBrickResultView result={{ payment_status: "approved" }} onClose={onClose} />);
-    expect(screen.getByText("Pagamento aprovado.")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Fechar/i })).toBeInTheDocument();
+    expect(screen.getByText("Payment approved.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Close/i })).toBeInTheDocument();
   });
 
   it("shows Pix instructions when pending with qr_code", () => {
@@ -19,7 +19,7 @@ describe("PaymentBrickResultView", () => {
         onClose={jest.fn()}
       />
     );
-    expect(screen.getByText(/Pix: escaneie o QR Code ou copie o código/)).toBeInTheDocument();
+    expect(screen.getByText("Scan the QR Code or copy the code below.")).toBeInTheDocument();
     expect(screen.getByText("pix-copy-paste-code")).toBeInTheDocument();
   });
 });

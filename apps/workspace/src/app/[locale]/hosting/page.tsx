@@ -34,7 +34,10 @@ function fmtGB(v: number) {
 
 export default function HostingOverviewPage() {
   const orgFilter = useOrgFilter();
-  const apiPath = (p: string) => withOrgQuery(p, orgFilter);
+  const apiPath = useCallback(
+    (p: string) => withOrgQuery(p, orgFilter),
+    [orgFilter]
+  );
   const [ov, setOv] = useState<Overview | null>(null);
   const [services, setServices] = useState<Svc[]>([]);
 

@@ -3,7 +3,7 @@ import { BillingStats } from "@/components/billing/BillingStats";
 
 describe("BillingStats", () => {
   it("renders three stat cards with paid, pending and total", () => {
-    render(<BillingStats totalPaid={1000} totalPending={500} totalInvoices={3} locale="pt" />);
+    render(<BillingStats totalPaid={1000} totalPending={500} totalInvoices={3} locale="pt" currency="BRL" />);
     expect(screen.getByText("statTotalPaid")).toBeInTheDocument();
     expect(screen.getByText("statPending")).toBeInTheDocument();
     expect(screen.getByText("statTotalInvoices")).toBeInTheDocument();

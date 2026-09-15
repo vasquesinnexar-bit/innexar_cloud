@@ -90,6 +90,15 @@ export function useSupport(searchParams: URLSearchParams) {
           body: JSON.stringify(createTicketBody),
         });
         if (res.ok) {
+          const created = (await res.json().catch(() => null)) as { id?: number } | null;
+          // Envia a mensagem inicial como primeira mensagem do ticket.
+          if (created?.id && message.trim()) {
+            await workspaceFetch(API_PATHS.TICKETS.MESSAGES(created.id), {
+              method: "POST",
+              token,
+              body: JSON.stringify({ body: message.trim() }),
+            });
+          }
           setSubject("");
           setMessage("");
           setShowForm(false);

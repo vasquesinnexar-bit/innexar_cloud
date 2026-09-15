@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { workspaceFetch, getCustomerToken, getWorkspaceApiBase } from "@/lib/workspace-api";
 import { useBilling } from "@/hooks/use-billing";
@@ -31,15 +31,12 @@ export default function BillingPage() {
     filteredInvoices,
     totalPaid,
     totalPending,
+    dominantCurrency,
     refresh,
   } = useBilling();
   const [paymentModalInvoice, setPaymentModalInvoice] = useState<Invoice | null>(null);
   const [pixModalInvoice, setPixModalInvoice] = useState<Invoice | null>(null);
   // Moeda dominante das faturas (clientes têm uma moeda; fallback USD legado)
-  const statsCurrency = useMemo(
-    () => invoices.find((inv) => inv.currency)?.currency ?? "USD",
-    [invoices]
-  );
 
   const handleDownload = useCallback(async (invoice: Invoice) => {
     const token = getCustomerToken();
@@ -78,7 +75,7 @@ export default function BillingPage() {
         totalPending={totalPending}
         totalInvoices={invoices.length}
         locale={locale}
-        currency={statsCurrency}
+        currency={dominantCurrency}
       />
       {invoices.length > 0 ? (
         <BillingInvoiceTable

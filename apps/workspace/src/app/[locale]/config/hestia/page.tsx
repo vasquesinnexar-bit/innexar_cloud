@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Loader2, AlertCircle, Server, Save } from 'lucide-react';
 import { workspaceFetch, getStaffToken } from '@/lib/workspace-api';
@@ -15,7 +15,10 @@ interface HestiaSettings {
 
 export default function WorkspaceConfigHestiaPage() {
   const orgFilter = useOrgFilter();
-  const apiPath = (path: string) => withOrgQuery(path, orgFilter);
+  const apiPath = useCallback(
+    (path: string) => withOrgQuery(path, orgFilter),
+    [orgFilter]
+  );
   const [settings, setSettings] = useState<HestiaSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

@@ -1,4 +1,5 @@
 "use client";
+import type { Ticket, TicketMessage } from "@/types/support";
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
@@ -8,22 +9,9 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Send, Loader2, AlertCircle, MessageSquare, User } from "lucide-react";
 import { useWorkspaceApi, workspaceFetch, getCustomerToken } from "@/lib/workspace-api";
 import { API_PATHS } from "@/lib/api-paths";
+import { getIntlLocale } from "@/lib/intl-locale";
 
-interface Ticket {
-  id: number;
-  subject: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
-}
 
-interface TicketMessage {
-  id: number;
-  ticket_id: number;
-  author_type: string;
-  body: string;
-  created_at: string;
-}
 
 export default function SupportTicketDetailPage() {
   const params = useParams();
@@ -183,9 +171,9 @@ export default function SupportTicketDetailPage() {
           </span>
         </div>
         <p className="text-theme-secondary text-sm">
-          {t("createdOn")} {new Date(ticket.created_at).toLocaleString(locale)}
+          {t("createdOn")} {new Date(ticket.created_at).toLocaleString(getIntlLocale(locale))}
           {ticket.updated_at !== ticket.created_at &&
-            ` • ${t("updatedOn")} ${new Date(ticket.updated_at).toLocaleString(locale)}`}
+            ` • ${t("updatedOn")} ${new Date(ticket.updated_at).toLocaleString(getIntlLocale(locale))}`}
         </p>
       </div>
 
@@ -209,7 +197,7 @@ export default function SupportTicketDetailPage() {
                   <User className="w-4 h-4" />
                   <span>{msg.author_type === "customer" ? t("you") : t("support")}</span>
                   <span>•</span>
-                  <span>{new Date(msg.created_at).toLocaleString(locale)}</span>
+                  <span>{new Date(msg.created_at).toLocaleString(getIntlLocale(locale))}</span>
                 </div>
                 <p className="text-theme-primary whitespace-pre-wrap">{msg.body}</p>
               </motion.div>

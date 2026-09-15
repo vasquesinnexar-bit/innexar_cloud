@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { Server, Globe } from "lucide-react";
 import { useHostingService } from "@/hooks/use-hosting";
+import { SkeletonCard } from "@/components/ui/Skeleton";
 
 const RUNTIME_LABEL: Record<string, string> = {
   online: "Online",
@@ -25,8 +26,9 @@ export default function HostingListPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4" role="status" aria-label="Carregando hospedagem">
+        <SkeletonCard />
+        <SkeletonCard />
       </div>
     );
   }

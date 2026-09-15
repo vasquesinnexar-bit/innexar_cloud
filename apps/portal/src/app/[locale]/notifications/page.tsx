@@ -1,4 +1,5 @@
 "use client";
+import type { NotificationItem } from "@/types/notifications";
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
@@ -6,15 +7,9 @@ import { useLocale, useTranslations } from "next-intl";
 import { Bell, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
 import { useWorkspaceApi, workspaceFetch, getCustomerToken } from "@/lib/workspace-api";
 import { API_PATHS } from "@/lib/api-paths";
+import { getIntlLocale } from "@/lib/intl-locale";
 
-interface NotificationItem {
-  id: number;
-  channel: string;
-  title: string;
-  body: string | null;
-  read_at: string | null;
-  created_at: string;
-}
+
 
 export default function NotificationsPage() {
   const locale = useLocale();
@@ -137,7 +132,7 @@ export default function NotificationsPage() {
                     </p>
                   )}
                   <p className="text-theme-muted text-xs mt-2">
-                    {new Date(n.created_at).toLocaleString(locale)}
+                    {new Date(n.created_at).toLocaleString(getIntlLocale(locale))}
                   </p>
                 </div>
                 {!n.read_at && (

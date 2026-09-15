@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from "react";
 import { motion } from 'framer-motion';
 import { Loader2, AlertCircle, Server, Package } from 'lucide-react';
 import { workspaceFetch, getStaffToken } from '@/lib/workspace-api';
@@ -14,7 +14,10 @@ interface PackageItem {
 
 export default function WorkspaceHestiaPackagesPage() {
   const orgFilter = useOrgFilter();
-  const apiPath = (path: string) => withOrgQuery(path, orgFilter);
+  const apiPath = useCallback(
+    (path: string) => withOrgQuery(path, orgFilter),
+    [orgFilter]
+  );
   const [packages, setPackages] = useState<PackageItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
