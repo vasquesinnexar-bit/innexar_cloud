@@ -6,16 +6,16 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from app.api.crm_webhook_router import router as crm_webhook_router
-from app.api.rate_limiter import limiter
-from slowapi import _rate_limit_exceeded_handler
-from slowapi.errors import RateLimitExceeded
 from app.api.portal import router as portal_router
 from app.api.public_router import router as public_router
+from app.api.rate_limiter import limiter
 from app.api.resend_inbound_router import router as resend_inbound_router
 from app.api.workspace_router import router as workspace_router
 from app.core.config import settings
@@ -55,36 +55,43 @@ from app.modules.crm.router_workspace import router as crm_workspace_router
 from app.modules.customers.router_workspace import router as customers_workspace_router
 from app.modules.dashboard.router_workspace import router as dashboard_workspace_router
 from app.modules.files.models import ProjectFile  # noqa: F401
-from app.modules.hosting.models import (  # noqa: F401
-    FileRevision, HostingBackup, HostingJob, HostingServer, HostingService,
-)
-from app.modules.hosting.router_portal import router as hosting_portal_router
-from app.modules.hosting.router_workspace import router as hosting_workspace_router
 from app.modules.files.router_workspace import router as files_workspace_router
-from app.modules.mail.models import (  # noqa: F401
-    EmailDomain, EmailMailbox, MailProvisioningJob, Service,
-)
-from app.modules.mail.router_portal import router as mail_portal_router
-from app.modules.mail.router_workspace import router as mail_workspace_router
-from app.modules.hestia.router_workspace import router as hestia_workspace_router
 from app.modules.fulfillment.models import Fulfillment  # noqa: F401
 from app.modules.fulfillment.router_workspace import (
     router as fulfillment_workspace_router,
 )
-from app.modules.reps.models import Representative  # noqa: F401
-from app.modules.reps.router_workspace import router as reps_workspace_router
-from app.modules.search.router_workspace import router as search_workspace_router
-from app.modules.notifications.router_workspace import (
-    router as notifications_workspace_router,
+from app.modules.hestia.router_workspace import router as hestia_workspace_router
+from app.modules.hosting.models import (  # noqa: F401
+    FileRevision,
+    HostingBackup,
+    HostingJob,
+    HostingServer,
+    HostingService,
 )
+from app.modules.hosting.router_portal import router as hosting_portal_router
+from app.modules.hosting.router_workspace import router as hosting_workspace_router
+from app.modules.mail.models import (  # noqa: F401
+    EmailDomain,
+    EmailMailbox,
+    MailProvisioningJob,
+    Service,
+)
+from app.modules.mail.router_portal import router as mail_portal_router
+from app.modules.mail.router_workspace import router as mail_workspace_router
 from app.modules.notifications.router_portal import (
     router as notifications_portal_router,
+)
+from app.modules.notifications.router_workspace import (
+    router as notifications_workspace_router,
 )
 from app.modules.orders.router_workspace import router as orders_workspace_router
 from app.modules.products.router_public import router as products_public_router
 from app.modules.projects.models import Project  # noqa: F401
 from app.modules.projects.router_portal import router as projects_portal_router
 from app.modules.projects.router_workspace import router as projects_workspace_router
+from app.modules.reps.models import Representative  # noqa: F401
+from app.modules.reps.router_workspace import router as reps_workspace_router
+from app.modules.search.router_workspace import router as search_workspace_router
 from app.modules.support.models import Ticket, TicketMessage  # noqa: F401
 from app.modules.support.router_portal import router as support_portal_router
 from app.modules.support.router_workspace import router as support_workspace_router
