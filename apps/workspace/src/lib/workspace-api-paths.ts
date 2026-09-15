@@ -92,6 +92,12 @@ export const WORKSPACE_API_PATHS = {
       customerId
         ? `${PREFIX}/billing/contracts?customer_id=${encodeURIComponent(String(customerId))}`
         : `${PREFIX}/billing/contracts`,
+    CONTRACT_ITEMS: (contractId: string | number) =>
+      `${PREFIX}/billing/contracts/${encodeURIComponent(String(contractId))}/items`,
+    CONTRACT_ITEM: (itemId: string | number) =>
+      `${PREFIX}/billing/contracts/items/${encodeURIComponent(String(itemId))}`,
+    CONTRACT_INVOICE: (contractId: string | number) =>
+      `${PREFIX}/billing/contracts/${encodeURIComponent(String(contractId))}/invoice`,
     POLICIES: `${PREFIX}/billing/policies`,
     POLICY_EFFECTIVE: `${PREFIX}/billing/policies/effective`,
     REFUNDS: (invoiceId?: string | number) =>

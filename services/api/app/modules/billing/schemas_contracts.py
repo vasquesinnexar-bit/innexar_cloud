@@ -18,6 +18,24 @@ class ContractItemCreate(BaseModel):
     unit_amount: float | None = None
 
 
+class ContractItemUpdate(BaseModel):
+    """Partial update of a contract item (all optional)."""
+
+    product_id: int | None = None
+    price_plan_id: int | None = None
+    subscription_id: int | None = None
+    description: str | None = None
+    quantity: int | None = None
+    unit_amount: float | None = None
+
+
+class ContractInvoiceCreate(BaseModel):
+    """Generate an invoice from contract items."""
+
+    due_date: datetime | None = None
+    subscription_id: int | None = None
+
+
 class ContractCreate(BaseModel):
     """Body for creating a contract."""
 

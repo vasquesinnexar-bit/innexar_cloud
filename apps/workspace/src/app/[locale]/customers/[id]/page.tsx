@@ -1122,6 +1122,7 @@ export default function WorkspaceCustomerDetailPage() {
                   className="w-full px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white"
                 >
                   <option value="USD">USD</option>
+                  <option value="BRL">BRL</option>
                 </select>
               </div>
               <div className="flex gap-2 pt-2">
