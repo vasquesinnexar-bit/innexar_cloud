@@ -23,7 +23,6 @@ from app.modules.hosting.models import (
 from app.modules.hosting.provider import HostingError
 from app.modules.hosting.schemas import (
     BackupCreateBody,
-    ComponentResponse,
     DiffResponse,
     FileEntry,
     FileRenameBody,
@@ -174,7 +173,7 @@ async def link_stack(
             actor_type="staff", actor_id=str(current.id),
         )
     except HostingError as e:
-        raise _err(e)
+        raise _err(e) from e
     return stack
 
 

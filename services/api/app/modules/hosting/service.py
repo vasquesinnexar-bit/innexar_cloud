@@ -224,10 +224,7 @@ class HostingServiceLayer:
             raw_labels = c.get("_labels_raw")
             project = c.get("project") or cls._label_value(raw_labels, "com.docker.compose.project")
             cname = c.get("name", "?")
-            if project:
-                key = f"compose:{project}"
-            else:
-                key = f"standalone:{cname}"
+            key = f"compose:{project}" if project else f"standalone:{cname}"
             g = groups.get(key)
             if g is None:
                 g = groups[key] = {
@@ -326,7 +323,7 @@ class HostingServiceLayer:
         actor_type: str, actor_id: str | None,
     ) -> HostingStack:
         """Vincula a STACK inteira (gerência/metadados; não toca containers)."""
-        names = sorted(set(c.strip() for c in container_names if c.strip()))
+        names = sorted({c.strip() for c in container_names if c.strip()})
         if self._is_platform(compose_project, names[0] if names else ""):
             raise HostingError("platform_infra",
                                "Infra da plataforma não é vinculável a clientes")
