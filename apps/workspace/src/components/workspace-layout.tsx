@@ -48,6 +48,7 @@ export default function WorkspaceLayout({
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [billingOpen, setBillingOpen] = useState(true);
+  const [cloudOpen, setCloudOpen] = useState(true);
   const [configOpen, setConfigOpen] = useState(false);
   const [hestiaOpen, setHestiaOpen] = useState(true);
   const [repsOpen, setRepsOpen] = useState(false);
@@ -226,18 +227,21 @@ export default function WorkspaceLayout({
               const Icon = item.icon;
               const hasChildren = item.children && item.children.length > 0;
               const isBilling = item.key === "billing";
+              const isCloud = item.key === "cloud";
               const isConfig = item.key === "config";
               const isHestia = item.key === "hestia";
               const isReps = item.key === "reps";
               const subOpen = isBilling
                 ? billingOpen
-                : isConfig
-                  ? configOpen
-                  : isHestia
-                    ? hestiaOpen
-                    : isReps
-                      ? repsOpen
-                      : false;
+                : isCloud
+                  ? cloudOpen
+                  : isConfig
+                    ? configOpen
+                    : isHestia
+                      ? hestiaOpen
+                      : isReps
+                        ? repsOpen
+                        : false;
 
               if (hasChildren && sidebarOpen) {
                 return (
@@ -246,6 +250,7 @@ export default function WorkspaceLayout({
                       type="button"
                       onClick={() => {
                         if (isBilling) setBillingOpen(!billingOpen);
+                        if (isCloud) setCloudOpen(!cloudOpen);
                         if (isConfig) setConfigOpen(!configOpen);
                         if (isHestia) setHestiaOpen(!hestiaOpen);
                         if (isReps) setRepsOpen(!repsOpen);
