@@ -30,20 +30,28 @@ export function useBilling() {
       const data = await res.json();
       const list = Array.isArray(data) ? data : data.invoices || [];
       setInvoices(
-        list.map((inv: { id: number; status: string; due_date?: string; total: number; currency?: string }) => ({
-          id: inv.id,
-          project_name: `Fatura #${getDisplayInvoiceNumber(inv.id)}`,
-          amount: Number(inv.total),
-          currency: inv.currency || "USD",
-          status: (inv.status === "paid"
-            ? "paid"
-            : inv.status === "past_due" || inv.status === "overdue"
-              ? "overdue"
-              : "pending") as Invoice["status"],
-          date: inv.due_date || "",
-          due_date: inv.due_date || "",
-          isErp: true,
-        }))
+        list.map(
+          (inv: {
+            id: number;
+            status: string;
+            due_date?: string;
+            total: number;
+            currency?: string;
+          }) => ({
+            id: inv.id,
+            project_name: `Fatura #${getDisplayInvoiceNumber(inv.id)}`,
+            amount: Number(inv.total),
+            currency: inv.currency || "USD",
+            status: (inv.status === "paid"
+              ? "paid"
+              : inv.status === "past_due" || inv.status === "overdue"
+                ? "overdue"
+                : "pending") as Invoice["status"],
+            date: inv.due_date || "",
+            due_date: inv.due_date || "",
+            isErp: true,
+          })
+        )
       );
     } catch {
       setInvoices([]);

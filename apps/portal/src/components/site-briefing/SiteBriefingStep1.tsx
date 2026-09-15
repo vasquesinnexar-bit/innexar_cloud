@@ -62,7 +62,9 @@ export function SiteBriefingStep1({
         <p className="text-xs text-theme-muted mt-1">{labels.companyHelp}</p>
       </div>
       <div>
-        <label className="block text-sm font-medium text-theme-secondary mb-2">{labels.services}</label>
+        <label className="block text-sm font-medium text-theme-secondary mb-2">
+          {labels.services}
+        </label>
         <textarea
           value={services}
           onChange={(e) => setServices(e.target.value)}
@@ -74,7 +76,9 @@ export function SiteBriefingStep1({
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-theme-secondary mb-2">{labels.city}</label>
+          <label className="block text-sm font-medium text-theme-secondary mb-2">
+            {labels.city}
+          </label>
           <input
             type="text"
             value={city}
@@ -84,7 +88,9 @@ export function SiteBriefingStep1({
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-theme-secondary mb-2">{labels.whatsapp}</label>
+          <label className="block text-sm font-medium text-theme-secondary mb-2">
+            {labels.whatsapp}
+          </label>
           <input
             type="text"
             value={whatsapp}

@@ -5,7 +5,10 @@ import { useLocale, useTranslations } from "next-intl";
 import { getIntlLocale } from "@/lib/intl-locale";
 import { Wrench, Calendar, Paperclip, Send, Loader2 } from "lucide-react";
 import type { ModRequestItem, ModQuota } from "@/types/project";
-import { MOD_STATUS_LABELS, getProjectColorClasses as getStatusColorClasses } from "@/lib/project-status";
+import {
+  MOD_STATUS_LABELS,
+  getProjectColorClasses as getStatusColorClasses,
+} from "@/lib/project-status";
 
 type ProjectModificationsTabProps = {
   modRequests: ModRequestItem[];

@@ -26,7 +26,11 @@ export default function HostingListPage() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4" role="status" aria-label="Carregando hospedagem">
+      <div
+        className="grid grid-cols-1 md:grid-cols-2 gap-4"
+        role="status"
+        aria-label="Carregando hospedagem"
+      >
         <SkeletonCard />
         <SkeletonCard />
       </div>

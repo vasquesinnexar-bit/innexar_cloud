@@ -95,7 +95,9 @@ export function PortalSidebar({
               )}
             </motion.div>
             {sidebarOpen && (
-              <span className="text-sm font-semibold text-theme-primary whitespace-nowrap">{panelBrandLabel}</span>
+              <span className="text-sm font-semibold text-theme-primary whitespace-nowrap">
+                {panelBrandLabel}
+              </span>
             )}
           </Link>
 

@@ -9,8 +9,6 @@ import { useWorkspaceApi, workspaceFetch, getCustomerToken } from "@/lib/workspa
 import { API_PATHS } from "@/lib/api-paths";
 import { getIntlLocale } from "@/lib/intl-locale";
 
-
-
 export default function NotificationsPage() {
   const locale = useLocale();
   const t = useTranslations("notificationsPage");

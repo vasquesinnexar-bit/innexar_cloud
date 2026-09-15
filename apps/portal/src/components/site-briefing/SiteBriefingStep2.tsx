@@ -145,7 +145,9 @@ export function SiteBriefingStep2({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-theme-secondary mb-2">{labels.domain}</label>
+        <label className="block text-sm font-medium text-theme-secondary mb-2">
+          {labels.domain}
+        </label>
         <input
           type="text"
           value={domain}
@@ -157,7 +159,9 @@ export function SiteBriefingStep2({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-theme-secondary mb-2">{labels.photos}</label>
+        <label className="block text-sm font-medium text-theme-secondary mb-2">
+          {labels.photos}
+        </label>
         <textarea
           value={photos}
           onChange={(e) => setPhotos(e.target.value)}

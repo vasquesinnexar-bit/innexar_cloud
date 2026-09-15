@@ -57,7 +57,8 @@ export function PaymentBrickModal({
       >
         <div className="flex items-center justify-between p-4 border-b border-[var(--border)]">
           <h3 className="text-lg font-semibold text-theme-primary">
-            Pay invoice #{invoice ? getDisplayInvoiceNumber(invoice.id) : "-"} – {invoice?.currency} {invoice?.total.toFixed(2)}
+            Pay invoice #{invoice ? getDisplayInvoiceNumber(invoice.id) : "-"} – {invoice?.currency}{" "}
+            {invoice?.total.toFixed(2)}
           </h3>
           <button
             type="button"

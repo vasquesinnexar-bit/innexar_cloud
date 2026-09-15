@@ -74,9 +74,7 @@ export default function PortalForgotPasswordPage() {
               <div className="flex justify-center">
                 <CheckCircle className="w-16 h-16 text-green-400" />
               </div>
-              <p className="text-center text-theme-secondary text-sm">
-                {t("successHint")}
-              </p>
+              <p className="text-center text-theme-secondary text-sm">{t("successHint")}</p>
               <Link
                 href={`/${locale}/login`}
                 className="block w-full py-3 rounded-xl text-center text-white font-medium bg-blue-500 hover:bg-blue-600 transition-colors"

@@ -5,7 +5,10 @@ import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
 import type { ProjectDetails } from "@/types/project";
-import { PROJECT_STATUS_CONFIG, getProjectColorClasses as getStatusColorClasses } from "@/lib/project-status";
+import {
+  PROJECT_STATUS_CONFIG,
+  getProjectColorClasses as getStatusColorClasses,
+} from "@/lib/project-status";
 import { Palette } from "lucide-react";
 import { getIntlLocale } from "@/lib/intl-locale";
 

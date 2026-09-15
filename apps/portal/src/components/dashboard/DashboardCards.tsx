@@ -89,12 +89,14 @@ export function DashboardCards({
               </p>
               {data.plan.since && (
                 <p className="text-theme-secondary text-xs mt-1">
-                  {labels.since}: {new Date(data.plan.since).toLocaleDateString(getIntlLocale(locale))}
+                  {labels.since}:{" "}
+                  {new Date(data.plan.since).toLocaleDateString(getIntlLocale(locale))}
                 </p>
               )}
               {data.plan.next_due_date && (
                 <p className="text-theme-secondary text-xs mt-1">
-                  {labels.nextDue}: {new Date(data.plan.next_due_date).toLocaleDateString(getIntlLocale(locale))}
+                  {labels.nextDue}:{" "}
+                  {new Date(data.plan.next_due_date).toLocaleDateString(getIntlLocale(locale))}
                 </p>
               )}
             </>

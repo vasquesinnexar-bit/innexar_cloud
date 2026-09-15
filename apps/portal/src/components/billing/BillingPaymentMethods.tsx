@@ -3,15 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
-import {
-  CreditCard,
-  Plus,
-  Trash2,
-  Star,
-  CheckCircle2,
-  AlertCircle,
-  Loader2,
-} from "lucide-react";
+import { CreditCard, Plus, Trash2, Star, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { useWorkspaceApi, workspaceFetch, getCustomerToken } from "@/lib/workspace-api";
 import { API_PATHS } from "@/lib/api-paths";
 import Modal from "@/components/Modal";
@@ -164,9 +156,7 @@ export function BillingPaymentMethods() {
         token,
       });
       if (res.ok) {
-        setCards((prev) =>
-          prev.map((c) => ({ ...c, is_default: c.id === id }))
-        );
+        setCards((prev) => prev.map((c) => ({ ...c, is_default: c.id === id })));
       }
     } catch {
       // ignore
@@ -340,12 +330,7 @@ export function BillingPaymentMethods() {
       )}
 
       {/* Add Card Modal */}
-      <Modal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title={t("addCard")}
-        size="sm"
-      >
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={t("addCard")} size="sm">
         <form onSubmit={handleAddCard} className="space-y-4">
           {cardError && (
             <div className="flex items-center gap-3 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">

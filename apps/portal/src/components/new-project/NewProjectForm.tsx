@@ -25,8 +25,6 @@ type NewProjectFormProps = {
   formError?: string | null;
 };
 
-
-
 export function NewProjectForm({
   step,
   setStep,

@@ -52,7 +52,10 @@ export function formatCustomerDisplayName(raw: string | null | undefined): strin
 
   const base = source.includes("@") ? source.split("@")[0] : source;
   const noTrailingDigits = base.replace(/\d+$/g, "").trim();
-  const separated = noTrailingDigits.replace(/[._-]+/g, " ").replace(/([a-z])([A-Z])/g, "$1 $2").trim();
+  const separated = noTrailingDigits
+    .replace(/[._-]+/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .trim();
 
   const normalized = splitGluedName(separated || base);
   return titleCase(normalized);

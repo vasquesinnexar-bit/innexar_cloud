@@ -58,7 +58,11 @@ export default function PortalFaqPage() {
       </div>
 
       {categories.map((category, index) => {
-        const items = t.raw(`sections.${category}.items`) as Array<{ id: string; question: string; answer: string }>;
+        const items = t.raw(`sections.${category}.items`) as Array<{
+          id: string;
+          question: string;
+          answer: string;
+        }>;
         return (
           <motion.section
             key={category}
@@ -67,7 +71,9 @@ export default function PortalFaqPage() {
             transition={{ delay: index * 0.04 }}
             className="space-y-4"
           >
-            <h2 className="text-xl font-semibold text-theme-primary">{t(`sections.${category}.title`)}</h2>
+            <h2 className="text-xl font-semibold text-theme-primary">
+              {t(`sections.${category}.title`)}
+            </h2>
             <div className="space-y-3">
               {items.map((item) => (
                 <FaqAccordionItem key={`${category}-${item.id}`} item={item} />

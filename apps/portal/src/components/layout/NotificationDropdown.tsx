@@ -9,8 +9,6 @@ import { useWorkspaceApi, workspaceFetch, getCustomerToken } from "@/lib/workspa
 import { API_PATHS } from "@/lib/api-paths";
 import { getIntlLocale } from "@/lib/intl-locale";
 
-
-
 const FOCUS_RING =
   "focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--page-bg)]";
 
@@ -126,27 +124,18 @@ export function NotificationDropdown({ unreadCount, locale }: NotificationDropdo
             ) : (
               <div className="divide-y" style={{ borderColor: "var(--border)" }}>
                 {list.map((n) => (
-                  <div
-                    key={n.id}
-                    className={`px-4 py-3 ${
-                      n.read_at ? "" : "bg-blue-500/5"
-                    }`}
-                  >
+                  <div key={n.id} className={`px-4 py-3 ${n.read_at ? "" : "bg-blue-500/5"}`}>
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <p
                           className={`text-sm truncate ${
-                            n.read_at
-                              ? "text-theme-secondary"
-                              : "text-theme-primary font-medium"
+                            n.read_at ? "text-theme-secondary" : "text-theme-primary font-medium"
                           }`}
                         >
                           {n.title}
                         </p>
                         {n.body && (
-                          <p className="text-xs text-theme-muted mt-0.5 line-clamp-2">
-                            {n.body}
-                          </p>
+                          <p className="text-xs text-theme-muted mt-0.5 line-clamp-2">{n.body}</p>
                         )}
                         <p className="text-xs text-theme-muted mt-1">
                           {new Date(n.created_at).toLocaleDateString(getIntlLocale(locale))}

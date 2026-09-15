@@ -3,15 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import {
-  RotateCw,
-  FolderTree,
-  Globe,
-  ShieldCheck,
-  ExternalLink,
-  Copy,
-  Check,
-} from "lucide-react";
+import { RotateCw, FolderTree, Globe, ShieldCheck, ExternalLink, Copy, Check } from "lucide-react";
 import { useHostingService } from "@/hooks/use-hosting";
 import { API_PATHS } from "@/lib/api-paths";
 import { workspaceFetch, getCustomerToken } from "@/lib/workspace-api";
@@ -85,9 +77,9 @@ export default function HostingDetailPage() {
   const ssl = (overview.ssl ?? {}) as Record<string, unknown>;
   const dns = (overview.dns ?? {}) as Record<string, unknown>;
   const deploy = overview.deploy ?? {};
-  const logLines = logs.split("\n").filter((l) =>
-    logSearch ? l.toLowerCase().includes(logSearch.toLowerCase()) : true
-  );
+  const logLines = logs
+    .split("\n")
+    .filter((l) => (logSearch ? l.toLowerCase().includes(logSearch.toLowerCase()) : true));
 
   const openFile = async (name: string, isDir: boolean) => {
     const next = path === "." ? name : `${path}/${name}`;
@@ -148,7 +140,10 @@ export default function HostingDetailPage() {
             </a>
           )}
           {!confirmRestart ? (
-            <button onClick={() => setConfirmRestart(true)} className="btn sm flex items-center gap-1">
+            <button
+              onClick={() => setConfirmRestart(true)}
+              className="btn sm flex items-center gap-1"
+            >
               <RotateCw className="w-4 h-4" /> {t("restart")}
             </button>
           ) : (
@@ -177,9 +172,7 @@ export default function HostingDetailPage() {
             key={tb}
             onClick={() => setTab(tb)}
             className={`px-4 py-2 text-sm font-medium whitespace-nowrap ${
-              tab === tb
-                ? "text-theme-primary border-b-2 border-blue-500"
-                : "text-theme-secondary"
+              tab === tb ? "text-theme-primary border-b-2 border-blue-500" : "text-theme-secondary"
             }`}
           >
             {t(`tab_${tb}`)}
@@ -196,7 +189,8 @@ export default function HostingDetailPage() {
           <div className="card-base rounded-2xl p-4">
             <p className="text-xs text-theme-secondary">RAM</p>
             <p className="text-xl font-bold">
-              {fmtBytes(m.mem_used_bytes)} <span className="text-sm font-normal">/ {fmtBytes(m.mem_limit_bytes)}</span>
+              {fmtBytes(m.mem_used_bytes)}{" "}
+              <span className="text-sm font-normal">/ {fmtBytes(m.mem_limit_bytes)}</span>
             </p>
           </div>
           <div className="card-base rounded-2xl p-4">
@@ -356,9 +350,13 @@ export default function HostingDetailPage() {
             <Globe className="w-4 h-4" />
             <strong>{overview.primary_domain ?? "—"}</strong>
           </p>
-          {(overview.domains ?? []).filter((d) => d !== overview.primary_domain).map((d) => (
-            <p key={d} className="text-theme-secondary">{d}</p>
-          ))}
+          {(overview.domains ?? [])
+            .filter((d) => d !== overview.primary_domain)
+            .map((d) => (
+              <p key={d} className="text-theme-secondary">
+                {d}
+              </p>
+            ))}
           <p className="text-theme-secondary">
             DNS: {JSON.stringify((overview.dns as Record<string, unknown>)?.ips ?? [])}
           </p>

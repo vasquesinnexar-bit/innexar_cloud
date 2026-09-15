@@ -45,18 +45,15 @@ export function useHostingService(id: number | null) {
     if (res.ok) setOverview(await res.json());
   }, []);
 
-  const loadFiles = useCallback(
-    async (sid: number, path: string) => {
-      const token = getCustomerToken();
-      if (!token) return;
-      const res = await workspaceFetch(API_PATHS.HOSTING.FILES(sid, path), { token });
-      if (res.ok) {
-        setFiles(await res.json());
-        setCwd(path);
-      }
-    },
-    []
-  );
+  const loadFiles = useCallback(async (sid: number, path: string) => {
+    const token = getCustomerToken();
+    if (!token) return;
+    const res = await workspaceFetch(API_PATHS.HOSTING.FILES(sid, path), { token });
+    if (res.ok) {
+      setFiles(await res.json());
+      setCwd(path);
+    }
+  }, []);
 
   const loadLogs = useCallback(async (sid: number) => {
     const token = getCustomerToken();
@@ -92,25 +89,22 @@ export function useHostingService(id: number | null) {
     [loadOverview]
   );
 
-  const saveFile = useCallback(
-    async (sid: number, path: string, content: string) => {
-      const token = getCustomerToken();
-      if (!token) return "no-token";
-      setBusy("save");
-      try {
-        const res = await workspaceFetch(API_PATHS.HOSTING.FILE_WRITE(sid, path), {
-          token,
-          method: "PUT",
-          body: JSON.stringify({ content }),
-        });
-        if (!res.ok) return `HTTP ${res.status}`;
-        return null;
-      } finally {
-        setBusy(null);
-      }
-    },
-    []
-  );
+  const saveFile = useCallback(async (sid: number, path: string, content: string) => {
+    const token = getCustomerToken();
+    if (!token) return "no-token";
+    setBusy("save");
+    try {
+      const res = await workspaceFetch(API_PATHS.HOSTING.FILE_WRITE(sid, path), {
+        token,
+        method: "PUT",
+        body: JSON.stringify({ content }),
+      });
+      if (!res.ok) return `HTTP ${res.status}`;
+      return null;
+    } finally {
+      setBusy(null);
+    }
+  }, []);
 
   const createBackup = useCallback(
     async (sid: number) => {

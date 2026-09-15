@@ -19,13 +19,7 @@ interface AttemptView {
   meta: Record<string, string | null>;
 }
 
-export function PixBoletoModal({
-  invoice,
-  onClose,
-}: {
-  invoice: Invoice;
-  onClose: () => void;
-}) {
+export function PixBoletoModal({ invoice, onClose }: { invoice: Invoice; onClose: () => void }) {
   const locale = useLocale();
   const intlLocale = getIntlLocale(locale);
   const t = useTranslations("billingPage");
@@ -94,7 +88,10 @@ export function PixBoletoModal({
   const isPix = attempt?.method === "pix";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+      onClick={onClose}
+    >
       <div
         className="card-base rounded-2xl p-6 w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
@@ -111,16 +108,26 @@ export function PixBoletoModal({
         {!attempt && (
           <div className="grid gap-2">
             {methods.includes("pix") && (
-              <button onClick={() => create("pix")} disabled={loading} className="btn flex items-center gap-2 justify-center">
+              <button
+                onClick={() => create("pix")}
+                disabled={loading}
+                className="btn flex items-center gap-2 justify-center"
+              >
                 <QrCode className="w-4 h-4" /> {t("payWithPix")}
               </button>
             )}
             {methods.includes("boleto") && (
-              <button onClick={() => create("boleto")} disabled={loading} className="btn ghost flex items-center gap-2 justify-center">
+              <button
+                onClick={() => create("boleto")}
+                disabled={loading}
+                className="btn ghost flex items-center gap-2 justify-center"
+              >
                 <Barcode className="w-4 h-4" /> {t("payWithBoleto")}
               </button>
             )}
-            {methods.length === 0 && <p className="text-theme-secondary text-sm">{t("loading")}…</p>}
+            {methods.length === 0 && (
+              <p className="text-theme-secondary text-sm">{t("loading")}…</p>
+            )}
           </div>
         )}
 
@@ -141,7 +148,10 @@ export function PixBoletoModal({
                 <p className="text-xs break-all p-3 rounded-xl bg-white/5 border border-white/10 max-h-24 overflow-y-auto">
                   {meta.copy_paste}
                 </p>
-                <button onClick={() => meta.copy_paste && copy(meta.copy_paste)} className="btn sm mt-2 flex items-center gap-1">
+                <button
+                  onClick={() => meta.copy_paste && copy(meta.copy_paste)}
+                  className="btn sm mt-2 flex items-center gap-1"
+                >
                   {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   {t("copyCode")}
                 </button>
@@ -164,14 +174,22 @@ export function PixBoletoModal({
                 <p className="text-xs break-all p-3 rounded-xl bg-white/5 border border-white/10">
                   {meta.digitable_line}
                 </p>
-                <button onClick={() => meta.digitable_line && copy(meta.digitable_line)} className="btn sm mt-2 flex items-center gap-1">
+                <button
+                  onClick={() => meta.digitable_line && copy(meta.digitable_line)}
+                  className="btn sm mt-2 flex items-center gap-1"
+                >
                   {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   {t("copyCode")}
                 </button>
               </div>
             )}
             {meta.ticket_url && (
-              <a href={meta.ticket_url} target="_blank" rel="noopener" className="btn ghost w-full text-center">
+              <a
+                href={meta.ticket_url}
+                target="_blank"
+                rel="noopener"
+                className="btn ghost w-full text-center"
+              >
                 {t("openBoleto")}
               </a>
             )}

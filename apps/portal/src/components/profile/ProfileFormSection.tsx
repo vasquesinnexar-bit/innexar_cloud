@@ -2,7 +2,17 @@
 
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
-import { User, Mail, Phone, MapPin, FileText, Save, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  FileText,
+  Save,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+} from "lucide-react";
 import type { CustomerProfile } from "@/types/profile";
 
 const inputBase =
@@ -116,7 +126,9 @@ export function ProfileFormSection({
               <input
                 type="text"
                 value={profile.document ?? ""}
-                onChange={(e) => setProfile({ ...profile, document: e.target.value.trim() || null })}
+                onChange={(e) =>
+                  setProfile({ ...profile, document: e.target.value.trim() || null })
+                }
                 className={inputBase}
                 placeholder={t("documentPlaceholder")}
               />
@@ -140,7 +152,8 @@ export function ProfileFormSection({
         </div>
         {(profile.country || profile.locale || profile.currency) && (
           <p className="text-xs text-theme-muted">
-            {t("accountInfo")}: {[profile.country, profile.locale, profile.currency].filter(Boolean).join(" · ")}
+            {t("accountInfo")}:{" "}
+            {[profile.country, profile.locale, profile.currency].filter(Boolean).join(" · ")}
           </p>
         )}
         <div>

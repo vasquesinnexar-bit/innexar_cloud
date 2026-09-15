@@ -11,8 +11,6 @@ import { useWorkspaceApi, workspaceFetch, getCustomerToken } from "@/lib/workspa
 import { API_PATHS } from "@/lib/api-paths";
 import { getIntlLocale } from "@/lib/intl-locale";
 
-
-
 export default function SupportTicketDetailPage() {
   const params = useParams();
   const locale = useLocale();
@@ -211,7 +209,9 @@ export default function SupportTicketDetailPage() {
           onSubmit={handleReply}
           className="bg-[var(--card-bg)] backdrop-blur-xl border border-[var(--border)] rounded-2xl p-6"
         >
-          <label className="block text-sm font-medium text-theme-secondary mb-2">{t("reply")}</label>
+          <label className="block text-sm font-medium text-theme-secondary mb-2">
+            {t("reply")}
+          </label>
           <textarea
             value={replyBody}
             onChange={(e) => setReplyBody(e.target.value)}
