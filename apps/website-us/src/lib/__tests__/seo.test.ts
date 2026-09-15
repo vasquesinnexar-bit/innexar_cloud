@@ -24,7 +24,7 @@ describe('SEO Utilities', () => {
     describe('generateStructuredData', () => {
         it('should generate valid JSON-LD structure', () => {
             const data = generateStructuredData('en', 'home')
-            expect(data.organization['@type']).toBe('Organization')
+            expect(data.organization['@type']).toBe('ProfessionalService')
             expect(data.website['@type']).toBe('WebSite')
             expect(data.breadcrumb['itemListElement']).toHaveLength(1) // Home only
         })

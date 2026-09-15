@@ -1,10 +1,28 @@
 """Fase 4: hosting API — link, tenant isolation, jobs (sqlite; docker real p/ inspect)."""
 
+import shutil
+import subprocess
+
 import pytest
 from app.core.security import create_token_staff
 from app.models.user import User
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
+
+
+def _require_docker_container(name: str) -> None:
+    """Pula testes que exigem container real (ex.: CI sem docker)."""
+    if not shutil.which("docker"):
+        pytest.skip("docker indisponível")
+    try:
+        subprocess.run(
+            ["docker", "inspect", name],
+            capture_output=True,
+            timeout=30,
+            check=True,
+        )
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError):
+        pytest.skip(f"container {name} indisponível")
 
 
 def _staff_headers(user: User) -> dict[str, str]:
@@ -23,6 +41,7 @@ async def _mk_customer(client: AsyncClient, h: dict, email: str) -> int:
 async def test_link_and_list(
     client: AsyncClient, staff_user: User, billing_enabled: None
 ):
+    _require_docker_container("innexar-mail-portal")
     h = _staff_headers(staff_user)
     cid = await _mk_customer(client, h, "host-a@teste.innexar")
     r = await client.post(
@@ -81,6 +100,7 @@ async def test_idor(
     from app.core.security import hash_password
     from app.models.customer_user import CustomerUser
 
+    _require_docker_container("innexar-mail-portal")
     h = _staff_headers(staff_user)
     cid_a = await _mk_customer(client, h, "host-idor-a@teste.innexar")
     cid_b = await _mk_customer(client, h, "host-idor-b@teste.innexar")
