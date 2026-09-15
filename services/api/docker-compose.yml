@@ -82,6 +82,8 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /usr/bin/docker:/usr/bin/docker:ro
+      # Somente leitura: permite ao overview de hosting medir disco de backups
+      - /srv/innexar/backups:/srv/innexar/backups:ro
     # API pública via Traefik (api3.innexar.app); bind só em loopback para debug local
     ports:
       - "127.0.0.1:8002:8000"

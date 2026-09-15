@@ -13,9 +13,9 @@ interface Overview {
   containers_total: number | null;
   images: number | null;
   docker_version: string;
-  disk_total: number;
-  disk_used: number;
-  disk_free: number;
+  disk_total: number | null;
+  disk_used: number | null;
+  disk_free: number | null;
   services_total: number;
   services_suspended: number;
 }
@@ -79,7 +79,7 @@ export default function HostingOverviewPage() {
         </div>
         <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
           <p className="text-slate-400 text-sm">Disco livre</p>
-          <p className="text-2xl font-bold text-white">{ov ? fmtGB(ov.disk_free) : "—"}</p>
+          <p className="text-2xl font-bold text-white">{ov && ov.disk_free != null ? fmtGB(ov.disk_free) : "—"}</p>
         </div>
       </div>
       {suspended.length > 0 && (

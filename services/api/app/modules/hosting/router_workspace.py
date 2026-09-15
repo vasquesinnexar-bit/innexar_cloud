@@ -97,7 +97,12 @@ async def servers_overview(
         info = __import__("json").loads(_docker("info", "--format", "{{json .}}"))
     except HostingError:
         info = {}
-    disk = shutil.disk_usage("/srv/innexar/backups")
+    try:
+        disk = shutil.disk_usage("/srv/innexar/backups")
+        disk_total, disk_used, disk_free = disk.total, disk.used, disk.free
+    except OSError:
+        # Path não montado no container (ex.: backups fora do volume).
+        disk_total = disk_used = disk_free = None
     rows = (
         await db.execute(select(HostingService))
     ).scalars().all()
@@ -106,9 +111,9 @@ async def servers_overview(
         "containers_total": info.get("Containers"),
         "images": info.get("Images"),
         "docker_version": (info.get("ServerVersion") or ""),
-        "disk_total": disk.total,
-        "disk_used": disk.used,
-        "disk_free": disk.free,
+        "disk_total": disk_total,
+        "disk_used": disk_used,
+        "disk_free": disk_free,
         "services_total": len(rows),
         "services_suspended": sum(1 for s in rows if s.status == "suspended"),
     }
