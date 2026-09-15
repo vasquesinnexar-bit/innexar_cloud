@@ -108,6 +108,17 @@ export function EmailServiceSection({ customerId }: { customerId: string }) {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
     });
 
+  const remove = (address: string, id: number) => {
+    if (!confirm(`Excluir ${address}? A caixa é removida do servidor.`)) return;
+    act(`del-${id}`, async () => {
+      const res = await workspaceFetchStaff(
+        apiPath(WORKSPACE_API_PATHS.MAIL.DELETE(id, customerId)),
+        { method: "DELETE" }
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    });
+  };
+
   const sync = (d: string) =>
     act("sync", async () => {
       await workspaceFetchStaff(apiPath(WORKSPACE_API_PATHS.MAIL.SYNC(customerId)), {
@@ -181,6 +192,15 @@ export function EmailServiceSection({ customerId }: { customerId: string }) {
                             className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-sm flex items-center gap-1"
                           >
                             {b.status === "active" ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => remove(b.address, b.id)}
+                            disabled={busy === `del-${b.id}`}
+                            className="px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-300 text-sm"
+                            title="Excluir conta"
+                          >
+                            Excluir
                           </button>
                         </div>
                         {pwFor === b.id && (

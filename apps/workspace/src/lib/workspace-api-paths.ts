@@ -139,6 +139,8 @@ export const WORKSPACE_API_PATHS = {
       `${PREFIX}/mail/mailboxes/${encodeURIComponent(String(id))}/enable?customer_id=${encodeURIComponent(String(customerId))}`,
     SYNC: (customerId: string | number) =>
       `${PREFIX}/mail/customers/${encodeURIComponent(String(customerId))}/sync`,
+    DELETE: (id: string | number, customerId: string | number) =>
+      `${PREFIX}/mail/mailboxes/${encodeURIComponent(String(id))}?customer_id=${encodeURIComponent(String(customerId))}`,
     DOMAINS: (customerId: string | number) =>
       `${PREFIX}/mail/domains?customer_id=${encodeURIComponent(String(customerId))}`,
   },
