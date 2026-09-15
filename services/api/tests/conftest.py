@@ -35,7 +35,20 @@ from app.modules.projects.models import Project
 
 from tests.storage_fake import FakeStorageBackend
 
+
+def _is_sqlite(url: str) -> bool:
+    """True if URL is SQLite (aiosqlite)."""
+    return "sqlite" in url
+
+
 TEST_DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+
+if not _is_sqlite(TEST_DATABASE_URL):
+    raise RuntimeError(
+        "TRAVA DE SEGURANÇA: testes unitários só rodam em SQLite. "
+        f"DATABASE_URL atual aponta para banco real: {TEST_DATABASE_URL.split('@')[-1]}. "
+        "Defina DATABASE_URL=sqlite+aiosqlite:///:memory: para rodar os testes."
+    )
 
 
 @pytest.fixture(scope="session")
@@ -44,11 +57,6 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
     loop = asyncio.new_event_loop()
     yield loop
     loop.close()
-
-
-def _is_sqlite(url: str) -> bool:
-    """True if URL is SQLite (aiosqlite)."""
-    return "sqlite" in url
 
 
 def _ensure_all_models_registered() -> None:

@@ -12,14 +12,12 @@ from sqlalchemy.orm import selectinload
 
 from app.core.audit import log_audit
 from app.core.database import get_db
-from app.core.datetime_utils import utc_now
 from app.core.rbac import RequirePermission
 from app.core.router_org import router_org_list_filter, router_org_write
 from app.models.customer import Customer
 from app.models.user import User
 from app.modules.billing.dependencies import require_billing_enabled
-from app.modules.billing.invoice_ops import create_manual_invoice
-from app.modules.billing.models import Contract, ContractItem, PricePlan, Product
+from app.modules.billing.models import Contract, ContractItem
 from app.modules.billing.schemas import InvoiceResponse
 from app.modules.billing.schemas_contracts import (
     ContractCreate,
@@ -114,6 +112,7 @@ async def create_contract(
     contract = Contract(
         customer_id=body.customer_id,
         org_id=org,
+        source="workspace",
         currency=body.currency or cust.currency,
         billing_provider=body.billing_provider,
         notes=body.notes,
@@ -131,6 +130,7 @@ async def create_contract(
         db.add(
             ContractItem(
                 contract_id=contract.id,
+                source="workspace",
                 product_id=item.product_id,
                 price_plan_id=item.price_plan_id,
                 subscription_id=item.subscription_id,
@@ -235,6 +235,7 @@ async def add_contract_item(
     db.add(
         ContractItem(
             contract_id=c.id,
+            source="workspace",
             product_id=body.product_id,
             price_plan_id=body.price_plan_id,
             subscription_id=body.subscription_id,
@@ -365,65 +366,24 @@ async def create_invoice_from_contract(
     org_id: str | None = None,
 ):
     """Fatura a partir dos itens do contrato (preço = qty × unit_amount)."""
-    from datetime import timedelta
+    from app.modules.billing.contract_invoicing import (
+        ContractBillingError,
+        create_invoice_from_contract as _invoice_from_contract,
+    )
 
     org_filter = router_org_list_filter(org_id)
     c = await _get_contract(db, contract_id, org_filter)
     if not c:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Contract não encontrado")
-    if not c.items:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Contrato sem itens")
-    missing = [i.id for i in c.items if i.unit_amount is None]
-    if missing:
-        raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_CONTENT,
-            f"Itens sem preço: {missing}",
+    try:
+        inv = await _invoice_from_contract(
+            db,
+            c,
+            due_date=body.due_date,
+            subscription_id=body.subscription_id,
+            actor_type="staff",
+            actor_id=str(current.id),
         )
-    lines = []
-    total = 0.0
-    for i in c.items:
-        product = await db.get(Product, i.product_id) if i.product_id else None
-        plan = await db.get(PricePlan, i.price_plan_id) if i.price_plan_id else None
-        amount = float(i.unit_amount or 0) * (i.quantity or 1)
-        total += amount
-        lines.append(
-            {
-                "description": i.description
-                or (
-                    plan.name
-                    if plan
-                    else (product.name if product else f"Item #{i.id}")
-                ),
-                "quantity": i.quantity or 1,
-                "unit_amount": float(i.unit_amount or 0),
-                "amount": amount,
-                "contract_item_id": i.id,
-                "contract_id": c.id,
-            }
-        )
-    cust = await db.get(Customer, c.customer_id)
-    currency = c.currency or (cust.currency if cust else None) or "USD"
-    inv = await create_manual_invoice(
-        db,
-        customer_id=c.customer_id,
-        due_date=body.due_date or (utc_now() + timedelta(days=7)),
-        total=round(total, 2),
-        currency=currency,
-        line_items=lines,
-    )
-    if body.subscription_id is not None:
-        inv.subscription_id = body.subscription_id
-        await db.flush()
-    await log_audit(
-        db,
-        entity="invoice",
-        entity_id=str(inv.id),
-        action="invoice_created_from_contract",
-        actor_type="staff",
-        actor_id=str(current.id),
-        org_id=c.org_id,
-        payload={"contract_id": c.id, "total": round(total, 2)},
-    )
-    await db.flush()
-    await db.refresh(inv)
+    except ContractBillingError as e:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, e.detail) from e
     return inv

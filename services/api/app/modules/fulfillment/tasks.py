@@ -20,12 +20,17 @@ async def fulfillment_after_payment(
     *,
     actor_type: str = "system",
     actor_id: str | None = None,
+    source: str | None = None,
 ) -> None:
     """Background: ensure contract/item/fulfillment + run handlers (1 sessão)."""
     async with AsyncSessionLocal() as db:
         try:
             await facade.after_payment(
-                db, invoice_id, actor_type=actor_type, actor_id=actor_id
+                db,
+                invoice_id,
+                actor_type=actor_type,
+                actor_id=actor_id,
+                source=source,
             )
             await db.commit()
         except Exception:

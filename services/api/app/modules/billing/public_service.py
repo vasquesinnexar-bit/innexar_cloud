@@ -98,11 +98,6 @@ def _is_mercadopago_test_notification(body: bytes) -> bool:
         return False
 
 
-async def _run_provisioning(invoice_id: int) -> None:
-    """Background: P0 — contratação formal + fulfillment (cobre mail+hestia)."""
-    await _fulfillment_after_payment(invoice_id)
-
-
 async def _run_create_project_and_notify(invoice_id: int) -> None:
     """Background: create project for site product and notify team."""
     async with AsyncSessionLocal() as db:
@@ -184,7 +179,9 @@ class BillingPublicService:
 
         inv = await self._billing.get_invoice_by_id(paid_invoice_id)
         if not inv:
-            background_tasks.add_task(_run_provisioning, paid_invoice_id)
+            background_tasks.add_task(
+                _fulfillment_after_payment, paid_invoice_id, source="website"
+            )
             background_tasks.add_task(_run_create_project_and_notify, paid_invoice_id)
             return
         customer = await self._customer.get_by_id_with_users(inv.customer_id)
@@ -235,5 +232,7 @@ class BillingPublicService:
             org_id,
             inv.id,
         )
-        background_tasks.add_task(_run_provisioning, paid_invoice_id)
+        background_tasks.add_task(
+                _fulfillment_after_payment, paid_invoice_id, source="website"
+            )
         background_tasks.add_task(_run_create_project_and_notify, paid_invoice_id)

@@ -218,7 +218,9 @@ class BillingPortalService:
                 fulfillment_after_payment as _fulfillment_after_payment,
             )
 
-            background_tasks.add_task(_fulfillment_after_payment, inv.id)
+            background_tasks.add_task(
+                _fulfillment_after_payment, inv.id, source="portal"
+            )
 
             await create_notification_and_maybe_send_email(
                 self._db,

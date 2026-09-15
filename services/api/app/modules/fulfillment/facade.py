@@ -49,6 +49,7 @@ async def ensure_contract_for_purchase(
     currency: str | None = None,
     actor_type: str = "system",
     actor_id: str | None = None,
+    source: str | None = None,
 ) -> Contract:
     """Um contrato por (cliente, subscription); sem subscription, reusa ou cria."""
     if subscription_id is not None:
@@ -94,6 +95,7 @@ async def ensure_contract_for_purchase(
         currency=currency or (cust.currency if cust else None),
         billing_interval="monthly",
         starts_at=utc_now(),
+        source=source,
     )
     db.add(contract)
     await db.flush()
@@ -123,6 +125,7 @@ async def ensure_contract_item_for_purchase(
     description: str | None = None,
     actor_type: str = "system",
     actor_id: str | None = None,
+    source: str | None = None,
 ) -> ContractItem:
     """Um item por (contrato, produto, plano, subscription) — NULL-safe."""
     pid = price_plan_id if price_plan_id is not None else -1
@@ -155,6 +158,7 @@ async def ensure_contract_item_for_purchase(
         description=description,
         quantity=quantity or 1,
         unit_amount=unit_amount,
+        source=source,
     )
     db.add(item)
     await db.flush()
@@ -460,7 +464,12 @@ async def run_fulfillment(
 
 
 async def after_payment(
-    db, invoice_id: int, *, actor_type: str = "system", actor_id: str | None = None
+    db,
+    invoice_id: int,
+    *,
+    actor_type: str = "system",
+    actor_id: str | None = None,
+    source: str | None = None,
 ) -> list[Fulfillment]:
     """Ponto único pós-pagamento: contrato → item → fulfillment → execução."""
     invoice = await db.get(Invoice, invoice_id)
@@ -480,6 +489,7 @@ async def after_payment(
         currency=invoice.currency,
         actor_type=actor_type,
         actor_id=actor_id,
+        source=source,
     )
     # Adoção: item já criado pelo fluxo mail para esta invoice?
     adopted_item = None
@@ -505,6 +515,7 @@ async def after_payment(
             description=(plan.name if plan else product.name),
             actor_type=actor_type,
             actor_id=actor_id,
+            source=source,
         )
     f = await ensure_fulfillment_for_item(
         db,

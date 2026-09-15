@@ -49,13 +49,15 @@ from app.providers.payments.mercadopago import MercadoPagoProvider
 router = APIRouter()
 
 
-async def _run_provisioning_after_payment(invoice_id: int) -> None:
+async def _run_provisioning_after_payment(
+    invoice_id: int, source: str | None = "workspace"
+) -> None:
     """Background: P0 — contratação formal + fulfillment (cobre mail+hestia)."""
     from app.modules.fulfillment.tasks import (
         fulfillment_after_payment as _fulfillment_after_payment,
     )
 
-    await _fulfillment_after_payment(invoice_id)
+    await _fulfillment_after_payment(invoice_id, source=source)
 
 
 def _invoice_to_response(
@@ -303,7 +305,7 @@ async def invoice_pay_bricks(
                     db, sub.id, org_id=invoice_org
                 )
         await db.flush()
-        background_tasks.add_task(_run_provisioning_after_payment, inv.id)
+        background_tasks.add_task(_run_provisioning_after_payment, inv.id, source="workspace")
         if cust_with_users and cust_with_users.users:
             for cu in cust_with_users.users:
                 await create_notification_and_maybe_send_email(
@@ -376,7 +378,7 @@ async def invoice_mark_paid(
             status_code=400,
             detail="Invoice not found or already paid",
         )
-    background_tasks.add_task(_run_provisioning_after_payment, paid_id)
+    background_tasks.add_task(_run_provisioning_after_payment, paid_id, source="workspace")
     return MarkPaidResponse(ok=True, invoice_id=paid_id)
 
 

@@ -46,6 +46,7 @@ interface Product {
   description: string | null;
   is_active: boolean;
   provisioning_type: string | null;
+  portal_sellable: boolean;
   hestia_package: string | null;
   created_at: string;
   price_plans?: PricePlan[];
@@ -61,6 +62,7 @@ export default function WorkspaceBillingProductsPage() {
   const [formName, setFormName] = useState('');
   const [formDescription, setFormDescription] = useState('');
   const [formIsActive, setFormIsActive] = useState(true);
+  const [formPortalSellable, setFormPortalSellable] = useState(false);
   const [formProvisioningType, setFormProvisioningType] = useState('');
   const [formHestiaPackage, setFormHestiaPackage] = useState('');
   const [saving, setSaving] = useState(false);
@@ -133,6 +135,7 @@ export default function WorkspaceBillingProductsPage() {
     setFormName('');
     setFormDescription('');
     setFormIsActive(true);
+    setFormPortalSellable(false);
     setFormProvisioningType('');
     setFormHestiaPackage('');
     setFormPlanName('');
@@ -148,6 +151,7 @@ export default function WorkspaceBillingProductsPage() {
     setFormName(p.name);
     setFormDescription(p.description ?? '');
     setFormIsActive(p.is_active);
+    setFormPortalSellable(p.portal_sellable ?? false);
     setFormProvisioningType(p.provisioning_type ?? '');
     setFormHestiaPackage(p.hestia_package ?? '');
     setFormPlanName('');
@@ -182,6 +186,7 @@ export default function WorkspaceBillingProductsPage() {
       name: formName,
       description: formDescription || null,
       is_active: formIsActive,
+      portal_sellable: formPortalSellable,
       provisioning_type: formProvisioningType || null,
       hestia_package: formHestiaPackage || null,
     };
@@ -410,6 +415,11 @@ export default function WorkspaceBillingProductsPage() {
               >
                 {p.is_active ? 'Ativo' : 'Inativo'}
               </span>
+              {p.portal_sellable && (
+                <span className="mt-2 ml-1 inline-block px-3 py-1 rounded-lg text-sm bg-blue-500/20 text-blue-300">
+                  Portal
+                </span>
+              )}
             </motion.div>
           ))}
         </div>
@@ -463,6 +473,17 @@ export default function WorkspaceBillingProductsPage() {
                     className="rounded bg-white/5 border-white/10 text-blue-600 focus:ring-blue-500"
                   />
                   <span className="text-sm font-medium text-slate-300">Ativo (visível no catálogo e disponível para assinatura)</span>
+                </label>
+              </div>
+              <div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formPortalSellable}
+                    onChange={(e) => setFormPortalSellable(e.target.checked)}
+                    className="rounded bg-white/5 border-white/10 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-slate-300">Vendável no Portal (marketplace do cliente)</span>
                 </label>
               </div>
               <div>

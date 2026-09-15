@@ -59,6 +59,10 @@ class Product(Base):
     slug: Mapped[str | None] = mapped_column(
         String(128), nullable=True, unique=True, index=True
     )
+    # P1.2 — venda explícita no Portal (default False: decisão comercial).
+    portal_sellable: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False, index=True
+    )
 
     price_plans: Mapped[list["PricePlan"]] = relationship(
         "PricePlan", back_populates="product", cascade="all, delete-orphan"
@@ -183,6 +187,10 @@ class Invoice(Base):
     period_key: Mapped[str | None] = mapped_column(
         String(32), nullable=True, index=True
     )  # ex. "2026-09" por contrato (unique parcial na migration)
+    # P1.2 — idempotência de purchase (cliente gera a chave; unique parcial).
+    idempotency_key: Mapped[str | None] = mapped_column(
+        String(128), nullable=True, index=True
+    )
     reminders_sent: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utc_now
@@ -428,6 +436,8 @@ class Contract(Base):
     billing_provider: Mapped[str | None] = mapped_column(
         String(32), nullable=True, index=True
     )  # stripe|mercadopago (NULL = resolver por cliente/moeda)
+    # P1.2 — origem da contratação (website|portal|workspace|migration).
+    source: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
     # Fase 3 — agenda de cobrança (NULL = policy/defaults).
     billing_interval: Mapped[str | None] = mapped_column(
         String(16), nullable=True
@@ -482,6 +492,8 @@ class ContractItem(Base):
     unit_amount: Mapped[float | None] = mapped_column(
         Numeric(12, 2), nullable=True
     )  # snapshot do preço no momento da venda
+    # P1.2 — origem da contratação (website|portal|workspace|migration).
+    source: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utc_now
     )

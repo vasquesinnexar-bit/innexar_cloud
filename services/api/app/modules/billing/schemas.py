@@ -17,6 +17,7 @@ class ProductBase(BaseModel):
     )
     category: str | None = None  # website|hosting|email|domain|maintenance…
     slug: str | None = None  # stable catalog key, e.g. "professional-email"
+    portal_sellable: bool = False  # P1.2: vendável no Portal (decisão explícita)
 
 
 class ProductCreate(ProductBase):
@@ -31,6 +32,7 @@ class ProductUpdate(BaseModel):
     hestia_package: str | None = None
     category: str | None = None
     slug: str | None = None
+    portal_sellable: bool | None = None
 
 
 class ProductResponse(ProductBase):

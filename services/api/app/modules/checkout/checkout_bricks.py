@@ -179,7 +179,7 @@ async def process_bricks_payment(
         )
 
         # P0: contratação formal + Hestia/mail via fulfillment (antes só projeto).
-        background_tasks.add_task(_fulfillment_after_payment, inv.id)
+        background_tasks.add_task(_fulfillment_after_payment, inv.id, source="website")
     elif payment_status in ("pending", "in_process"):
         inv.status = InvoiceStatus.PENDING.value
     else:

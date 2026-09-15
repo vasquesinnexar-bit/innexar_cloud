@@ -15,7 +15,15 @@ interface ContractItem {
   description: string | null;
   quantity: number;
   unit_amount: number | null;
+  source: string | null;
 }
+
+const SOURCE_LABEL: Record<string, string> = {
+  website: "Website",
+  portal: "Portal",
+  workspace: "Administrador",
+  migration: "Migração",
+};
 
 interface Contract {
   id: number;
@@ -366,6 +374,7 @@ export function ContractsSection({ customerId }: { customerId: string }) {
                                   <span className="text-slate-500 text-xs block">
                                     {it.product_id ? productName(it.product_id) : ""}
                                     {it.price_plan_id ? ` · ${planOf(it.product_id, it.price_plan_id)?.name ?? `plano #${it.price_plan_id}`}` : ""}
+                                    {it.source ? ` · Origem: ${SOURCE_LABEL[it.source] ?? it.source}` : ""}
                                   </span>
                                 </td>
                                 <td className="py-1 px-2">

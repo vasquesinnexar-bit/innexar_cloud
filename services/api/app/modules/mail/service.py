@@ -773,6 +773,7 @@ class MailService:
                 org_id=org_id,
                 status="pending",
                 currency=ent["currency"],
+                source="portal",
             )
             self._db.add(contract)
             await self._db.flush()
@@ -783,6 +784,7 @@ class MailService:
             description=f"Conta adicional: {address}",
             quantity=1,
             unit_amount=float(plan.amount),
+            source="portal",
         )
         self._db.add(item)
         await self._db.flush()

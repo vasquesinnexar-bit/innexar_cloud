@@ -85,6 +85,7 @@ class BillingWorkspaceService:
             hestia_package=body.hestia_package,
             category=body.category,
             slug=body.slug.strip().lower() if body.slug else None,
+            portal_sellable=body.portal_sellable,
         )
         self._repo.add_product(p)
         await self._db.flush()
@@ -111,6 +112,8 @@ class BillingWorkspaceService:
             p.category = body.category.strip() or None
         if body.slug is not None:
             p.slug = body.slug.strip().lower() or None
+        if body.portal_sellable is not None:
+            p.portal_sellable = body.portal_sellable
         await self._repo.update_product(p)
         return p
 
