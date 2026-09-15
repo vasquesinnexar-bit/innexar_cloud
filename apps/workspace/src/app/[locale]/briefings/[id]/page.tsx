@@ -49,7 +49,7 @@ export default function BriefingDetailPage() {
       .then(setBriefing)
       .catch(() => setError('Falha ao carregar briefing'))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, apiPath]);
 
   const handleDownload = useCallback(async () => {
     if (!briefing) return;
@@ -70,7 +70,7 @@ export default function BriefingDetailPage() {
     a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
-  }, [briefing]);
+  }, [briefing, apiPath]);
 
   if (loading) {
     return (
