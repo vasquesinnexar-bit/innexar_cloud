@@ -21,6 +21,16 @@ const nextConfig: NextConfig = {
         destination: "/:locale/services/catalog/:path*",
         permanent: false,
       },
+      {
+        source: "/:locale(pt|en|es)/hosting",
+        destination: "/:locale/services/hosting",
+        permanent: false,
+      },
+      {
+        source: "/:locale(pt|en|es)/hosting/:path*",
+        destination: "/:locale/services/hosting/:path*",
+        permanent: false,
+      },
     ];
   },
   async headers() {
