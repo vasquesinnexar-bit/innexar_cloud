@@ -266,7 +266,10 @@
     "retry": "Try again",
     "attention": "Needs attention",
     "pendingInvoice": "Pending invoice",
-    "continueSetup": "Continue setup"
+    "continueSetup": "Continue setup",
+    "openInvoicesTitle": "You have open invoices",
+    "openInvoicesSub": "Pay to keep your services active.",
+    "later": "Later"
   },
   "projectDetails": {
     "backToProjects": "Back to Projects",

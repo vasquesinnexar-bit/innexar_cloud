@@ -8,6 +8,7 @@ import { DashboardBriefingCta } from "./dashboard/DashboardBriefingCta";
 import { DashboardProjectsList } from "./dashboard/DashboardProjectsList";
 import { DashboardWelcome } from "./dashboard/DashboardWelcome";
 import { DashboardCards } from "./dashboard/DashboardCards";
+import OpenInvoicesModal from "./dashboard/OpenInvoicesModal";
 
 export default function PortalDashboardWorkspace() {
   const locale = useLocale();
@@ -65,6 +66,21 @@ export default function PortalDashboardWorkspace() {
 
   return (
     <div className="space-y-8">
+      <OpenInvoicesModal
+        locale={locale}
+        invoices={(data?.pending_actions ?? [])
+          .filter((a) => a.kind === "invoice")
+          .map((a) => ({
+            total: a.total,
+            currency: a.currency,
+            due_date: a.due_date,
+            href: a.href,
+          }))}
+        title={t("openInvoicesTitle")}
+        subtitle={t("openInvoicesSub")}
+        payLabel={t("payInvoice")}
+        laterLabel={t("later")}
+      />
       <ForcePasswordModal
         isOpen={showPasswordModal}
         onSuccess={() => {

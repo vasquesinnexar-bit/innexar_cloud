@@ -266,7 +266,10 @@
     "retry": "Tentar novamente",
     "attention": "Atenção necessária",
     "pendingInvoice": "Fatura pendente",
-    "continueSetup": "Continuar configuração"
+    "continueSetup": "Continuar configuração",
+    "openInvoicesTitle": "Você tem faturas em aberto",
+    "openInvoicesSub": "Regularize para manter seus serviços ativos.",
+    "later": "Ver depois"
   },
   "projectDetails": {
     "backToProjects": "Voltar para Projetos",
