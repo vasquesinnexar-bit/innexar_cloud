@@ -613,6 +613,45 @@ class MercadoPagoProvider:
             return None
         return resp.json()
 
+    def search_payments(
+        self, *, payer_email: str, date_from: str, date_to: str, limit: int = 50
+    ) -> list[dict[str, Any]]:
+        """Busca pagamentos aprovados por e-mail do pagador (sync permanente)."""
+        if not self._access_token:
+            return []
+        try:
+            with httpx.Client(timeout=15.0) as client:
+                resp = client.get(
+                    f"{MP_API_BASE}/v1/payments/search",
+                    headers={"Authorization": f"Bearer {self._access_token}"},
+                    params={
+                        "sort": "date_created",
+                        "criteria": "desc",
+                        "range": "date_created",
+                        "begin_date": date_from,
+                        "end_date": date_to,
+                        "limit": max(1, min(limit, 100)),
+                    },
+                )
+            if resp.status_code != 200:
+                return []
+            data = resp.json() or {}
+            results = data.get("results") or []
+            out = []
+            for pay in results:
+                if not isinstance(pay, dict):
+                    continue
+                payer = pay.get("payer") or {}
+                if (payer.get("email") or "").lower() != payer_email.lower():
+                    continue
+                if (pay.get("status") or "").lower() != "approved":
+                    continue
+                out.append(pay)
+            return out
+        except Exception:  # noqa: BLE001 (sync nunca quebra por rede)
+            logger.exception("MP search_payments failed")
+            return []
+
     def cancel_payment(self, payment_id: str) -> bool:
         """Cancela cobrança pendente (limpeza de testes / expiração manual)."""
         if not self._access_token:

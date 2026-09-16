@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import func, select, update
+from sqlalchemy import func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -602,7 +602,13 @@ class BillingRepository:
     async def list_subscriptions_due_with_plan_product(
         self, cutoff: datetime
     ) -> list[tuple[Subscription, PricePlan, Product]]:
-        """Active subscriptions with next_due_date <= cutoff (recurring invoice generation)."""
+        """Active subscriptions with next_due_date <= cutoff (recurring invoice generation).
+
+        Pula assinaturas Stripe (external_id sub_*): o provedor cobra
+        sozinho e o sync espelha — gerar local duplicaria. MP preapproval
+        mantém geração local (fluxo próprio, sem cobrança automática
+        espelhável 1:1).
+        """
         from app.modules.billing.enums import SubscriptionStatus
 
         r = await self._db.execute(
@@ -613,6 +619,12 @@ class BillingRepository:
                 Subscription.status == SubscriptionStatus.ACTIVE.value,
                 Subscription.next_due_date.isnot(None),
                 Subscription.next_due_date <= cutoff,
+                # Stripe cobra sozinho (ver docstring); demais geram local.
+                # NULL = cobrança local → mantém.
+                or_(
+                    Subscription.external_id.is_(None),
+                    ~Subscription.external_id.like("sub\\_%", escape="\\"),
+                ),
             )
         )
         return list(r.all())

@@ -109,6 +109,17 @@ async def cmd_fulfillments() -> dict:
         return await _with_lock(db, "fulfillments", run)
 
 
+async def cmd_external_sync() -> dict:
+    from app.modules.billing.external_sync import sync_external_billing
+
+    async with AsyncSessionLocal() as db:
+
+        async def run():
+            return await sync_external_billing(db)
+
+        return await _with_lock(db, "external-sync", run)
+
+
 COMMANDS = {
     "generate": cmd_generate,  # faturas recorrentes (subscriptions)
     "contracts": cmd_contracts,  # faturas por contrato (Fase 3)
@@ -116,6 +127,7 @@ COMMANDS = {
     "overdue": cmd_overdue,  # past_due + suspensão
     "reconcile": cmd_reconcile,  # provider x Innexar
     "fulfillments": cmd_fulfillments,  # P0: QUEUED + retries vencidos
+    "external-sync": cmd_external_sync,  # provedor → local (Stripe + MP)
 }
 
 
