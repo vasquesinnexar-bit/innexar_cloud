@@ -6,7 +6,6 @@ import {
   Mail,
   Plus,
   KeyRound,
-  Smartphone,
   ExternalLink,
   Power,
   PowerOff,
@@ -548,24 +547,6 @@ export default function EmailServicePage() {
           </form>
         </div>
       )}
-
-      <div className="card-base rounded-2xl p-6 space-y-3">
-        <h2 className="text-lg font-bold flex items-center gap-2">
-          <Smartphone className="w-5 h-5" /> {t("howTo")}
-        </h2>
-        <div className="text-sm text-theme-secondary space-y-1">
-          <p>
-            <strong>IMAP:</strong> mail.{domain} · 993 · SSL/TLS
-          </p>
-          <p>
-            <strong>SMTP:</strong> mail.{domain} · 465 SSL · {t("or")} 587 STARTTLS
-          </p>
-          <p>
-            <strong>{t("username")}:</strong> {t("fullAddress")}
-          </p>
-          <p>{t("apps")}: Webmail · iPhone · Android · Gmail · Outlook · Apple Mail</p>
-        </div>
-      </div>
 
       <EmailConnectGuide
         domain={domain}
