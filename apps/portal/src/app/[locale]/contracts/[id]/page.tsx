@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -21,7 +21,7 @@ export default function ContractDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
+  const load = useCallback(async () => {
     if (!id) {
       setLoading(false);
       return;
@@ -33,17 +33,23 @@ export default function ContractDetailPage() {
     }
     setLoading(true);
     setError("");
-    workspaceFetch(API_PATHS.CONTRACTS.DETAIL(id), { token })
-      .then(async (res) => {
-        if (res.ok) {
-          setContract((await res.json()) as Contract);
-        } else {
-          setError(res.status === 404 ? "not-found" : `HTTP ${res.status}`);
-        }
-      })
-      .catch(() => setError("load"))
-      .finally(() => setLoading(false));
+    try {
+      const res = await workspaceFetch(API_PATHS.CONTRACTS.DETAIL(id), { token });
+      if (res.ok) {
+        setContract((await res.json()) as Contract);
+      } else {
+        setError(res.status === 404 ? "not-found" : `HTTP ${res.status}`);
+      }
+    } catch {
+      setError("load");
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   if (loading) {
     return (
