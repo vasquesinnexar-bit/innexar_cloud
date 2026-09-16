@@ -73,9 +73,14 @@ export default function EmailServicePage() {
       <div className="space-y-4">
         <h1 className="text-3xl font-bold text-theme-primary">{t("pageTitle")}</h1>
         <p className="text-theme-secondary">{t("noService")}</p>
-        <button onClick={() => load()} className="btn">
-          {t("retry")}
-        </button>
+        <div className="flex gap-2">
+          <a href="./email/setup" className="btn">
+            {t("setupCta")}
+          </a>
+          <button onClick={() => load()} className="btn ghost">
+            {t("retry")}
+          </button>
+        </div>
       </div>
     );
   }

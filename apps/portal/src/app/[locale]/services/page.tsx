@@ -91,7 +91,7 @@ export default function MyServicesPage() {
                     </Link>
                   )}
                   {s.fulfillment_step === "domain" && (
-                    <Link href="./email" className="btn ghost sm">
+                    <Link href="./email/setup" className="btn ghost sm">
                       {t("emailCta")}
                     </Link>
                   )}

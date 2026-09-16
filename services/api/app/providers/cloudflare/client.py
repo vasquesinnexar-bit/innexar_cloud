@@ -93,3 +93,25 @@ class CloudflareClient:
             body["priority"] = priority
         data = self._request("POST", f"/zones/{zone_id}/dns_records", json=body)
         return data.get("result", {})
+
+    def list_dns_records(
+        self,
+        zone_id: str,
+        record_type: str | None = None,
+        name: str | None = None,
+    ) -> list[dict]:
+        """List DNS records (para snapshot/diff/upsert)."""
+        params: dict[str, str] = {}
+        if record_type:
+            params["type"] = record_type
+        if name:
+            params["name"] = name
+        data = self._request(
+            "GET", f"/zones/{zone_id}/dns_records", params=params or None
+        )
+        return list(data.get("result", []))
+
+    def delete_dns_record(self, zone_id: str, record_id: str) -> dict:
+        """Delete a DNS record (usado no rollback)."""
+        data = self._request("DELETE", f"/zones/{zone_id}/dns_records/{record_id}")
+        return data.get("result", {})

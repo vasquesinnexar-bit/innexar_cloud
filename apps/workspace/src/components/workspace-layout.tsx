@@ -96,6 +96,7 @@ export default function WorkspaceLayout({
         },
         { key: "policies", label: "Políticas", href: "/billing/policies" },
         { key: "provisioning", label: "Provisionamento", href: "/provisioning" },
+        { key: "onboarding", label: "Onboardings", href: "/onboarding" },
       ],
     },
     {

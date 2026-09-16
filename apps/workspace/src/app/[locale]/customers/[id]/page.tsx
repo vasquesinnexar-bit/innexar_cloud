@@ -29,6 +29,7 @@ import { WORKSPACE_API_PATHS } from "@/lib/workspace-api-paths";
 import { EmailServiceSection } from "@/components/EmailServiceSection";
 import { ContractsSection } from "@/components/ContractsSection";
 import { FulfillmentSection } from "@/components/FulfillmentSection";
+import { OnboardingSection } from "@/components/OnboardingSection";
 import { withOrgQuery } from '@/lib/org-filter';
 import { useOrgFilter } from '@/hooks/use-org-filter';
 import { orgRegionBadgeClass, orgRegionLabel } from "@/lib/org-labels";
@@ -895,6 +896,8 @@ export default function WorkspaceCustomerDetailPage() {
       <ContractsSection customerId={id} />
 
       <FulfillmentSection customerId={id} />
+
+      <OnboardingSection customerId={id} />
 
       <div className="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-6">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-4">

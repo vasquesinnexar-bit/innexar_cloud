@@ -120,6 +120,17 @@ async def cmd_external_sync() -> dict:
         return await _with_lock(db, "external-sync", run)
 
 
+async def cmd_onboarding_verify() -> dict:
+    from app.modules.onboarding.verify_job import verify_waiting_dns
+
+    async with AsyncSessionLocal() as db:
+
+        async def run():
+            return await verify_waiting_dns(db)
+
+        return await _with_lock(db, "onboarding-verify", run)
+
+
 COMMANDS = {
     "generate": cmd_generate,  # faturas recorrentes (subscriptions)
     "contracts": cmd_contracts,  # faturas por contrato (Fase 3)
@@ -128,6 +139,7 @@ COMMANDS = {
     "reconcile": cmd_reconcile,  # provider x Innexar
     "fulfillments": cmd_fulfillments,  # P0: QUEUED + retries vencidos
     "external-sync": cmd_external_sync,  # provedor → local (Stripe + MP)
+    "onboarding-verify": cmd_onboarding_verify,  # P1.3: DNS waiting → resume
 }
 
 

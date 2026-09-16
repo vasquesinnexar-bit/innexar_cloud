@@ -325,6 +325,49 @@ class MailService:
         }
 
     # -- domains ----------------------------------------------------------
+    async def claim_domain(
+        self,
+        *,
+        customer_id: int,
+        org_id: str,
+        domain: str,
+        contract_item_id: int | None = None,
+        actor_type: str,
+        actor_id: str | None,
+    ) -> EmailDomain:
+        """Reivindica domínio (status pending) sem exigir presença no servidor.
+
+        Usado pelo onboarding: o provisionamento server-side (DKIM/conta no
+        mailserver) é feito pelo staff; o DNS do cliente independe disso.
+        """
+        domain = _norm_domain(domain)
+        if not domain or "." not in domain:
+            raise MailError("email_domain_not_configured", "Domínio inválido")
+        existing = await self._get_domain(customer_id, org_id, domain)
+        if existing:
+            return existing
+        d = EmailDomain(
+            customer_id=customer_id,
+            org_id=org_id,
+            domain=domain,
+            status=EmailDomainStatus.PENDING.value,
+        )
+        self._db.add(d)
+        await self._db.flush()
+        svc = await self._get_or_create_service(customer_id, org_id, contract_item_id)
+        d.service_id = svc.id
+        await self._audit(
+            entity="email_domain",
+            entity_id=str(d.id),
+            action="email_domain_claimed",
+            actor_type=actor_type,
+            actor_id=actor_id,
+            org_id=org_id,
+            payload={"domain": domain},
+        )
+        await self._db.flush()
+        return d
+
     async def register_domain(
         self,
         *,

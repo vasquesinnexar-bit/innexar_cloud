@@ -1,32 +1,58 @@
 """Alembic env: use Base.metadata and DATABASE_URL from settings (sync for migrations)."""
+
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import engine_from_config, pool
-
 from app.core.config import settings
 from app.core.database import Base
 
 # Import all models so Base.metadata has every table
 from app.models import (  # noqa: F401
-    AuditLog, Customer, CustomerUser, FeatureFlag, HestiaSettings,
-    IntegrationConfig, Notification, Permission, ProjectRequest,
-    Role, StaffPasswordResetToken, User
+    AuditLog,
+    Customer,
+    CustomerUser,
+    FeatureFlag,
+    HestiaSettings,
+    IntegrationConfig,
+    Notification,
+    Permission,
+    ProjectRequest,
+    Role,
+    StaffPasswordResetToken,
+    User,
 )
 from app.modules.billing.models import (  # noqa: F401
-    BillingPolicy, Contract, ContractItem, Invoice, MPSubscriptionCheckout,
-    PaymentAttempt, PricePlan, Product, ProvisioningJob, ProvisioningRecord,
-    Refund, Subscription, WebhookEvent
+    BillingPolicy,
+    Contract,
+    ContractItem,
+    Invoice,
+    MPSubscriptionCheckout,
+    PaymentAttempt,
+    PricePlan,
+    Product,
+    ProvisioningJob,
+    ProvisioningRecord,
+    Refund,
+    Subscription,
+    WebhookEvent,
 )
 from app.modules.crm.models import Contact, ContactActivity  # noqa: F401
 from app.modules.files.models import ProjectFile  # noqa: F401
 from app.modules.fulfillment.models import Fulfillment  # noqa: F401
 from app.modules.hosting.models import (  # noqa: F401
-    FileRevision, HostingBackup, HostingComponent, HostingJob, HostingServer,
-    HostingService, HostingStack,
+    FileRevision,
+    HostingBackup,
+    HostingComponent,
+    HostingJob,
+    HostingServer,
+    HostingService,
+    HostingStack,
 )
 from app.modules.mail.models import (  # noqa: F401
-    EmailDomain, EmailMailbox, MailProvisioningJob, Service,
+    EmailDomain,
+    EmailMailbox,
+    MailProvisioningJob,
+    Service,
 )
 from app.modules.projects.models import Project  # noqa: F401
 from app.modules.projects.modification_request import (  # noqa: F401
@@ -35,6 +61,7 @@ from app.modules.projects.modification_request import (  # noqa: F401
 from app.modules.projects.project_message import ProjectMessage  # noqa: F401
 from app.modules.reps.models import Representative  # noqa: F401
 from app.modules.support.models import Ticket, TicketMessage  # noqa: F401
+from sqlalchemy import engine_from_config, pool
 
 config = context.config
 if config.config_file_name is not None:
@@ -68,8 +95,7 @@ def run_migrations_online() -> None:
     kwargs: dict = {"poolclass": pool.NullPool}
     if config.get_main_option("sqlalchemy.url", "").startswith("sqlite:"):
         # :memory: precisa da mesma conexão (só CI/check).
-        kwargs = {"poolclass": StaticPool,
-                  "connect_args": {"check_same_thread": False}}
+        kwargs = {"poolclass": StaticPool, "connect_args": {"check_same_thread": False}}
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",

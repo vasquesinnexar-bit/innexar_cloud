@@ -163,6 +163,66 @@ TEMPLATES: dict[str, dict[str, tuple[str, str]]] = {
             "The certificate of {domain} expires in {days} days.",
         ),
     },
+    "onboarding_started": {
+        "pt-BR": (
+            "Configuração iniciada",
+            "Vamos configurar seu serviço passo a passo.",
+        ),
+        "en-US": (
+            "Setup started",
+            "Let's configure your service step by step.",
+        ),
+    },
+    "onboarding_action_required": {
+        "pt-BR": (
+            "Ação necessária na configuração",
+            "Falta uma informação sua para continuar: {step}.",
+        ),
+        "en-US": (
+            "Setup action required",
+            "We need one more thing from you to continue: {step}.",
+        ),
+    },
+    "onboarding_dns_waiting": {
+        "pt-BR": (
+            "Aguardando propagação do DNS",
+            "Assim que o DNS de {domain} estiver válido, continuamos sozinhos.",
+        ),
+        "en-US": (
+            "Waiting for DNS propagation",
+            "As soon as the DNS for {domain} is valid, we continue automatically.",
+        ),
+    },
+    "onboarding_dns_verified": {
+        "pt-BR": (
+            "DNS verificado",
+            "O DNS de {domain} está válido. Seguindo para a próxima etapa.",
+        ),
+        "en-US": (
+            "DNS verified",
+            "The DNS for {domain} is valid. Moving to the next step.",
+        ),
+    },
+    "onboarding_service_ready": {
+        "pt-BR": (
+            "Serviço pronto",
+            "Sua contratação está ativa e configurada.",
+        ),
+        "en-US": (
+            "Service ready",
+            "Your purchase is active and configured.",
+        ),
+    },
+    "onboarding_failed": {
+        "pt-BR": (
+            "Configuração precisa de atenção",
+            "Não conseguimos concluir automaticamente: {error}",
+        ),
+        "en-US": (
+            "Setup needs attention",
+            "We could not finish automatically: {error}",
+        ),
+    },
 }
 
 SUPPORTED = tuple(TEMPLATES)

@@ -335,6 +335,7 @@ async def _apply_result(
             org_id=org,
             payload={"step": result.waiting_input},
         )
+        await _ensure_onboarding(db, f, actor_type=actor_type, actor_id=actor_id)
     elif result.retryable:
         f.status = FulfillmentStatus.FAILED.value
         f.current_step = result.step
@@ -406,11 +407,17 @@ async def _notify_staff(db, f: Fulfillment, title: str, body: str) -> None:
 async def run_fulfillment(
     db, fulfillment_id: int, *, actor_type: str = "system", actor_id: str | None = None
 ) -> Fulfillment | None:
-    """Executa o handler e aplica o resultado (idempotente por estado)."""
+    """Executa o handler e aplica o resultado (idempotente por estado).
+
+    P1.3: estados manuais (manual_review/suspended) só saem por ação humana
+    explícita (retry muda para queued antes de executar).
+    """
     f = await db.get(Fulfillment, fulfillment_id)
     if not f or f.status in (
         FulfillmentStatus.ACTIVE.value,
         FulfillmentStatus.CANCELLED.value,
+        FulfillmentStatus.MANUAL_REVIEW.value,
+        FulfillmentStatus.SUSPENDED.value,
     ):
         return f
     invoice = await db.get(Invoice, f.invoice_id) if f.invoice_id else None
@@ -662,6 +669,29 @@ async def cancel_fulfillment(
     )
     await db.flush()
     return f
+
+
+async def _ensure_onboarding(
+    db, f: Fulfillment, *, actor_type: str, actor_id: str | None
+) -> None:
+    """Cria/reusa OnboardingSession ao entrar em WAITING_INPUT (P1.3)."""
+    try:
+        from app.modules.onboarding.registry import resolve_type_for_fulfillment
+        from app.modules.onboarding.service import ensure_session
+
+        await ensure_session(
+            db,
+            customer_id=f.customer_id,
+            org_id=f.org_id,
+            type=resolve_type_for_fulfillment(f.handler_key),
+            fulfillment_id=f.id,
+            contract_item_id=f.contract_item_id,
+            product_id=f.product_id,
+            actor_type=actor_type,
+            actor_id=actor_id,
+        )
+    except Exception:  # noqa: BLE001 (onboarding nunca quebra fulfillment)
+        logger.exception("ensure_onboarding failed fulfillment %s", f.id)
 
 
 async def sync_service_event(

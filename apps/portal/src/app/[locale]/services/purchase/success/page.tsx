@@ -111,7 +111,7 @@ function SuccessContent() {
       {paid && service?.fulfillment_step === "domain" && (
         <div className="space-y-2">
           <p className="text-theme-secondary">{t("domainNeeded")}</p>
-          <Link href="../email" className="btn">
+          <Link href="../email/setup" className="btn">
             {t("emailCta")}
           </Link>
         </div>

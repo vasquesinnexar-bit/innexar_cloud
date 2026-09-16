@@ -195,6 +195,9 @@ RBAC_PERMISSION_SLUGS = [
     "provisioning.read",
     "provisioning.retry",
     "provisioning.manage",
+    "onboarding.read",
+    "onboarding.retry",
+    "onboarding.manage",
 ]
 
 

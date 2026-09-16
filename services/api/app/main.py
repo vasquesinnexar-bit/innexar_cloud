@@ -87,6 +87,16 @@ from app.modules.notifications.router_portal import (
 from app.modules.notifications.router_workspace import (
     router as notifications_workspace_router,
 )
+from app.modules.onboarding.models import (  # noqa: F401
+    OnboardingSession,
+    OnboardingStep,
+)
+from app.modules.onboarding.router_portal import (
+    router as onboarding_portal_router,
+)
+from app.modules.onboarding.router_workspace import (
+    router as onboarding_workspace_router,
+)
 from app.modules.orders.router_workspace import router as orders_workspace_router
 from app.modules.products.router_public import router as products_public_router
 from app.modules.projects.models import Project  # noqa: F401
@@ -198,6 +208,8 @@ app.include_router(portal_router, prefix="/api/portal", tags=["portal"])
 app.include_router(billing_portal_router, prefix="/api/portal")
 app.include_router(mail_portal_router, prefix="/api/portal")
 app.include_router(marketplace_portal_router, prefix="/api/portal")
+app.include_router(onboarding_portal_router, prefix="/api/portal")
+app.include_router(onboarding_workspace_router, prefix="/api/workspace")
 app.include_router(projects_portal_router, prefix="/api/portal")
 app.include_router(hosting_portal_router, prefix="/api/portal")
 app.include_router(support_portal_router, prefix="/api/portal")

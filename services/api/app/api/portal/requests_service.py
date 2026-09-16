@@ -134,6 +134,25 @@ class PortalRequestsService:
         if linked_project_id is not None and project_to_link:
             project_to_link.status = "briefing_recebido"
             await self._project_repo.flush_and_refresh(project_to_link)
+            # P1.3: briefing concluído avança onboarding/fulfillment.
+            try:
+                from app.modules.onboarding.service import (
+                    complete_step_for_project,
+                )
+
+                await complete_step_for_project(
+                    self._project_repo._db,  # noqa: SLF001 (mesma sessão)
+                    linked_project_id,
+                    actor_type="customer",
+                    actor_id=str(current.id),
+                )
+            except Exception:  # noqa: BLE001 (briefing nunca quebra)
+                import logging as _logging
+
+                _logging.getLogger(__name__).exception(
+                    "briefing onboarding hook failed project %s",
+                    linked_project_id,
+                )
 
         ticket_id = await self._create_briefing_ticket_if_enabled(
             current.customer_id, company, description, linked_project_id
@@ -220,6 +239,25 @@ class PortalRequestsService:
         if linked_project_id is not None and project_to_link:
             project_to_link.status = "briefing_recebido"
             await self._project_repo.flush_and_refresh(project_to_link)
+            # P1.3: briefing concluído avança onboarding/fulfillment.
+            try:
+                from app.modules.onboarding.service import (
+                    complete_step_for_project,
+                )
+
+                await complete_step_for_project(
+                    self._project_repo._db,  # noqa: SLF001 (mesma sessão)
+                    linked_project_id,
+                    actor_type="customer",
+                    actor_id=str(current.id),
+                )
+            except Exception:  # noqa: BLE001 (briefing nunca quebra)
+                import logging as _logging
+
+                _logging.getLogger(__name__).exception(
+                    "briefing onboarding hook failed project %s",
+                    linked_project_id,
+                )
 
         ticket_id = await self._create_briefing_ticket_if_enabled(
             current.customer_id, company, full_description, linked_project_id

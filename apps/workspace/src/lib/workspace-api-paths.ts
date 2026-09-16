@@ -124,6 +124,20 @@ export const WORKSPACE_API_PATHS = {
     CUSTOMER: (customerId: string | number) =>
       `${PREFIX}/customers/${encodeURIComponent(String(customerId))}/fulfillments`,
   },
+  ONBOARDING: {
+    LIST: (query?: string) =>
+      query ? `${PREFIX}/onboardings?${query}` : `${PREFIX}/onboardings`,
+    DETAIL: (id: string | number) =>
+      `${PREFIX}/onboardings/${encodeURIComponent(String(id))}`,
+    VERIFY: (id: string | number) =>
+      `${PREFIX}/onboardings/${encodeURIComponent(String(id))}/verify-dns`,
+    RESOLVE: (id: string | number) =>
+      `${PREFIX}/onboardings/${encodeURIComponent(String(id))}/resolve`,
+    RETRY: (id: string | number) =>
+      `${PREFIX}/onboardings/${encodeURIComponent(String(id))}/retry`,
+    CUSTOMER: (customerId: string | number) =>
+      `${PREFIX}/customers/${encodeURIComponent(String(customerId))}/onboardings`,
+  },
   HOSTING: {
     SERVERS: `${PREFIX}/hosting/servers`,
     SERVERS_OVERVIEW: `${PREFIX}/hosting/servers/overview`,
