@@ -775,7 +775,79 @@
     "username": "Username",
     "fullAddress": "your full email address",
     "apps": "Apps",
-    "setupCta": "Set up email"
+    "setupCta": "Set up email",
+    "connectTitle": "How to connect",
+    "connectSub": "Use these settings in any app. Tap to copy.",
+    "imap": "Incoming (IMAP)",
+    "smtp": "Outgoing (SMTP)",
+    "user": "Username",
+    "userHint": "always the full address",
+    "fallback": "If your domain host does not respond, use the fallback:",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "openWebmailBtn": "Open webmail",
+    "imapOnly": "IMAP only (no POP3). Your messages stay on the server.",
+    "connectGuides": [
+      {
+        "id": "webmail",
+        "title": "Webmail (fastest)",
+        "steps": [
+          "Open the Webmail button above.",
+          "Sign in with your full address and password.",
+          "Done: works in any browser, nothing to configure."
+        ]
+      },
+      {
+        "id": "iphone",
+        "title": "iPhone (Mail)",
+        "steps": [
+          "Settings > Apps > Mail > Mail Accounts > Add Account > Other.",
+          "Tap Add Mail Account and fill in name, address and password.",
+          "For Incoming and Outgoing servers use the host below (IMAP 993 SSL; SMTP 587 STARTTLS).",
+          "Username: always the full email address.",
+          "Save and wait for verification."
+        ]
+      },
+      {
+        "id": "android",
+        "title": "Android (Gmail app)",
+        "steps": [
+          "Open Gmail > profile photo > Add another account > Other (IMAP).",
+          "Type your full address and tap Manual.",
+          "Fill in host, port and security below (IMAP 993 SSL; SMTP 587 STARTTLS).",
+          "Username: the full email address. Finish the wizard."
+        ]
+      },
+      {
+        "id": "outlookapp",
+        "title": "Outlook (mobile)",
+        "steps": [
+          "Install Microsoft Outlook (App Store/Play).",
+          "Tap Add Account > Advanced setup (or IMAP).",
+          "Fill in host, port and security below.",
+          "Username: the full email address."
+        ]
+      },
+      {
+        "id": "outlookpc",
+        "title": "Outlook (Windows/Mac)",
+        "steps": [
+          "File > Add Account > type the address > Advanced options > Manual setup.",
+          "Choose IMAP and fill in host, ports and encryption below.",
+          "Username: the full email address.",
+          "Finish and restart Outlook if asked."
+        ]
+      },
+      {
+        "id": "thunderbird",
+        "title": "Thunderbird (automatic)",
+        "steps": [
+          "Thunderbird detects everything itself: just enter name, address and password.",
+          "If asked, confirm the hosts below.",
+          "Done."
+        ]
+      }
+    ]
   },
   "hostingPage": {
     "pageTitle": "Hosting",

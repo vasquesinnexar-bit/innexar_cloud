@@ -775,7 +775,79 @@
     "username": "Usuário",
     "fullAddress": "seu e-mail completo",
     "apps": "Apps",
-    "setupCta": "Configurar e-mail"
+    "setupCta": "Configurar e-mail",
+    "connectTitle": "Como conectar",
+    "connectSub": "Use estes dados em qualquer app. Toque para copiar.",
+    "imap": "Recebimento (IMAP)",
+    "smtp": "Envio (SMTP)",
+    "user": "Usuário",
+    "userHint": "sempre o endereço completo",
+    "fallback": "Se o host do seu domínio não responder, use o alternativo:",
+    "copy": "Copiar",
+    "copied": "Copiado!",
+    "openWebmailBtn": "Abrir webmail",
+    "imapOnly": "Somente IMAP (sem POP3). Suas mensagens ficam no servidor.",
+    "connectGuides": [
+      {
+        "id": "webmail",
+        "title": "Webmail (mais rápido)",
+        "steps": [
+          "Abra o botão Webmail acima.",
+          "Entre com seu endereço completo e a senha.",
+          "Pronto: funciona em qualquer navegador, sem configurar nada."
+        ]
+      },
+      {
+        "id": "iphone",
+        "title": "iPhone (Mail)",
+        "steps": [
+          "Ajustes > Apps > Mail > Contas de E-mail > Adicionar Conta > Outra.",
+          "Toque em Adicionar Conta de E-mail e preencha nome, endereço e senha.",
+          "Em Servidor de Entrada e Saída, use o host abaixo (IMAP 993 SSL; SMTP 587 STARTTLS).",
+          "Usuário: sempre o endereço de e-mail completo.",
+          "Salve e aguarde a verificação concluir."
+        ]
+      },
+      {
+        "id": "android",
+        "title": "Android (app Gmail)",
+        "steps": [
+          "Abra o Gmail > foto do perfil > Adicionar outra conta > Outra (IMAP).",
+          "Digite seu endereço completo e toque em Manual.",
+          "Preencha o host, porta e segurança abaixo (IMAP 993 SSL; SMTP 587 STARTTLS).",
+          "Usuário: o endereço de e-mail completo. Conclua o assistente."
+        ]
+      },
+      {
+        "id": "outlookapp",
+        "title": "Outlook (celular)",
+        "steps": [
+          "Instale o Microsoft Outlook (App Store/Play).",
+          "Toque em Adicionar Conta > Configuração avançada (ou IMAP).",
+          "Preencha host, porta e segurança abaixo.",
+          "Usuário: o endereço de e-mail completo."
+        ]
+      },
+      {
+        "id": "outlookpc",
+        "title": "Outlook (Windows/Mac)",
+        "steps": [
+          "Arquivo > Adicionar Conta > digite o endereço > Opções avançadas > Configuração manual.",
+          "Escolha IMAP e preencha o host, portas e criptografia abaixo.",
+          "Usuário: o endereço de e-mail completo.",
+          "Conclua e reinicie o Outlook se ele pedir."
+        ]
+      },
+      {
+        "id": "thunderbird",
+        "title": "Thunderbird (automático)",
+        "steps": [
+          "O Thunderbird detecta tudo sozinho: basta informar nome, endereço e senha.",
+          "Se pedir confirmação, aceite os hosts abaixo.",
+          "Pronto."
+        ]
+      }
+    ]
   },
   "hostingPage": {
     "pageTitle": "Hospedagem",

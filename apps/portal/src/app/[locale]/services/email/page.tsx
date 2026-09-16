@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useEmailService } from "@/hooks/use-email-service";
 import { SkeletonCard } from "@/components/ui/Skeleton";
+import EmailConnectGuide from "@/components/email/EmailConnectGuide";
 import { getIntlLocale } from "@/lib/intl-locale";
 import { workspaceFetch, getCustomerToken } from "@/lib/workspace-api";
 import { API_PATHS } from "@/lib/api-paths";
@@ -553,6 +554,12 @@ export default function EmailServicePage() {
           <p>{t("apps")}: Webmail · iPhone · Android · Gmail · Outlook · Apple Mail</p>
         </div>
       </div>
+
+      <EmailConnectGuide
+        domain={domain}
+        exampleAddress={overview.mailboxes[0]?.address ?? null}
+        webmailUrl={WEBMAIL_URL}
+      />
     </div>
   );
 }

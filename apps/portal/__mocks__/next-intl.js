@@ -3,7 +3,11 @@
  * useTranslations returns (key) => key so tests assert on translation keys.
  */
 const useLocale = () => "en";
-const useTranslations = () => (key) => key;
+const useTranslations = () => {
+  const fn = (key) => key;
+  fn.raw = (key) => [];
+  return fn;
+};
 const NextIntlClientProvider = ({ children }) => children;
 
 module.exports = {
