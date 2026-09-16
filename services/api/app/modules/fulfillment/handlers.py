@@ -27,7 +27,8 @@ class MailProvisioner:
     key = FulfillmentHandler.MAIL.value
 
     async def provision(self, ctx: ProvisionContext) -> ProvisionResult:
-        from app.modules.mail.models import MailProvisioningJob
+
+        from app.modules.mail.models import EmailDomain, MailProvisioningJob
         from app.modules.mail.provisioning import (
             trigger_mail_provisioning_if_needed,
         )
@@ -38,6 +39,22 @@ class MailProvisioner:
                 ok=False,
                 waiting_input="invoice",
                 error="fulfillment sem invoice vinculada",
+            )
+        has_domain = (
+            await ctx.db.execute(
+                select(EmailDomain.id).where(
+                    EmailDomain.customer_id == ctx.fulfillment.customer_id
+                )
+            )
+        ).first()
+        if not has_domain:
+            return ProvisionResult(
+                ok=False,
+                waiting_input="domain",
+                step="domain",
+                progress=20,
+                error="Pagamento confirmado. Precisamos do domínio que será "
+                "usado no serviço.",
             )
         try:
             await trigger_mail_provisioning_if_needed(ctx.db, inv_id)

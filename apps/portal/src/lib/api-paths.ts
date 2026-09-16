@@ -56,6 +56,11 @@ export const API_PATHS = {
     DETAIL: (id: string | number) => `/api/portal/tickets/${id}`,
     MESSAGES: (id: string | number) => `/api/portal/tickets/${id}/messages`,
   },
+  MARKETPLACE: {
+    CATALOG: "/api/portal/catalog",
+    PURCHASES: "/api/portal/purchases",
+    SERVICES: "/api/portal/services/overview",
+  },
   EMAIL: {
     OVERVIEW: "/api/portal/services/email",
     DOMAINS: "/api/portal/services/email/domains",

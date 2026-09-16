@@ -151,23 +151,14 @@ async def purchase(
             )
         ).scalar_one_or_none()
         if existing:
-            item = (
-                (
-                    await db.execute(
-                        select(ContractItem).where(
-                            ContractItem.contract_id.in_(
-                                select(Contract.id).where(
-                                    Contract.customer_id == customer.id
-                                )
-                            )
-                        )
-                    )
-                )
-                .scalars()
-                .first()
-            )
+            item = None
+            for iid in _invoice_item_ids(existing):
+                item = await db.get(ContractItem, iid)
+                if item:
+                    break
+            contract = await db.get(Contract, item.contract_id) if item else None
             return {
-                "contract_id": None,
+                "contract_id": contract.id if contract else None,
                 "contract_item_id": item.id if item else None,
                 "invoice_id": existing.id,
                 "total": float(existing.total),
@@ -200,7 +191,6 @@ async def purchase(
     provider = plan.provider or customer.billing_provider or None
     contract = await _find_compatible_contract(db, customer, currency, provider)
     if contract is None:
-
         contract = Contract(
             customer_id=customer.id,
             org_id=customer.org_id,
@@ -224,10 +214,25 @@ async def purchase(
             org_id=customer.org_id,
         )
         await db.flush()
+    subscription_id = None
+    if plan.billing_type == "recurring":
+        from app.modules.billing.models import Subscription
+
+        sub = Subscription(
+            customer_id=customer.id,
+            product_id=product.id,
+            price_plan_id=plan.id,
+            status="inactive",
+            currency=currency,
+        )
+        db.add(sub)
+        await db.flush()
+        subscription_id = sub.id
     item = ContractItem(
         contract_id=contract.id,
         product_id=product.id,
         price_plan_id=plan.id,
+        subscription_id=subscription_id,
         description=f"{product.name} — {plan.name}",
         quantity=quantity,
         unit_amount=float(plan.amount),
@@ -283,7 +288,9 @@ async def _invoice_for_item(
             contract,
             due_date=utc_now() + timedelta(days=3),
             only_item_ids=[item.id],
+            subscription_id=item.subscription_id,
             idempotency_key=idempotency_key,
+            status="pending",
             actor_type="customer",
             actor_id=actor_id,
         )

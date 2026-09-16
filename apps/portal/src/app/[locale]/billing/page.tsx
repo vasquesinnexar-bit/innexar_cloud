@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { workspaceFetch, getCustomerToken, getWorkspaceApiBase } from "@/lib/workspace-api";
 import { useBilling } from "@/hooks/use-billing";
@@ -36,6 +37,16 @@ export default function BillingPage() {
   } = useBilling();
   const [paymentModalInvoice, setPaymentModalInvoice] = useState<Invoice | null>(null);
   const [pixModalInvoice, setPixModalInvoice] = useState<Invoice | null>(null);
+  const searchParams = useSearchParams();
+  const [payAutoOpened, setPayAutoOpened] = useState(false);
+
+  // Deep-link ?pay=<id>: abre o pagamento uma única vez (derived state).
+  const payId = searchParams.get("pay");
+  if (payId && !payAutoOpened && !paymentModalInvoice && invoices.length > 0) {
+    const found = invoices.find((i) => String(i.id) === payId);
+    setPayAutoOpened(true);
+    if (found && found.status !== "paid") setPaymentModalInvoice(found);
+  }
   // Moeda dominante das faturas (clientes têm uma moeda; fallback USD legado)
 
   const handleDownload = useCallback(async (invoice: Invoice) => {

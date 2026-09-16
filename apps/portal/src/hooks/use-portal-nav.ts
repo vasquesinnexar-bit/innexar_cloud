@@ -12,6 +12,8 @@ import {
   CircleHelp,
   Mail,
   Server,
+  Package,
+  ShoppingBag,
 } from "lucide-react";
 import {
   useWorkspaceApi,
@@ -70,6 +72,8 @@ export function usePortalNav() {
   const navItems = useMemo(() => {
     const all: NavItem[] = [
       { key: "dashboard", label: t("dashboard"), icon: LayoutDashboard, href: `/${locale}` },
+      { key: "my-services", label: t("myServices"), icon: Package, href: `/${locale}/services` },
+      { key: "hire-services", label: t("hireServices"), icon: ShoppingBag, href: `/${locale}/services/catalog` },
       { key: "projects", label: t("projects"), icon: FolderOpen, href: `/${locale}/projects` },
       { key: "support", label: t("support"), icon: MessageSquare, href: `/${locale}/support` },
       {

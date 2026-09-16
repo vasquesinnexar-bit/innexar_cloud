@@ -34,6 +34,7 @@ async def create_invoice_from_contract(
     subscription_id: int | None = None,
     idempotency_key: str | None = None,
     only_item_ids: list[int] | None = None,
+    status: str | None = None,
     actor_type: str = "staff",
     actor_id: str | None = None,
 ) -> Invoice:
@@ -51,10 +52,24 @@ async def create_invoice_from_contract(
         ).scalar_one_or_none()
         if existing:
             return existing
-    items = list(contract.items or [])
+    items = list(contract.items or []) if only_item_ids is None else []
     if only_item_ids is not None:
-        wanted = set(only_item_ids)
-        items = [i for i in items if i.id in wanted]
+        from sqlalchemy import select
+
+        from app.modules.billing.models import ContractItem
+
+        items = (
+            (
+                await db.execute(
+                    select(ContractItem).where(
+                        ContractItem.contract_id == contract.id,
+                        ContractItem.id.in_(list(only_item_ids)),
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
     if not items:
         raise ContractBillingError("empty_contract", "Contrato sem itens")
     missing = [i.id for i in items if i.unit_amount is None]
@@ -92,6 +107,9 @@ async def create_invoice_from_contract(
         currency=currency,
         line_items=lines,
     )
+    if status is not None:
+        inv.status = status
+        await db.flush()
     if idempotency_key:
         inv.idempotency_key = idempotency_key
         await db.flush()

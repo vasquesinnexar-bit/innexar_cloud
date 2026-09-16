@@ -13,6 +13,7 @@ from app.core.auth_customer import get_current_customer
 from app.core.database import get_db
 from app.models.customer import Customer
 from app.models.customer_user import CustomerUser
+from app.modules.billing.dependencies import require_billing_enabled
 from app.modules.marketplace import service as marketplace
 from app.modules.marketplace.schemas import (
     CatalogProduct,
@@ -44,6 +45,7 @@ async def _customer(db: AsyncSession, current: CustomerUser) -> Customer:
 async def catalog(
     db: Annotated[AsyncSession, Depends(get_db)],
     current: Annotated[CustomerUser, Depends(get_current_customer)],
+    _: Annotated[None, Depends(require_billing_enabled)],
 ):
     """Catálogo vendável p/ este cliente (org + moeda + portal_sellable)."""
     cust = await _customer(db, current)
@@ -55,6 +57,7 @@ async def purchase(
     body: PurchaseCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
     current: Annotated[CustomerUser, Depends(get_current_customer)],
+    _: Annotated[None, Depends(require_billing_enabled)],
 ):
     """Contrata: valida no servidor, cria contrato/item/invoice. Idempotente."""
     cust = await _customer(db, current)
@@ -78,6 +81,7 @@ async def purchase(
 async def my_purchases(
     db: Annotated[AsyncSession, Depends(get_db)],
     current: Annotated[CustomerUser, Depends(get_current_customer)],
+    _: Annotated[None, Depends(require_billing_enabled)],
 ):
     """Itens do cliente com invoice + fulfillment (base de Meus serviços)."""
     cust = await _customer(db, current)
@@ -88,6 +92,7 @@ async def my_purchases(
 async def my_services(
     db: Annotated[AsyncSession, Depends(get_db)],
     current: Annotated[CustomerUser, Depends(get_current_customer)],
+    _: Annotated[None, Depends(require_billing_enabled)],
 ):
     """Meus serviços: itens + domínios de e-mail do cliente."""
     from app.modules.mail.service import MailService
