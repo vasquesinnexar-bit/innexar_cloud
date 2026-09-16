@@ -46,8 +46,8 @@ test("hosting lista + detalhe 31", async ({ page }) => {
 
 test("billing mostra fatura 401 BRL sem contradicao", async ({ page }) => {
   await page.goto("/pt/billing");
-  await expect(page.getByText(/1755/)).toBeVisible({ timeout: 20000 });
-  await expect(page.getByText(/R\$.*100/)).toBeVisible();
+  await expect(page.getByText(/1755/).first()).toBeVisible({ timeout: 20000 });
+  await expect(page.getByText(/R\$.*100/).first()).toBeVisible();
 });
 
 test("contracts lista + detalhe 40", async ({ page }) => {
