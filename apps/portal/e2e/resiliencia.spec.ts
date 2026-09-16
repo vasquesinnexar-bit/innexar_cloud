@@ -29,7 +29,7 @@ test("API de hosting falha => erro com retry", async ({ page }) => {
   }, TOKEN);
   await page.route("**/api/portal/hosting/services", (r) => r.abort());
   await page.goto("/pt/services/hosting");
-  await expect(page.getByRole("alert")).toBeVisible({ timeout: 30000 });
+  await expect(page.getByText(/carregar a hospedagem/)).toBeVisible({ timeout: 30000 });
 });
 
 test("overview vazio => empty state com CTA (cenário F)", async ({ page }) => {
@@ -45,7 +45,7 @@ test("overview vazio => empty state com CTA (cenário F)", async ({ page }) => {
     })
   );
   await page.goto("/pt/services");
-  await expect(page.getByText(/Nenhum serviço|noServices/)).toBeVisible({ timeout: 20000 });
+  await expect(page.getByText(/ainda não contratou/).first()).toBeVisible({ timeout: 20000 });
 });
 
 test("EN: catalog redirect + pagina carrega", async ({ page }) => {

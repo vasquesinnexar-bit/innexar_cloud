@@ -14,7 +14,7 @@ test.beforeEach(async ({ page }) => {
 test("dashboard mostra servicos, fatura e acao pendente (893)", async ({ page }) => {
   await page.goto("/pt/");
   await expect(page.getByText("Serviços contratados")).toBeVisible({ timeout: 20000 });
-  await expect(page.getByText("E-mail Profissional")).toBeVisible();
+  await expect(page.getByText("E-mail Profissional").first()).toBeVisible();
   await expect(page.getByText("Hospedagem Gerenciada")).toBeVisible();
   await expect(page.getByText("Atenção necessária")).toBeVisible();
   await expect(page.getByText(/#1755/)).toBeVisible();
@@ -55,5 +55,5 @@ test("contracts lista + detalhe 40", async ({ page }) => {
   const link = page.locator('a[href="/pt/contracts/40"]');
   await expect(link).toBeVisible({ timeout: 20000 });
   await link.click();
-  await expect(page.getByText("E-mail Profissional")).toBeVisible();
+  await expect(page.getByText("E-mail Profissional").first()).toBeVisible();
 });
