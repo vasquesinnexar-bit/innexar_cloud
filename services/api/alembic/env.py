@@ -54,6 +54,10 @@ from app.modules.mail.models import (  # noqa: F401
     MailProvisioningJob,
     Service,
 )
+from app.modules.onboarding.models import (  # noqa: F401
+    OnboardingSession,
+    OnboardingStep,
+)
 from app.modules.projects.models import Project  # noqa: F401
 from app.modules.projects.modification_request import (  # noqa: F401
     ModificationRequest,
