@@ -12,7 +12,8 @@ describe("EmailConnectGuide", () => {
         webmailUrl="https://webmail.innexar.com.br"
       />
     );
-    expect(screen.getAllByText("mail.touficsleiman.com.br").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText("mail.innexar.com.br").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText("mail.touficsleiman.com.br")).toBeInTheDocument();
     expect(screen.getByText("993")).toBeInTheDocument();
     expect(screen.getByText("587")).toBeInTheDocument();
     expect(screen.getByText("contato@touficsleiman.com.br")).toBeInTheDocument();
@@ -32,7 +33,7 @@ describe("EmailConnectGuide", () => {
         webmailUrl="https://webmail.innexar.com.br"
       />
     );
-    fireEvent.click(screen.getAllByText("mail.touficsleiman.com.br")[0]);
-    expect(writeText).toHaveBeenCalledWith("mail.touficsleiman.com.br");
+    fireEvent.click(screen.getAllByText("mail.innexar.com.br")[0]);
+    expect(writeText).toHaveBeenCalledWith("mail.innexar.com.br");
   });
 });

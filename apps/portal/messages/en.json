@@ -796,7 +796,7 @@
     "smtp": "Outgoing (SMTP)",
     "user": "Username",
     "userHint": "always the full address",
-    "fallback": "If your domain host does not respond, use the fallback:",
+    "fallback": "Fallback (may show a certificate warning in some apps):",
     "copy": "Copy",
     "copied": "Copied!",
     "openWebmailBtn": "Open webmail",
@@ -861,7 +861,8 @@
           "Done."
         ]
       }
-    ]
+    ],
+    "fallbackWarn": ""
   },
   "hostingPage": {
     "pageTitle": "Hosting",

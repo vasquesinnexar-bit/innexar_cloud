@@ -50,7 +50,8 @@ export default function EmailConnectGuide({
 }) {
   const t = useTranslations("emailPage");
   const [open, setOpen] = useState<string | null>("webmail");
-  const host = `mail.${domain}`;
+  // Host com certificado válido (mesmo servidor; evita aviso de certificado).
+  const host = "mail.innexar.com.br";
   const guides = t.raw("connectGuides") as Guide[];
 
   return (
@@ -79,8 +80,9 @@ export default function EmailConnectGuide({
       <CopyRow label={`${t("user")} (${t("userHint")})`} value={exampleAddress ?? ""} />
 
       <p className="text-xs text-theme-secondary">
-        {t("fallback")} <code>mail.innexar.com.br</code> · {t("imapOnly")}
+        {t("fallback")} <code>{`mail.${domain}`}</code> {t("fallbackWarn")}
       </p>
+      <p className="text-xs text-theme-secondary">{t("imapOnly")}</p>
 
       <div className="flex flex-wrap gap-2">
         <a href={webmailUrl} target="_blank" rel="noopener" className="btn sm">

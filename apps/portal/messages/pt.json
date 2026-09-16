@@ -796,7 +796,7 @@
     "smtp": "Envio (SMTP)",
     "user": "Usuário",
     "userHint": "sempre o endereço completo",
-    "fallback": "Se o host do seu domínio não responder, use o alternativo:",
+    "fallback": "Alternativo (pode exibir aviso de certificado em alguns apps):",
     "copy": "Copiar",
     "copied": "Copiado!",
     "openWebmailBtn": "Abrir webmail",
@@ -861,7 +861,8 @@
           "Pronto."
         ]
       }
-    ]
+    ],
+    "fallbackWarn": ""
   },
   "hostingPage": {
     "pageTitle": "Hospedagem",
