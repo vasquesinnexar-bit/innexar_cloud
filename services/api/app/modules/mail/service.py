@@ -272,7 +272,27 @@ class MailService:
                     )
                 )
             ).all()
+            # billing_type por plano (setup one_time não consome licença).
+            plan_ids = {item.price_plan_id for item, _ in items if item.price_plan_id}
+            plan_by_id: dict[int, str] = {}
+            if plan_ids:
+                for p in (
+                    await self._db.execute(
+                        select(PricePlan.id, PricePlan.billing_type).where(
+                            PricePlan.id.in_(plan_ids)
+                        )
+                    )
+                ).all():
+                    plan_by_id[p[0]] = p[1] or ""
             for item, _contract in items:
+                # Setup (one_time) é cobrança comercial, não licença de mailbox.
+                plan_bt = (
+                    (plan_by_id.get(item.price_plan_id) or "").lower()
+                    if item.price_plan_id
+                    else ""
+                )
+                if plan_bt == "one_time":
+                    continue
                 contracted += item.quantity or 0
             # preço de referência: plano mensal recorrente na moeda do cliente
             plans = (

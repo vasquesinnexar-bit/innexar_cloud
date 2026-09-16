@@ -304,3 +304,65 @@ async def test_sync_and_jobs(db_session: AsyncSession):
     res = await svc.process_pending_jobs()
     assert res == {"done": 1, "failed": 0}
     assert prov.mailbox_exists("job@cliente.com.br")
+
+
+@pytest.mark.asyncio
+async def test_entitlement_ignores_setup_item(db_session: AsyncSession):
+    """Setup one_time é cobrança, não licença: contracted conta só o mensal."""
+    svc = MailService(db_session, provider=FakeProvider())
+    c = await _customer(db_session, email="setup@example.com")
+    p = Product(
+        org_id="innexar",
+        name="E-mail Profissional",
+        slug="professional-email",
+        category="email",
+        is_active=True,
+    )
+    db_session.add(p)
+    await db_session.flush()
+    setup = PricePlan(
+        product_id=p.id,
+        name="Setup",
+        interval="one_time",
+        amount=100.0,
+        currency="BRL",
+        billing_type="one_time",
+    )
+    monthly = PricePlan(
+        product_id=p.id,
+        name="Mensal",
+        interval="monthly",
+        amount=25.0,
+        currency="BRL",
+        billing_type="recurring",
+    )
+    db_session.add_all([setup, monthly])
+    await db_session.flush()
+    ct = Contract(customer_id=c.id, org_id="innexar", status="pending")
+    db_session.add(ct)
+    await db_session.flush()
+    db_session.add_all(
+        [
+            ContractItem(
+                contract_id=ct.id,
+                product_id=p.id,
+                price_plan_id=setup.id,
+                quantity=1,
+                unit_amount=100.0,
+            ),
+            ContractItem(
+                contract_id=ct.id,
+                product_id=p.id,
+                price_plan_id=monthly.id,
+                quantity=1,
+                unit_amount=25.0,
+            ),
+        ]
+    )
+    d = EmailDomain(
+        customer_id=c.id, org_id="innexar", domain="setup.com.br", status="active"
+    )
+    db_session.add(d)
+    await db_session.flush()
+    ent = await svc.entitlement(c.id, "innexar")
+    assert (ent["contracted"], ent["used"], ent["available"]) == (1, 0, 1)
