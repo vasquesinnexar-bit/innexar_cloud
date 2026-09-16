@@ -121,7 +121,7 @@ async def test_webhook_stripe_200_with_paid_invoice_triggers_background(
             "app.modules.customers.service.send_portal_credentials_after_payment",
         ),
         patch(
-            "app.modules.billing.public_service._run_provisioning",
+            "app.modules.billing.public_service._fulfillment_after_payment",
             new_callable=AsyncMock,
         ),
         patch(
