@@ -475,14 +475,22 @@ class MailService:
 
     def mailbox_usage(self) -> dict[str, dict]:
         """Uso live por endereço {address: {used, quota, pct}}. Sem exceção."""
+        from app.core.ttl_cache import get as _cache_get
+        from app.core.ttl_cache import put as _cache_put
+
+        hit, cached = _cache_get("mail:usage", 60)
+        if hit:
+            return cached  # type: ignore[return-value]
         try:
             infos = self._provider.list_mailboxes()
         except MailProviderError:
             return {}
-        return {
+        out = {
             i.address.lower(): {"used": i.used, "quota": i.quota, "pct": i.pct}
             for i in infos
         }
+        _cache_put("mail:usage", out)
+        return out
 
     async def _get_or_create_service(
         self, customer_id: int, org_id: str, contract_item_id: int | None

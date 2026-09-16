@@ -71,6 +71,12 @@ def _traefik_hosts(labels: dict) -> list[str]:
 
 def _ssl_info(domain: str) -> dict:
     """TLS ao vivo: issuer/datas/dias. Sem chave privada, só leitura."""
+    from app.core.ttl_cache import get as _cache_get
+    from app.core.ttl_cache import put as _cache_put
+
+    hit, cached = _cache_get(f"hosting:ssl:{domain}", 300)
+    if hit:
+        return cached  # type: ignore[return-value]
     out = {
         "ok": False,
         "issuer": None,
@@ -108,15 +114,25 @@ def _ssl_info(domain: str) -> dict:
         )
     except (OSError, ssl.SSLError, ValueError) as e:
         out["error"] = str(e)[:120]
+    if out.get("ok"):
+        _cache_put(f"hosting:ssl:{domain}", out)
     return out
 
 
 def _dns_status(domain: str) -> dict:
+    from app.core.ttl_cache import get as _cache_get
+    from app.core.ttl_cache import put as _cache_put
+
+    hit, cached = _cache_get(f"hosting:dns:{domain}", 300)
+    if hit:
+        return cached  # type: ignore[return-value]
     try:
         _, _, ips = socket.gethostbyname_ex(domain)
     except OSError:
         return {"ok": False, "ips": []}
-    return {"ok": True, "ips": ips, "points_here": SERVER_PUBLIC_IP in ips}
+    out = {"ok": True, "ips": ips, "points_here": SERVER_PUBLIC_IP in ips}
+    _cache_put(f"hosting:dns:{domain}", out)
+    return out
 
 
 class HostingServiceLayer:
