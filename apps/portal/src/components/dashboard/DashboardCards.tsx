@@ -52,6 +52,8 @@ type DashboardCardsProps = {
     supportDesc: string;
     couponCode: string;
     couponPlaceholder: string;
+    services: string;
+    noServices: string;
   };
   onPayInvoice: (id: number, couponCode?: string) => void;
 };
@@ -198,6 +200,41 @@ export function DashboardCards({
             <p className="text-theme-secondary text-sm">{labels.noInvoice}</p>
           )}
         </motion.div>
+
+        {(data?.services?.length ?? 0) > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.22 }}
+            className="bg-[var(--card-bg)] backdrop-blur-xl border border-[var(--border)] rounded-2xl p-6 shadow-md transition-all duration-200"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-theme-secondary text-sm">{labels.services}</span>
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                <Package className="w-5 h-5 text-emerald-400" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              {data!.services!.map((s, i) => (
+                <Link
+                  key={`${s.kind}-${i}`}
+                  href={
+                    s.kind === "hosting"
+                      ? `/${locale}/services/hosting`
+                      : `/${locale}/services/email`
+                  }
+                  className={`block rounded-xl ${FOCUS_RING}`}
+                >
+                  <p className="text-theme-primary font-medium text-sm">{s.label}</p>
+                  <p className="text-theme-secondary text-xs mt-0.5">
+                    {s.status}
+                    {s.detail ? ` · ${s.detail}` : ""}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </motion.div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

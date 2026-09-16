@@ -34,4 +34,5 @@ export interface DashboardData {
   projects?: ProjectSummary[];
   projects_aguardando_briefing?: ProjectSummary[];
   requires_password_change?: boolean;
+  services?: { kind: string; label: string; status: string; detail: string | null }[];
 }

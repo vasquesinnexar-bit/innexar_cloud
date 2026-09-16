@@ -294,3 +294,67 @@ async def test_portal_me_dashboard_diagnostic_when_no_subscriptions(
     assert "diagnostic" in data
     assert data["diagnostic"] is not None
     assert data["diagnostic"]["subscriptions_count"] == 0
+
+
+@pytest.mark.asyncio
+async def test_portal_me_dashboard_contract_services(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    customer_and_user: tuple[Customer, CustomerUser],
+) -> None:
+    """Dashboard agrega e-mail + hosting sem subscription (contract-driven)."""
+    from app.modules.hosting.models import HostingService
+    from app.modules.mail.models import EmailDomain, EmailMailbox
+
+    customer, customer_user = customer_and_user
+    db_session.add(
+        EmailDomain(
+            customer_id=customer.id,
+            org_id=customer.org_id,
+            domain="dash.example.com",
+            status="active",
+        )
+    )
+    await db_session.flush()
+    dom = (
+        (
+            await db_session.execute(
+                __import__("sqlalchemy")
+                .select(EmailDomain)
+                .where(EmailDomain.customer_id == customer.id)
+            )
+        )
+        .scalars()
+        .first()
+    )
+    assert dom is not None
+    db_session.add(
+        EmailMailbox(
+            customer_id=customer.id,
+            email_domain_id=dom.id,
+            org_id=customer.org_id,
+            address="a@dash.example.com",
+            local_part="a",
+            status="active",
+        )
+    )
+    db_session.add(
+        HostingService(
+            customer_id=customer.id,
+            org_id=customer.org_id,
+            runtime_type="docker",
+            container_name="d-web",
+            project_name="dproj",
+            primary_domain="dash.example.com",
+            environment="production",
+            path_mode="container",
+            status="active",
+        )
+    )
+    await db_session.flush()
+    r = await client.get(
+        "/api/portal/me/dashboard", headers=_auth_headers(customer_user)
+    )
+    assert r.status_code == 200
+    kinds = {s["kind"] for s in r.json().get("services", [])}
+    assert {"email", "hosting"} <= kinds

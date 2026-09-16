@@ -94,16 +94,52 @@ async def my_services(
     current: Annotated[CustomerUser, Depends(get_current_customer)],
     _: Annotated[None, Depends(require_billing_enabled)],
 ):
-    """Meus serviços: itens + domínios de e-mail do cliente."""
+    """Meus serviços: itens + domínios de e-mail + hosting + projetos."""
+    from app.modules.hosting.models import HostingService
     from app.modules.mail.service import MailService
+    from app.modules.projects.models import Project
 
     cust = await _customer(db, current)
     mail_svc = MailService(db)
     domains = await mail_svc.list_domains(cust.id, str(cust.org_id))
     items = await marketplace.list_my_purchases(db, cust)
+    hosting_rows = (
+        (
+            await db.execute(
+                select(HostingService)
+                .where(HostingService.customer_id == cust.id)
+                .order_by(HostingService.id)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    project_rows = (
+        (
+            await db.execute(
+                select(Project)
+                .where(Project.customer_id == cust.id)
+                .order_by(Project.id.desc())
+            )
+        )
+        .scalars()
+        .all()
+    )
     return {
         "items": items,
         "email_domains": [{"domain": d.domain, "status": d.status} for d in domains],
-        "hosting_services": [],
-        "projects": [],
+        "hosting_services": [
+            {
+                "id": h.id,
+                "primary_domain": h.primary_domain,
+                "status": h.status,
+                "runtime": "online" if (h.status or "") == "active" else "unknown",
+                "project": h.project_name,
+                "environment": h.environment,
+            }
+            for h in hosting_rows
+        ],
+        "projects": [
+            {"id": p.id, "name": p.name, "status": p.status} for p in project_rows
+        ],
     }

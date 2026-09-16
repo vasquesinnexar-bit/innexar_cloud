@@ -486,3 +486,88 @@ async def test_14_idor_items_scoped(
     rb = await client.get("/api/portal/purchases", headers=_ctok(cu_b))
     assert rb.status_code == 200
     assert rb.json() == []
+
+
+@pytest.mark.asyncio
+async def test_overview_hosting_and_setup_flag(
+    client: AsyncClient, db_session: AsyncSession, billing_enabled: None
+):
+    """Overview inclui hosting sem ContractItem + marca setup (is_setup)."""
+    from app.modules.billing.models import Contract, ContractItem
+    from app.modules.hosting.models import HostingService
+
+    cust, cu = await _br_customer(db_session)
+    p, _ = await _product(db_session, "innexar-br", "Mail Ov", category="email")
+    setup = await _plan(db_session, p.id, 100.0, "BRL", billing_type="one_time")
+    monthly = await _plan(db_session, p.id, 25.0, "BRL", billing_type="recurring")
+    ct = Contract(
+        customer_id=cust.id,
+        org_id="innexar-br",
+        status="pending",
+        currency="BRL",
+        source="workspace",
+    )
+    db_session.add(ct)
+    await db_session.flush()
+    for plan, amount in ((setup, 100.0), (monthly, 25.0)):
+        db_session.add(
+            ContractItem(
+                contract_id=ct.id,
+                product_id=p.id,
+                price_plan_id=plan.id,
+                quantity=1,
+                unit_amount=amount,
+                source="workspace",
+            )
+        )
+    db_session.add(
+        HostingService(
+            customer_id=cust.id,
+            server_id=None,
+            org_id="innexar-br",
+            runtime_type="docker",
+            container_name="t-web",
+            project_name="tproj",
+            primary_domain="t.example.com",
+            environment="production",
+            path_mode="container",
+            status="active",
+        )
+    )
+    await db_session.flush()
+    r = await client.get("/api/portal/services/overview", headers=_ctok(cu))
+    assert r.status_code == 200
+    data = r.json()
+    by_plan = {i["unit_amount"]: i for i in data["items"]}
+    assert by_plan[100.0]["is_setup"] is True
+    assert by_plan[25.0]["is_setup"] is False
+    assert [h["primary_domain"] for h in data["hosting_services"]] == ["t.example.com"]
+
+
+@pytest.mark.asyncio
+async def test_overview_tenant_isolation(
+    client: AsyncClient, db_session: AsyncSession, billing_enabled: None
+):
+    """Hosting de outro cliente nunca aparece no overview."""
+    from app.modules.hosting.models import HostingService
+
+    cust_a, cu_a = await _br_customer(db_session)
+    cust_b, cu_b = await _br_customer(db_session)
+    db_session.add(
+        HostingService(
+            customer_id=cust_b.id,
+            server_id=None,
+            org_id="innexar-br",
+            runtime_type="docker",
+            container_name="b-web",
+            project_name="bproj",
+            primary_domain="b.example.com",
+            environment="production",
+            path_mode="container",
+            status="active",
+        )
+    )
+    await db_session.flush()
+    r = await client.get("/api/portal/services/overview", headers=_ctok(cu_a))
+    assert r.status_code == 200
+    assert r.json()["hosting_services"] == []

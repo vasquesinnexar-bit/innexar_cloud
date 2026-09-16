@@ -258,7 +258,9 @@
     "invoicesDesc": "Ver historial y pagar",
     "projects": "Proyectos",
     "projectsDesc": "Seguir proyectos",
-    "supportDesc": "Tickets y ayuda"
+    "supportDesc": "Tickets y ayuda",
+    "services": "Servicios contratados",
+    "noServices": "Aún no hay servicios contratados."
   },
   "projectDetails": {
     "backToProjects": "Volver a Proyectos",
@@ -801,7 +803,10 @@
     "tab_files": "Archivos",
     "tab_logs": "Logs",
     "tab_backups": "Respaldos",
-    "tab_domains": "Dominios y SSL"
+    "tab_domains": "Dominios y SSL",
+    "loadError": "No pudimos cargar el alojamiento.",
+    "retry": "Reintentar",
+    "notFound": "Servicio de alojamiento no encontrado."
   },
   "marketplace": {
     "title": "Contratar servicios",
@@ -839,7 +844,11 @@
     "back": "Atrás",
     "unavailable": "Este servicio aún no está disponible para compra en línea.",
     "customQuoteText": "¿Necesitas algo a medida?",
-    "customQuoteCta": "Solicita un Nuevo Proyecto"
+    "customQuoteCta": "Solicita un Nuevo Proyecto",
+    "loadError": "No pudimos cargar tus servicios.",
+    "retry": "Reintentar",
+    "setupPending": "Configuración inicial: $ {amount} pendiente.",
+    "hostingTitle": "Alojamiento gestionado"
   },
   "onboarding": {
     "title": "Configurar correo profesional",

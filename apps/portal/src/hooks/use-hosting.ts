@@ -19,6 +19,8 @@ export function useHostingService(id: number | null) {
   const [backups, setBackups] = useState<HostingBackupItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [overviewLoading, setOverviewLoading] = useState(false);
+  const [overviewError, setOverviewError] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
 
   const loadServices = useCallback(async () => {
@@ -28,10 +30,17 @@ export function useHostingService(id: number | null) {
       return;
     }
     setLoading(true);
+    setError("");
     try {
       const res = await workspaceFetch(API_PATHS.HOSTING.SERVICES, { token });
-      if (res.ok) setServices(await res.json());
+      if (res.ok) {
+        setServices(await res.json());
+      } else {
+        setServices([]);
+        setError(`HTTP ${res.status}`);
+      }
     } catch {
+      setServices([]);
       setError("load");
     } finally {
       setLoading(false);
@@ -41,8 +50,22 @@ export function useHostingService(id: number | null) {
   const loadOverview = useCallback(async (sid: number) => {
     const token = getCustomerToken();
     if (!token) return;
-    const res = await workspaceFetch(API_PATHS.HOSTING.OVERVIEW(sid), { token });
-    if (res.ok) setOverview(await res.json());
+    setOverviewLoading(true);
+    setOverviewError("");
+    try {
+      const res = await workspaceFetch(API_PATHS.HOSTING.OVERVIEW(sid), { token });
+      if (res.ok) {
+        setOverview(await res.json());
+      } else {
+        setOverview(null);
+        setOverviewError(res.status === 404 ? "not-found" : `HTTP ${res.status}`);
+      }
+    } catch {
+      setOverview(null);
+      setOverviewError("load");
+    } finally {
+      setOverviewLoading(false);
+    }
   }, []);
 
   const loadFiles = useCallback(async (sid: number, path: string) => {
@@ -134,6 +157,8 @@ export function useHostingService(id: number | null) {
     backups,
     loading,
     error,
+    overviewLoading,
+    overviewError,
     busy,
     loadServices,
     loadOverview,

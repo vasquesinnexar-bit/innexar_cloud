@@ -71,6 +71,8 @@ class MyPurchaseItem(BaseModel):
     invoice_total: float | None = None
     fulfillment_status: str | None = None
     fulfillment_step: str | None = None
+    # Setup fee (one_time) é cobrança, não serviço técnico (agrupar na UI).
+    is_setup: bool = False
 
 
 class MyServicesResponse(BaseModel):

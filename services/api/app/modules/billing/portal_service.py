@@ -60,9 +60,10 @@ class BillingPortalService:
         self._customer_repo = CustomerRepository(db)
 
     async def list_my_invoices(self, customer_id: int) -> list[InvoiceResponse]:
-        """List invoices for customer, newest first."""
+        """List invoices for customer, newest first (org do próprio cliente)."""
+        org_id = await _customer_org_id(self._customer_repo, customer_id)
         invoices = await self._repo.list_invoices(
-            customer_id=customer_id, order_desc=True
+            customer_id=customer_id, org_id=org_id, order_desc=True
         )
         return [_invoice_to_response(inv) for inv in invoices]
 

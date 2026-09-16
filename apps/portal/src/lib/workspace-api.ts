@@ -26,7 +26,10 @@ export type TokenType = "customer" | "staff";
 /**
  * Fetch from workspace API with optional Bearer token.
  * Use from client: getCustomerToken() before calling.
+ * Timeout de 25s: nenhuma chamada pode travar a UI em loading infinito.
  */
+const FETCH_TIMEOUT_MS = 25000;
+
 export async function workspaceFetch(
   path: string,
   options: RequestInit & { token?: string; tokenType?: TokenType } = {}
@@ -41,7 +44,14 @@ export async function workspaceFetch(
   if (!headers.has("Content-Type") && init.body && typeof init.body === "string") {
     headers.set("Content-Type", "application/json");
   }
-  const res = await fetch(url, { ...init, headers });
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+  let res: Response;
+  try {
+    res = await fetch(url, { ...init, headers, signal: ctrl.signal });
+  } finally {
+    clearTimeout(timer);
+  }
   if (res.status === 401 && token && typeof window !== "undefined") {
     if (path.includes("/api/portal/") || tokenType === "customer") {
       localStorage.removeItem(CUSTOMER_TOKEN_KEY);

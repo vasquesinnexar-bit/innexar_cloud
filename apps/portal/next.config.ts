@@ -8,6 +8,21 @@ const nextConfig: NextConfig = {
   output: "standalone",
   // Type-check: use `npm run typecheck` (tsc on src only). Next 16 @next/font .d.ts in node_modules can break full tsc; build uses ignoreBuildErrors for that.
   typescript: { ignoreBuildErrors: true },
+  async redirects() {
+    // Atalho legado: /<locale>/catalog nunca existiu; rota real é /services/catalog.
+    return [
+      {
+        source: "/:locale(pt|en|es)/catalog",
+        destination: "/:locale/services/catalog",
+        permanent: false,
+      },
+      {
+        source: "/:locale(pt|en|es)/catalog/:path*",
+        destination: "/:locale/services/catalog/:path*",
+        permanent: false,
+      },
+    ];
+  },
   async headers() {
     return [
       {

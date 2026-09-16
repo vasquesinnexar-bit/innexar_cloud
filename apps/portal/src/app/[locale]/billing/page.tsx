@@ -11,7 +11,6 @@ import { BillingInvoiceTable } from "@/components/billing/BillingInvoiceTable";
 import { BillingEmptyState } from "@/components/billing/BillingEmptyState";
 import { PixBoletoModal } from "@/components/billing/PixBoletoModal";
 import { BillingSummaryCard } from "@/components/billing/BillingSummaryCard";
-import { BillingPaymentMethods } from "@/components/billing/BillingPaymentMethods";
 import type { Invoice } from "@/types/billing";
 import { API_PATHS } from "@/lib/api-paths";
 
@@ -103,7 +102,6 @@ export default function BillingPage() {
       ) : (
         <BillingEmptyState />
       )}
-      <BillingPaymentMethods />
       {pixModalInvoice && (
         <PixBoletoModal invoice={pixModalInvoice} onClose={() => setPixModalInvoice(null)} />
       )}

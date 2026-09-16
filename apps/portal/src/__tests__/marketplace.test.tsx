@@ -41,6 +41,12 @@ function mockHook(over: Record<string, unknown> = {}) {
     getCatalog: jest.fn(async () => [product]),
     purchase: jest.fn(async () => ({ data: null, error: null })),
     getMyServices: jest.fn(async () => []),
+    getServicesOverview: jest.fn(async () => ({
+      items: [],
+      email_domains: [],
+      hosting_services: [],
+      projects: [],
+    })),
     ...over,
   });
 }
@@ -56,6 +62,12 @@ describe("CatalogPage", () => {
       getCatalog: jest.fn(async () => null),
       purchase: jest.fn(),
       getMyServices: jest.fn(async () => []),
+      getServicesOverview: jest.fn(async () => ({
+        items: [],
+        email_domains: [],
+        hosting_services: [],
+        projects: [],
+      })),
     });
     render(<CatalogPage />);
     expect(screen.getByRole("status")).toBeInTheDocument();
@@ -74,6 +86,12 @@ describe("CatalogPage", () => {
       getCatalog: jest.fn(async () => null),
       purchase: jest.fn(),
       getMyServices: jest.fn(async () => []),
+      getServicesOverview: jest.fn(async () => ({
+        items: [],
+        email_domains: [],
+        hosting_services: [],
+        projects: [],
+      })),
     });
     render(<CatalogPage />);
     expect(await screen.findByText("boom")).toBeInTheDocument();
@@ -134,44 +152,53 @@ describe("ProductDetailPage", () => {
   });
 });
 
+const overviewOf = (items: unknown[], hosting: unknown[] = []) => ({
+  items,
+  email_domains: [],
+  hosting_services: hosting,
+  projects: [],
+});
+
 describe("MyServicesPage", () => {
   beforeEach(() => jest.clearAllMocks());
   afterEach(() => cleanup());
 
   it("shows empty state and pending/active badges", async () => {
-    mockHook({ getMyServices: jest.fn(async () => []) });
+    mockHook({ getServicesOverview: jest.fn(async () => overviewOf([])) });
     render(<MyServices />);
     expect(await screen.findByText("noServices")).toBeInTheDocument();
 
     mockHook({
-      getMyServices: jest.fn(async () => [
-        {
-          id: 1,
-          product_name: "E-mail",
-          description: null,
-          quantity: 1,
-          unit_amount: 25,
-          source: "portal",
-          invoice_id: 9,
-          invoice_status: "pending",
-          invoice_total: 25,
-          fulfillment_status: null,
-          fulfillment_step: null,
-        },
-        {
-          id: 2,
-          product_name: "Site",
-          description: null,
-          quantity: 1,
-          unit_amount: 500,
-          source: "portal",
-          invoice_id: 10,
-          invoice_status: "paid",
-          invoice_total: 500,
-          fulfillment_status: "active",
-          fulfillment_step: "done",
-        },
-      ]),
+      getServicesOverview: jest.fn(async () =>
+        overviewOf([
+          {
+            id: 1,
+            product_name: "E-mail",
+            description: null,
+            quantity: 1,
+            unit_amount: 25,
+            source: "portal",
+            invoice_id: 9,
+            invoice_status: "pending",
+            invoice_total: 25,
+            fulfillment_status: null,
+            fulfillment_step: null,
+          },
+          {
+            id: 2,
+            product_name: "Site",
+            description: null,
+            quantity: 1,
+            unit_amount: 500,
+            source: "portal",
+            invoice_id: 10,
+            invoice_status: "paid",
+            invoice_total: 500,
+            fulfillment_status: "active",
+            fulfillment_step: "done",
+          },
+        ])
+      ),
     });
     render(<MyServices />);
     expect(await screen.findByText("pendingPayment")).toBeInTheDocument();
@@ -180,5 +207,88 @@ describe("MyServicesPage", () => {
       "href",
       "../billing?pay=9"
     );
+  });
+
+  it("groups setup fee under one service card (not a second service)", async () => {
+    mockHook({
+      getServicesOverview: jest.fn(async () =>
+        overviewOf([
+          {
+            id: 45,
+            product_name: "E-mail Profissional",
+            description: "E-mail Profissional mensal",
+            quantity: 1,
+            unit_amount: 25,
+            source: "workspace",
+            invoice_id: null,
+            invoice_status: null,
+            invoice_total: null,
+            fulfillment_status: "active",
+            fulfillment_step: null,
+            is_setup: false,
+          },
+          {
+            id: 44,
+            product_name: "E-mail Profissional",
+            description: "Setup E-mail Profissional (one_time)",
+            quantity: 1,
+            unit_amount: 100,
+            source: "workspace",
+            invoice_id: 401,
+            invoice_status: "pending",
+            invoice_total: 100,
+            fulfillment_status: null,
+            fulfillment_step: null,
+            is_setup: true,
+          },
+        ])
+      ),
+    });
+    render(<MyServices />);
+    const titles = await screen.findAllByText("E-mail Profissional");
+    expect(titles).toHaveLength(1);
+    expect(screen.getByText(/setupPending/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "continuePayment" })).toHaveAttribute(
+      "href",
+      "../billing?pay=401"
+    );
+  });
+
+  it("shows hosting card from overview and error with retry", async () => {
+    mockHook({
+      getServicesOverview: jest.fn(async () =>
+        overviewOf(
+          [],
+          [
+            {
+              id: 31,
+              primary_domain: "touficsleiman.com.br",
+              status: "active",
+              runtime: "online",
+              project: "sitetoufic",
+              environment: "production",
+            },
+          ]
+        )
+      ),
+    });
+    render(<MyServices />);
+    expect(await screen.findByText("touficsleiman.com.br")).toBeInTheDocument();
+    expect(screen.getByText("hostingTitle")).toBeInTheDocument();
+
+    cleanup();
+    const retry = jest.fn(async () => overviewOf([]));
+    mockUseMarketplace.mockReturnValue({
+      loading: false,
+      error: "loadError",
+      getCatalog: jest.fn(),
+      purchase: jest.fn(),
+      getMyServices: jest.fn(async () => []),
+      getServicesOverview: retry,
+    });
+    render(<MyServices />);
+    expect(await screen.findByText("loadError")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("retry"));
+    expect(retry).toHaveBeenCalled();
   });
 });

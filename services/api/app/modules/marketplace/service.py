@@ -317,9 +317,10 @@ async def list_my_purchases(db: AsyncSession, customer: Customer) -> list[dict]:
 
     items = (
         await db.execute(
-            select(ContractItem, Contract, Product)
+            select(ContractItem, Contract, Product, PricePlan)
             .join(Contract, Contract.id == ContractItem.contract_id)
             .outerjoin(Product, Product.id == ContractItem.product_id)
+            .outerjoin(PricePlan, PricePlan.id == ContractItem.price_plan_id)
             .where(Contract.customer_id == customer.id)
             .order_by(ContractItem.id.desc())
         )
@@ -352,7 +353,7 @@ async def list_my_purchases(db: AsyncSession, customer: Customer) -> list[dict]:
     for fl in fulfillments:
         by_item_f.setdefault(fl.contract_item_id, fl)
     out = []
-    for item, _contract, product in items:
+    for item, _contract, product, plan in items:
         inv_match = by_item.get(item.id)
         f = by_item_f.get(item.id)
         out.append(
@@ -370,6 +371,7 @@ async def list_my_purchases(db: AsyncSession, customer: Customer) -> list[dict]:
                 "invoice_total": (float(inv_match.total) if inv_match else None),
                 "fulfillment_status": f.status if f else None,
                 "fulfillment_step": f.current_step if f else None,
+                "is_setup": ((plan.billing_type or "") if plan else "") == "one_time",
             }
         )
     return out

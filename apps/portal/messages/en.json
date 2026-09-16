@@ -258,7 +258,9 @@
     "invoicesDesc": "View history and pay",
     "projects": "Projects",
     "projectsDesc": "Track projects",
-    "supportDesc": "Tickets and help"
+    "supportDesc": "Tickets and help",
+    "services": "Contracted services",
+    "noServices": "No services contracted yet."
   },
   "projectDetails": {
     "backToProjects": "Back to Projects",
@@ -801,7 +803,10 @@
     "tab_files": "Files",
     "tab_logs": "Logs",
     "tab_backups": "Backups",
-    "tab_domains": "Domains & SSL"
+    "tab_domains": "Domains & SSL",
+    "loadError": "We couldn't load the hosting service.",
+    "retry": "Try again",
+    "notFound": "Hosting service not found."
   },
   "marketplace": {
     "title": "Add services",
@@ -839,7 +844,11 @@
     "back": "Back",
     "unavailable": "This service is not available for online purchase yet.",
     "customQuoteText": "Need something custom?",
-    "customQuoteCta": "Request a New Project"
+    "customQuoteCta": "Request a New Project",
+    "loadError": "We couldn't load your services.",
+    "retry": "Try again",
+    "setupPending": "Initial setup: $ {amount} pending.",
+    "hostingTitle": "Managed Hosting"
   },
   "onboarding": {
     "title": "Set up professional email",

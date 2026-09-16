@@ -158,6 +158,15 @@ class MeDashboardProductSummaryItem(BaseModel):
     provisioning_type: str | None = None
 
 
+class MeDashboardServiceItem(BaseModel):
+    """Dashboard: contracted/active technical service (contract-driven)."""
+
+    kind: str  # email | hosting
+    label: str
+    status: str
+    detail: str | None = None
+
+
 class MeDashboardDiagnosticItem(BaseModel):
     """Dashboard: optional diagnostic (no plan found)."""
 
@@ -185,6 +194,8 @@ class MeDashboardResponse(BaseModel):
     nav_show_hosting: bool = False
     requires_password_change: bool = False
     diagnostic: MeDashboardDiagnosticItem | None = None
+    # Serviços técnicos contratados (contract-driven; independe de subscription).
+    services: list[MeDashboardServiceItem] = []
 
 
 class FileUploadResponse(BaseModel):

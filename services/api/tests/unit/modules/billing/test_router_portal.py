@@ -360,3 +360,48 @@ async def test_download_invoice_html_404(
         headers={"Authorization": f"Bearer {token}"},
     )
     assert r.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_list_my_invoices_br_org(
+    client: AsyncClient,
+    override_get_db: AsyncSession,
+    billing_enabled: None,
+) -> None:
+    """Cliente innexar-br enxerga as próprias invoices (regressão: filtro de org)."""
+    import uuid as _uuid
+
+    from app.core.security import hash_password as _hp
+
+    suffix = _uuid.uuid4().hex[:8]
+    customer = Customer(
+        org_id="innexar-br",
+        name="BR",
+        email=f"br-{suffix}@test.innexar.com",
+        currency="BRL",
+    )
+    override_get_db.add(customer)
+    await override_get_db.flush()
+    cu = CustomerUser(
+        customer_id=customer.id,
+        email=customer.email,
+        password_hash=_hp("x"),
+        email_verified=True,
+    )
+    override_get_db.add(cu)
+    inv = await create_manual_invoice(
+        override_get_db,
+        customer_id=customer.id,
+        due_date=datetime.now(UTC),
+        total=100.0,
+        currency="BRL",
+    )
+    await override_get_db.flush()
+    token = create_token_customer(cu.id)
+    r = await client.get(
+        "/api/portal/invoices",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert r.status_code == 200
+    ids = [i["id"] for i in r.json()]
+    assert inv.id in ids

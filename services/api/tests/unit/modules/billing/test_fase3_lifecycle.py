@@ -255,3 +255,60 @@ async def test_boleto_requires_doc(db_session: AsyncSession):
 async def test_refund_missing_invoice(db_session: AsyncSession):
     with pytest.raises(pay_methods.PayMethodError):
         await pay_methods.create_refund(db_session, invoice_id=999999)
+
+
+@pytest.mark.asyncio
+async def test_contract_pending_generates_nothing(db_session: AsyncSession):
+    """Contrato PENDING (ex.: Toufic pré-outubro) nunca gera cobrança no cron."""
+    from app.jobs import contract_billing
+
+    c = await _customer(db_session, email="toufic-pending@example.com")
+    p = Product(
+        org_id="innexar-br",
+        name="E-mail Profissional",
+        slug="professional-email",
+        category="email",
+        is_active=True,
+    )
+    db_session.add(p)
+    await db_session.flush()
+    plan = PricePlan(
+        product_id=p.id,
+        name="Mensal",
+        interval="monthly",
+        amount=25.0,
+        currency="BRL",
+        billing_type="recurring",
+    )
+    db_session.add(plan)
+    await db_session.flush()
+    ct = Contract(
+        customer_id=c.id,
+        org_id="innexar-br",
+        status="pending",
+        currency="BRL",
+        billing_provider="mercadopago",
+        billing_interval="monthly",
+        billing_day=25,
+        source="workspace",
+    )
+    db_session.add(ct)
+    await db_session.flush()
+    db_session.add(
+        ContractItem(
+            contract_id=ct.id,
+            product_id=p.id,
+            price_plan_id=plan.id,
+            quantity=1,
+            unit_amount=25.0,
+            source="workspace",
+        )
+    )
+    await db_session.flush()
+    r = await contract_billing.generate(db_session)
+    assert r["created"] == 0
+    from app.modules.billing.models import Invoice
+    from sqlalchemy import func, select
+
+    n = await db_session.scalar(select(func.count()).select_from(Invoice))
+    assert n == 0

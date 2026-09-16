@@ -18,7 +18,7 @@ const RUNTIME_LABEL: Record<string, string> = {
 export default function HostingListPage() {
   const locale = useLocale();
   const t = useTranslations("hostingPage");
-  const { services, loading, loadServices } = useHostingService(null);
+  const { services, loading, error, loadServices } = useHostingService(null);
 
   useEffect(() => {
     loadServices();
@@ -33,6 +33,24 @@ export default function HostingListPage() {
       >
         <SkeletonCard />
         <SkeletonCard />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-theme-primary">{t("pageTitle")}</h1>
+          <p className="text-theme-secondary">{t("pageSubtitle")}</p>
+        </div>
+        <div className="card-base rounded-2xl p-8 text-center space-y-3" role="alert">
+          <Server className="w-10 h-10 mx-auto text-red-400" />
+          <p className="text-theme-secondary">{t("loadError")}</p>
+          <button type="button" className="btn sm" onClick={() => loadServices()}>
+            {t("retry")}
+          </button>
+        </div>
       </div>
     );
   }

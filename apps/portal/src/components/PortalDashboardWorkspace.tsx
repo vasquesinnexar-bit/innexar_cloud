@@ -117,6 +117,8 @@ export default function PortalDashboardWorkspace() {
           supportDesc: t("supportDesc"),
           couponCode: t("couponCode"),
           couponPlaceholder: t("couponPlaceholder"),
+          services: t("services"),
+          noServices: t("noServices"),
         }}
       />
     </div>

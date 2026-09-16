@@ -19,6 +19,7 @@ from .schemas import (
     MeDashboardPlanItem,
     MeDashboardProductSummaryItem,
     MeDashboardResponse,
+    MeDashboardServiceItem,
     MeDashboardSiteItem,
     MeDashboardSupportItem,
     ProjectAguardandoBriefingResponse,
@@ -249,4 +250,83 @@ class PortalDashboardService:
             nav_show_hosting=nav_show_hosting,
             requires_password_change=current.requires_password_change,
             diagnostic=diagnostic,
+            services=await self._contract_services(customer_id),
         )
+
+    async def _contract_services(
+        self, customer_id: int
+    ) -> list[MeDashboardServiceItem]:
+        """Serviços técnicos reais: e-mail (domínios/caixas) + hosting.
+
+        Contract-driven: independe de subscription/Hestia legado. Nunca falha
+        o dashboard (retorna [] em erro).
+        """
+        from sqlalchemy import func, select
+
+        from app.modules.hosting.models import HostingService
+        from app.modules.mail.models import EmailDomain, EmailMailbox
+
+        out: list[MeDashboardServiceItem] = []
+        try:
+            db = self._billing._db
+            doms = (
+                (
+                    await db.execute(
+                        select(EmailDomain).where(
+                            EmailDomain.customer_id == customer_id
+                        )
+                    )
+                )
+                .scalars()
+                .all()
+            )
+            if doms:
+                n_boxes = (
+                    await db.execute(
+                        select(func.count(EmailMailbox.id)).where(
+                            EmailMailbox.customer_id == customer_id,
+                            EmailMailbox.status == "active",
+                        )
+                    )
+                ).scalar() or 0
+                first = doms[0]
+                out.append(
+                    MeDashboardServiceItem(
+                        kind="email",
+                        label="E-mail Profissional",
+                        status=first.status,
+                        detail=(
+                            f"{first.domain} · {n_boxes} conta(s)"
+                            if len(doms) == 1
+                            else f"{len(doms)} domínios · {n_boxes} conta(s)"
+                        ),
+                    )
+                )
+            hosts = (
+                (
+                    await db.execute(
+                        select(HostingService).where(
+                            HostingService.customer_id == customer_id
+                        )
+                    )
+                )
+                .scalars()
+                .all()
+            )
+            seen: set[str] = set()
+            for h in hosts:
+                key = h.primary_domain or f"#{h.id}"
+                if key in seen:
+                    continue
+                seen.add(key)
+                out.append(
+                    MeDashboardServiceItem(
+                        kind="hosting",
+                        label="Hospedagem Gerenciada",
+                        status=h.status,
+                        detail=h.primary_domain,
+                    )
+                )
+        except Exception:  # noqa: BLE001 (dashboard nunca quebra por agregado)
+            return []
+        return out

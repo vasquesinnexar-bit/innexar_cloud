@@ -3,7 +3,16 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { RotateCw, FolderTree, Globe, ShieldCheck, ExternalLink, Copy, Check } from "lucide-react";
+import {
+  RotateCw,
+  FolderTree,
+  Globe,
+  ShieldCheck,
+  ExternalLink,
+  Copy,
+  Check,
+  Server,
+} from "lucide-react";
 import { useHostingService } from "@/hooks/use-hosting";
 import { API_PATHS } from "@/lib/api-paths";
 import { workspaceFetch, getCustomerToken } from "@/lib/workspace-api";
@@ -30,6 +39,8 @@ export default function HostingDetailPage() {
     logs,
     backups,
     busy,
+    overviewLoading,
+    overviewError,
     loadOverview,
     loadFiles,
     loadLogs,
@@ -65,10 +76,28 @@ export default function HostingDetailPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, [editing, editContent, id, path, saveFile, loadFiles]);
 
-  if (!overview) {
+  if (overviewLoading || (!overview && !overviewError)) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div
+        className="flex items-center justify-center h-64"
+        role="status"
+        aria-label="Carregando hospedagem"
+      >
         <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (overviewError || !overview) {
+    return (
+      <div className="card-base rounded-2xl p-8 text-center space-y-3" role="alert">
+        <Server className="w-10 h-10 mx-auto text-red-400" />
+        <p className="text-theme-secondary">
+          {overviewError === "not-found" ? t("notFound") : t("loadError")}
+        </p>
+        <button type="button" className="btn sm" onClick={() => id && loadOverview(id)}>
+          {t("retry")}
+        </button>
       </div>
     );
   }

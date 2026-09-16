@@ -47,6 +47,23 @@ export interface MyServiceItem {
   invoice_total: number | null;
   fulfillment_status: string | null;
   fulfillment_step: string | null;
+  is_setup?: boolean;
+}
+
+export interface OverviewHostingItem {
+  id: number;
+  primary_domain: string | null;
+  status: string;
+  runtime: string;
+  project: string | null;
+  environment: string;
+}
+
+export interface ServicesOverview {
+  items: MyServiceItem[];
+  email_domains: { domain: string; status: string }[];
+  hosting_services: OverviewHostingItem[];
+  projects: { id: number; name: string; status: string }[];
 }
 
 export function useMarketplace() {
@@ -118,17 +135,22 @@ export function useMarketplace() {
   );
 
   const getMyServices = useCallback(async (): Promise<MyServiceItem[] | null> => {
+    const ov = await getServicesOverview();
+    return ov ? ov.items : null;
+  }, []);
+
+  const getServicesOverview = useCallback(async (): Promise<ServicesOverview | null> => {
     const token = getCustomerToken();
     if (!token) return null;
     setLoading(true);
     setError("");
     try {
-      const res = await workspaceFetch(API_PATHS.MARKETPLACE.PURCHASES, { token });
+      const res = await workspaceFetch(API_PATHS.MARKETPLACE.SERVICES, { token });
       if (!res.ok) {
         setError(await apiError(res));
         return null;
       }
-      return (await res.json()) as MyServiceItem[];
+      return (await res.json()) as ServicesOverview;
     } catch {
       setError("load");
       return null;
@@ -137,5 +159,5 @@ export function useMarketplace() {
     }
   }, []);
 
-  return { loading, error, getCatalog, purchase, getMyServices };
+  return { loading, error, getCatalog, purchase, getMyServices, getServicesOverview };
 }

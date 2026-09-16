@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { Package, ArrowRight } from "lucide-react";
-import { useMarketplace, type MyServiceItem } from "@/hooks/use-marketplace";
+import { Package, ArrowRight, Server, Globe } from "lucide-react";
+import { useMarketplace, type MyServiceItem, type ServicesOverview } from "@/hooks/use-marketplace";
 import { SkeletonCard } from "@/components/ui/Skeleton";
 
 function statusBadge(s: MyServiceItem) {
@@ -14,22 +14,52 @@ function statusBadge(s: MyServiceItem) {
   return { cls: "badge" };
 }
 
+type ServiceGroup = { main: MyServiceItem; setups: MyServiceItem[] };
+
+function groupServices(items: MyServiceItem[]): ServiceGroup[] {
+  const groups = new Map<string, ServiceGroup>();
+  for (const s of items) {
+    const key = s.product_name ?? `#${s.id}`;
+    let g = groups.get(key);
+    if (!g) {
+      g = { main: s, setups: [] };
+      groups.set(key, g);
+    }
+    if (s.is_setup) {
+      g.setups.push(s);
+    } else if (g.main.is_setup) {
+      g.setups.push(g.main);
+      g.main = s;
+    }
+  }
+  return [...groups.values()];
+}
+
 export default function MyServicesPage() {
   const t = useTranslations("marketplace");
-  const { loading, error, getMyServices } = useMarketplace();
-  const [items, setItems] = useState<MyServiceItem[] | null>(null);
+  const { loading, error, getServicesOverview } = useMarketplace();
+  const [overview, setOverview] = useState<ServicesOverview | null>(null);
+
+  const load = useCallback(() => {
+    getServicesOverview().then(setOverview);
+  }, [getServicesOverview]);
 
   useEffect(() => {
-    getMyServices().then(setItems);
-  }, [getMyServices]);
+    load();
+  }, [load]);
 
-  if (loading && items === null) {
+  if (loading && overview === null) {
     return (
       <div className="space-y-4" role="status" aria-label="Carregando serviços">
         <SkeletonCard />
       </div>
     );
   }
+
+  const items = overview?.items ?? [];
+  const groups = groupServices(items);
+  const hosting = overview?.hosting_services ?? [];
+  const isEmpty = groups.length === 0 && hosting.length === 0;
 
   return (
     <div className="space-y-6">
@@ -43,9 +73,16 @@ export default function MyServicesPage() {
         </Link>
       </div>
 
-      {error && <p className="text-red-400 text-sm">{error}</p>}
+      {error && (
+        <div className="card-base rounded-2xl p-5 text-center space-y-3" role="alert">
+          <p className="text-red-400 text-sm">{t("loadError")}</p>
+          <button type="button" className="btn sm" onClick={load}>
+            {t("retry")}
+          </button>
+        </div>
+      )}
 
-      {!items || items.length === 0 ? (
+      {isEmpty ? (
         <div className="card-base rounded-2xl p-8 text-center space-y-3">
           <Package className="w-10 h-10 mx-auto text-theme-secondary" />
           <p className="text-theme-secondary">{t("noServices")}</p>
@@ -55,7 +92,8 @@ export default function MyServicesPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {items.map((s) => {
+          {groups.map((g) => {
+            const s = g.main;
             const badge = statusBadge(s);
             const needsPay = s.invoice_id && s.invoice_status !== "paid";
             return (
@@ -79,6 +117,23 @@ export default function MyServicesPage() {
                 {s.description && (
                   <p className="text-sm text-theme-secondary truncate">{s.description}</p>
                 )}
+                {g.setups
+                  .filter((u) => u.invoice_status && u.invoice_status !== "paid")
+                  .map((u) => (
+                    <p key={u.id} className="text-sm text-amber-300">
+                      {t("setupPending", {
+                        amount: (u.unit_amount ?? 0).toFixed(2),
+                      })}{" "}
+                      {u.invoice_id && (
+                        <Link
+                          href={`../billing?pay=${u.invoice_id}`}
+                          className="underline underline-offset-2"
+                        >
+                          {t("continuePayment")}
+                        </Link>
+                      )}
+                    </p>
+                  ))}
                 <div className="flex flex-wrap gap-2">
                   {needsPay && (
                     <Link href={`../billing?pay=${s.invoice_id}`} className="btn sm">
@@ -99,6 +154,27 @@ export default function MyServicesPage() {
               </div>
             );
           })}
+          {hosting.map((h) => (
+            <Link
+              key={`hosting-${h.id}`}
+              href="./hosting"
+              className="card-base rounded-2xl p-5 space-y-2 hover:border-blue-500/40 transition-colors"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <p className="font-bold text-theme-primary flex items-center gap-2 truncate">
+                  <Server className="w-4 h-4 shrink-0" />
+                  {t("hostingTitle")}
+                </p>
+                <span className={`badge ${h.status === "active" ? "ok" : "warn"}`}>
+                  {h.status === "active" ? t("serviceActive") : h.status}
+                </span>
+              </div>
+              <p className="text-sm text-theme-secondary flex items-center gap-1 truncate">
+                <Globe className="w-3 h-3" />
+                {h.primary_domain ?? `#${h.id}`}
+              </p>
+            </Link>
+          ))}
         </div>
       )}
     </div>

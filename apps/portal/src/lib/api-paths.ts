@@ -45,12 +45,6 @@ export const API_PATHS = {
     PAYMENTS: (id: string | number) => `/api/portal/invoices/${id}/payments`,
     SUMMARY: "/api/portal/billing/summary",
   },
-  PAYMENT_METHODS: {
-    LIST: "/api/portal/payment-methods",
-    CREATE: "/api/portal/payment-methods",
-    DELETE: (id: string | number) => `/api/portal/payment-methods/${id}`,
-    SET_DEFAULT: (id: string | number) => `/api/portal/payment-methods/${id}/default`,
-  },
   TICKETS: {
     LIST: "/api/portal/tickets",
     DETAIL: (id: string | number) => `/api/portal/tickets/${id}`,
