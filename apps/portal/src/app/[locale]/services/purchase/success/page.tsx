@@ -31,6 +31,7 @@ function SuccessContent() {
   const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
   const [service, setService] = useState<MyServiceItem | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     if (!invoiceId) {
@@ -42,19 +43,30 @@ function SuccessContent() {
       setLoading(false);
       return;
     }
-    Promise.all([
-      workspaceFetch(API_PATHS.INVOICES.DETAIL(invoiceId), { token }),
-      getMyServices(),
-    ]).then(async ([iRes, items]) => {
-      try {
-        if (iRes.ok) setInvoice((await iRes.json()) as InvoiceDetail);
-        const match = (items ?? []).find((s) => s.invoice_id === Number(invoiceId)) ?? null;
-        setService(match);
-      } finally {
+    setLoadError(false);
+    Promise.all([workspaceFetch(API_PATHS.INVOICES.DETAIL(invoiceId), { token }), getMyServices()])
+      .then(async ([iRes, items]) => {
+        try {
+          if (iRes.ok) setInvoice((await iRes.json()) as InvoiceDetail);
+          const match = (items ?? []).find((s) => s.invoice_id === Number(invoiceId)) ?? null;
+          setService(match);
+        } finally {
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        setLoadError(true);
         setLoading(false);
-      }
-    });
+      });
   }, [invoiceId, getMyServices]);
+
+  if (loading) {
+    return (
+      <div className="space-y-4" role="status" aria-label="Carregando resultado">
+        <SkeletonCard />
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -70,7 +82,14 @@ function SuccessContent() {
         <Link href="../catalog" className="btn ghost sm inline-flex items-center gap-1">
           <ArrowLeft className="w-4 h-4" /> {t("back")}
         </Link>
-        <p className="text-theme-secondary">{t("unavailable")}</p>
+        <p className="text-theme-secondary" role={loadError ? "alert" : undefined}>
+          {loadError ? t("loadError") : t("unavailable")}
+        </p>
+        {loadError && (
+          <button type="button" className="btn sm" onClick={() => window.location.reload()}>
+            {t("retry")}
+          </button>
+        )}
       </div>
     );
   }

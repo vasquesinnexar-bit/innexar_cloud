@@ -9,6 +9,7 @@ export function useDashboardWorkspace(locale: string) {
   const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [payingId, setPayingId] = useState<number | null>(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -16,6 +17,7 @@ export function useDashboardWorkspace(locale: string) {
   const refetchDashboard = useCallback(async () => {
     const currentToken = getCustomerToken();
     if (!currentToken) return;
+    setLoadError(false);
     try {
       const r = await workspaceFetch(API_PATHS.ME.DASHBOARD, {
         token: currentToken,
@@ -32,9 +34,11 @@ export function useDashboardWorkspace(locale: string) {
         router.push(`/${locale}/login`);
       } else {
         setData(null);
+        setLoadError(true);
       }
     } catch {
       setData(null);
+      setLoadError(true);
     }
   }, [locale, router]);
 
@@ -74,9 +78,13 @@ export function useDashboardWorkspace(locale: string) {
             return;
           }
           setData(null);
+          setLoadError(true);
         }
       } catch {
-        if (isMounted) setData(null);
+        if (isMounted) {
+          setData(null);
+          setLoadError(true);
+        }
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -128,6 +136,8 @@ export function useDashboardWorkspace(locale: string) {
   return {
     data,
     loading,
+    loadError,
+    refetchDashboard,
     customerName,
     payingId,
     showPasswordModal,

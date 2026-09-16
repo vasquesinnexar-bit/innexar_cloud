@@ -8,6 +8,7 @@ export function useProjectsList() {
   const isWorkspaceApi = useWorkspaceApi();
   const [projects, setProjects] = useState<ProjectListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const fetchProjects = useCallback(async () => {
     const token = getCustomerToken();
@@ -15,6 +16,7 @@ export function useProjectsList() {
       setLoading(false);
       return;
     }
+    setError("");
     try {
       if (!isWorkspaceApi) {
         setLoading(false);
@@ -22,6 +24,8 @@ export function useProjectsList() {
       }
       const res = await workspaceFetch(API_PATHS.PROJECTS.LIST, { token });
       if (!res.ok) {
+        setProjects([]);
+        setError(`HTTP ${res.status}`);
         setLoading(false);
         return;
       }
@@ -51,6 +55,7 @@ export function useProjectsList() {
       );
     } catch {
       setProjects([]);
+      setError("load");
     } finally {
       setLoading(false);
     }
@@ -60,5 +65,5 @@ export function useProjectsList() {
     fetchProjects();
   }, [fetchProjects]);
 
-  return { projects, loading };
+  return { projects, loading, error, refetch: fetchProjects };
 }

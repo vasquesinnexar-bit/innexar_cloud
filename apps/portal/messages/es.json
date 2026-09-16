@@ -260,7 +260,9 @@
     "projectsDesc": "Seguir proyectos",
     "supportDesc": "Tickets y ayuda",
     "services": "Servicios contratados",
-    "noServices": "Aún no hay servicios contratados."
+    "noServices": "Aún no hay servicios contratados.",
+    "loadError": "No pudimos cargar el panel.",
+    "retry": "Reintentar"
   },
   "projectDetails": {
     "backToProjects": "Volver a Proyectos",
@@ -360,7 +362,9 @@
       "title": "Aún No Hay Proyectos",
       "subtitle": "Comience su trayectoria digital hoy.",
       "cta": "Iniciar Mi Primer Proyecto"
-    }
+    },
+    "loadError": "No pudimos cargar los proyectos.",
+    "retry": "Reintentar"
   },
   "newProjectPage": {
     "title": "Solicitar nuevo proyecto",

@@ -260,7 +260,9 @@
     "projectsDesc": "Track projects",
     "supportDesc": "Tickets and help",
     "services": "Contracted services",
-    "noServices": "No services contracted yet."
+    "noServices": "No services contracted yet.",
+    "loadError": "We couldn't load the dashboard.",
+    "retry": "Try again"
   },
   "projectDetails": {
     "backToProjects": "Back to Projects",
@@ -360,7 +362,9 @@
       "title": "No Projects Yet",
       "subtitle": "Start your digital journey today.",
       "cta": "Start Your First Project"
-    }
+    },
+    "loadError": "We couldn't load the projects.",
+    "retry": "Try again"
   },
   "newProjectPage": {
     "title": "Request New Project",

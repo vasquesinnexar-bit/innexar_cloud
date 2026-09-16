@@ -10,12 +10,29 @@ import { ProjectsEmptyState } from "@/components/projects/ProjectsEmptyState";
 export default function ProjectsPage() {
   const locale = useLocale();
   const t = useTranslations("projectsPage");
-  const { projects, loading } = useProjectsList();
+  const { projects, loading, error, refetch } = useProjectsList();
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-3xl font-bold text-theme-primary mb-2">{t("title")}</h1>
+          <p className="text-theme-secondary">{t("subtitle")}</p>
+        </div>
+        <div className="card-base rounded-2xl p-8 text-center space-y-3" role="alert">
+          <p className="text-theme-secondary">{t("loadError")}</p>
+          <button type="button" className="btn sm" onClick={() => refetch()}>
+            {t("retry")}
+          </button>
+        </div>
       </div>
     );
   }

@@ -18,6 +18,8 @@ export default function PortalDashboardWorkspace() {
   const {
     data,
     loading,
+    loadError,
+    refetchDashboard,
     customerName,
     payingId,
     showPasswordModal,
@@ -37,6 +39,17 @@ export default function PortalDashboardWorkspace() {
           aria-hidden="true"
         />
         <span className="sr-only">{t("loadingDashboard")}</span>
+      </div>
+    );
+  }
+
+  if (loadError && !data) {
+    return (
+      <div className="card-base rounded-2xl p-8 text-center space-y-3" role="alert">
+        <p className="text-theme-secondary">{t("loadError")}</p>
+        <button type="button" className="btn sm" onClick={() => refetchDashboard()}>
+          {t("retry")}
+        </button>
       </div>
     );
   }

@@ -260,7 +260,9 @@
     "projectsDesc": "Acompanhar projetos",
     "supportDesc": "Tickets e ajuda",
     "services": "Serviços contratados",
-    "noServices": "Nenhum serviço contratado ainda."
+    "noServices": "Nenhum serviço contratado ainda.",
+    "loadError": "Não conseguimos carregar o painel.",
+    "retry": "Tentar novamente"
   },
   "projectDetails": {
     "backToProjects": "Voltar para Projetos",
@@ -360,7 +362,9 @@
       "title": "Nenhum Projeto Ainda",
       "subtitle": "Comece sua jornada digital hoje mesmo.",
       "cta": "Iniciar Meu Primeiro Projeto"
-    }
+    },
+    "loadError": "Não conseguimos carregar os projetos.",
+    "retry": "Tentar novamente"
   },
   "newProjectPage": {
     "title": "Solicitar Novo Projeto",
