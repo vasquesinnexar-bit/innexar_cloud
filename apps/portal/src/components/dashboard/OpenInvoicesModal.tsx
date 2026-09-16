@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Receipt } from "lucide-react";
 import Modal from "@/components/Modal";
@@ -14,6 +14,14 @@ export interface OpenInvoice {
 }
 
 const SEEN_KEY = "innexar-open-invoices-seen";
+
+function seenThisSession(): boolean {
+  try {
+    return !!sessionStorage.getItem(SEEN_KEY);
+  } catch {
+    return false;
+  }
+}
 
 export default function OpenInvoicesModal({
   locale,
@@ -30,20 +38,14 @@ export default function OpenInvoicesModal({
   payLabel: string;
   laterLabel: string;
 }) {
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    if (invoices.length === 0) return;
-    try {
-      if (sessionStorage.getItem(SEEN_KEY)) return;
-    } catch {
-      /* storage indisponível: mostra mesmo assim */
-    }
-    setOpen(true);
-  }, [invoices.length]);
+  // Derivado no render (sem setState em efeito): funciona mesmo com
+  // dados assíncronos e mostra uma vez por sessão.
+  const [dismissed, setDismissed] = useState(false);
+  const show =
+    invoices.length > 0 && !dismissed && (typeof window === "undefined" || !seenThisSession());
 
   const dismiss = () => {
-    setOpen(false);
+    setDismissed(true);
     try {
       sessionStorage.setItem(SEEN_KEY, "1");
     } catch {
@@ -63,7 +65,7 @@ export default function OpenInvoicesModal({
         });
 
   return (
-    <Modal isOpen={open} onClose={dismiss} title={title} size="sm">
+    <Modal isOpen={show} onClose={dismiss} title={title} size="sm">
       <div className="space-y-3" role="dialog" aria-label={title}>
         <p className="text-sm">{subtitle}</p>
         {invoices.map((inv, i) => (
@@ -76,11 +78,7 @@ export default function OpenInvoicesModal({
               {money(inv.total, inv.currency)}
             </span>
             {inv.href && (
-              <Link
-                href={`/${locale}${inv.href}`}
-                onClick={dismiss}
-                className="btn sm shrink-0"
-              >
+              <Link href={`/${locale}${inv.href}`} onClick={dismiss} className="btn sm shrink-0">
                 {payLabel}
               </Link>
             )}

@@ -55,3 +55,33 @@ describe("OpenInvoicesModal", () => {
     expect(screen.queryByText("openInvoicesTitle")).not.toBeInTheDocument();
   });
 });
+
+describe("OpenInvoicesModal async data", () => {
+  beforeEach(() => sessionStorage.clear());
+  afterEach(() => cleanup());
+
+  it("appears when invoices arrive after mount", () => {
+    const { rerender } = render(
+      <OpenInvoicesModal
+        locale="pt"
+        invoices={[]}
+        title="openInvoicesTitle"
+        subtitle="openInvoicesSub"
+        payLabel="payInvoice"
+        laterLabel="later"
+      />
+    );
+    expect(screen.queryByText("openInvoicesTitle")).not.toBeInTheDocument();
+    rerender(
+      <OpenInvoicesModal
+        locale="pt"
+        invoices={invoices}
+        title="openInvoicesTitle"
+        subtitle="openInvoicesSub"
+        payLabel="payInvoice"
+        laterLabel="later"
+      />
+    );
+    expect(screen.getByText("openInvoicesTitle")).toBeInTheDocument();
+  });
+});
