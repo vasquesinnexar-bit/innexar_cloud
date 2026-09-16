@@ -14,6 +14,7 @@ from app.modules.billing.enums import InvoiceStatus
 from app.modules.billing.models import Invoice
 from app.modules.billing.overdue import reactivate_subscription_after_payment
 from app.modules.billing.schemas import InvoiceResponse, PayRequest, PayResponse
+from app.modules.billing.schemas_contracts import ContractItemResponse, ContractResponse
 from app.modules.billing.service import _get_payment_provider, create_payment_attempt
 from app.modules.notifications.service import create_notification_and_maybe_send_email
 from app.providers.payments.mercadopago import MercadoPagoProvider
@@ -66,6 +67,96 @@ class BillingPortalService:
             customer_id=customer_id, org_id=org_id, order_desc=True
         )
         return [_invoice_to_response(inv) for inv in invoices]
+
+    async def list_my_contracts(self, customer_id: int) -> list[ContractResponse]:
+        """Contratos do cliente (somente leitura; escopo por customer)."""
+        from sqlalchemy import select
+        from sqlalchemy.orm import selectinload
+
+        from app.modules.billing.models import Contract
+
+        rows = (
+            (
+                await self._db.execute(
+                    select(Contract)
+                    .options(selectinload(Contract.items))
+                    .where(Contract.customer_id == customer_id)
+                    .order_by(Contract.id.desc())
+                )
+            )
+            .scalars()
+            .all()
+        )
+        return [await self._contract_to_response(c) for c in rows]
+
+    async def get_my_contract(
+        self, contract_id: int, customer_id: int
+    ) -> ContractResponse:
+        """Detalhe do contrato se pertencer ao cliente (404 caso contrário)."""
+        from sqlalchemy import select
+        from sqlalchemy.orm import selectinload
+
+        from app.modules.billing.models import Contract
+
+        c = (
+            await self._db.execute(
+                select(Contract)
+                .options(selectinload(Contract.items))
+                .where(
+                    Contract.id == contract_id,
+                    Contract.customer_id == customer_id,
+                )
+            )
+        ).scalar_one_or_none()
+        if not c:
+            raise HTTPException(status_code=404, detail="Contract not found")
+        return await self._contract_to_response(c)
+
+    async def _contract_to_response(self, c) -> ContractResponse:
+        from app.modules.billing.models import PricePlan, Product
+
+        items = []
+        for i in c.items or []:
+            pname, plan_name = None, None
+            if i.product_id:
+                p = await self._db.get(Product, i.product_id)
+                pname = p.name if p else None
+            if i.price_plan_id:
+                pl = await self._db.get(PricePlan, i.price_plan_id)
+                plan_name = pl.name if pl else None
+            items.append(
+                ContractItemResponse(
+                    id=i.id,
+                    product_id=i.product_id,
+                    price_plan_id=i.price_plan_id,
+                    subscription_id=i.subscription_id,
+                    description=i.description,
+                    quantity=i.quantity,
+                    unit_amount=(
+                        float(i.unit_amount) if i.unit_amount is not None else None
+                    ),
+                    product_name=pname,
+                    plan_name=plan_name,
+                )
+            )
+        return ContractResponse(
+            id=c.id,
+            customer_id=c.customer_id,
+            org_id=str(c.org_id),
+            status=str(c.status),
+            currency=c.currency,
+            billing_provider=c.billing_provider,
+            notes=c.notes,
+            starts_at=c.starts_at,
+            ends_at=c.ends_at,
+            billing_interval=c.billing_interval,
+            billing_day=c.billing_day,
+            due_days=c.due_days,
+            timezone=c.timezone,
+            credit_balance=float(c.credit_balance or 0),
+            created_at=c.created_at,
+            items=items,
+        )
 
     async def get_my_invoice(
         self, invoice_id: int, customer_id: int

@@ -111,7 +111,8 @@
       "profile": "Perfil",
       "logout": "Sair",
       "myServices": "Meus serviços",
-      "hireServices": "Contratar serviços"
+      "hireServices": "Contratar serviços",
+      "contracts": "Contratos"
     },
     "forgotPassword": {
       "title": "Recuperar Senha",
@@ -983,5 +984,19 @@
     "ready": "Seu e-mail está pronto!",
     "openWebmail": "Abrir webmail",
     "finishHint": "Conclua as etapas acima. Avisaremos quando estiver tudo pronto."
+  },
+  "contractsPage": {
+    "title": "Contratos",
+    "subtitle": "Suas contratações e itens.",
+    "loading": "Carregando contratos",
+    "loadError": "Não conseguimos carregar os contratos.",
+    "retry": "Tentar novamente",
+    "empty": "Nenhum contrato ainda.",
+    "browse": "Ver serviços",
+    "contract": "Contrato",
+    "items": "Itens",
+    "noItems": "Sem itens.",
+    "back": "Voltar",
+    "notFound": "Contrato não encontrado."
   }
 }

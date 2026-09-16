@@ -118,6 +118,9 @@ class ContractItemResponse(BaseModel):
     description: str | None
     quantity: int
     unit_amount: float | None
+    # Portal: nomes resolvidos (None no workspace legado).
+    product_name: str | None = None
+    plan_name: str | None = None
 
 
 class ContractResponse(BaseModel):

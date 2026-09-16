@@ -111,7 +111,8 @@
       "profile": "Perfil",
       "logout": "Cerrar Sesión",
       "myServices": "Mis servicios",
-      "hireServices": "Contratar servicios"
+      "hireServices": "Contratar servicios",
+      "contracts": "Contratos"
     },
     "forgotPassword": {
       "title": "Restablecer contraseña",
@@ -983,5 +984,19 @@
     "ready": "¡Tu correo está listo!",
     "openWebmail": "Abrir webmail",
     "finishHint": "Completa los pasos anteriores. Te avisaremos cuando esté listo."
+  },
+  "contractsPage": {
+    "title": "Contratos",
+    "subtitle": "Sus contrataciones e ítems.",
+    "loading": "Cargando contratos",
+    "loadError": "No pudimos cargar los contratos.",
+    "retry": "Reintentar",
+    "empty": "Aún no hay contratos.",
+    "browse": "Ver servicios",
+    "contract": "Contrato",
+    "items": "Ítems",
+    "noItems": "Sin ítems.",
+    "back": "Volver",
+    "notFound": "Contrato no encontrado."
   }
 }

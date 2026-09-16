@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   Mail,
@@ -59,6 +59,10 @@ export default function EmailServicePage() {
     checks: Record<string, { ok: boolean; hint: string }>;
   }>(null);
   const [wizardDnsLoading, setWizardDnsLoading] = useState(false);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   if (loading) {
     return (

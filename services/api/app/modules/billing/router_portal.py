@@ -21,6 +21,7 @@ from app.modules.billing.pay_methods import (
 )
 from app.modules.billing.portal_service import BillingPortalService
 from app.modules.billing.schemas import InvoiceResponse, PayRequest, PayResponse
+from app.modules.billing.schemas_contracts import ContractResponse
 
 router = APIRouter(tags=["portal-billing"])
 limiter = Limiter(key_func=get_remote_address)
@@ -51,6 +52,27 @@ async def list_my_invoices(
 ):
     """List invoices for the current customer."""
     return await service.list_my_invoices(current.customer_id)
+
+
+@router.get("/contracts", response_model=list[ContractResponse])
+async def list_my_contracts(
+    current: Annotated[CustomerUser, Depends(get_current_customer)],
+    _: Annotated[None, Depends(require_billing_enabled)],
+    service: Annotated[BillingPortalService, Depends(get_billing_portal_service)],
+):
+    """List contracts for the current customer (read-only)."""
+    return await service.list_my_contracts(current.customer_id)
+
+
+@router.get("/contracts/{contract_id}", response_model=ContractResponse)
+async def get_my_contract(
+    contract_id: int,
+    current: Annotated[CustomerUser, Depends(get_current_customer)],
+    _: Annotated[None, Depends(require_billing_enabled)],
+    service: Annotated[BillingPortalService, Depends(get_billing_portal_service)],
+):
+    """Contract detail if owned by the current customer (read-only)."""
+    return await service.get_my_contract(contract_id, current.customer_id)
 
 
 @router.get("/invoices/{invoice_id}", response_model=InvoiceResponse)

@@ -405,3 +405,58 @@ async def test_list_my_invoices_br_org(
     assert r.status_code == 200
     ids = [i["id"] for i in r.json()]
     assert inv.id in ids
+
+
+@pytest.mark.asyncio
+async def test_list_my_contracts_br_org_and_isolation(
+    client: AsyncClient,
+    override_get_db: AsyncSession,
+    billing_enabled: None,
+) -> None:
+    """Contratos: cliente BR enxerga os seus; outro cliente recebe 404 no detalhe."""
+    import uuid as _uuid
+
+    from app.core.security import hash_password as _hp
+    from app.modules.billing.models import Contract, ContractItem
+
+    async def _mkuser(org: str):
+        suffix = _uuid.uuid4().hex[:8]
+        c = Customer(org_id=org, name="CT", email=f"ct-{suffix}@test.innexar.com")
+        override_get_db.add(c)
+        await override_get_db.flush()
+        cu = CustomerUser(
+            customer_id=c.id, email=c.email, password_hash=_hp("x"), email_verified=True
+        )
+        override_get_db.add(cu)
+        await override_get_db.flush()
+        return c, cu
+
+    ca, cua = await _mkuser("innexar-br")
+    cb, cub = await _mkuser("innexar")
+    ct = Contract(customer_id=ca.id, org_id="innexar-br", status="pending", currency="BRL")
+    override_get_db.add(ct)
+    await override_get_db.flush()
+    override_get_db.add(
+        ContractItem(contract_id=ct.id, description="avulso", quantity=1, unit_amount=10.0)
+    )
+    await override_get_db.flush()
+
+    ra = await client.get(
+        "/api/portal/contracts",
+        headers={"Authorization": f"Bearer {create_token_customer(cua.id)}"},
+    )
+    assert ra.status_code == 200
+    assert [c["id"] for c in ra.json()] == [ct.id]
+
+    rb = await client.get(
+        "/api/portal/contracts",
+        headers={"Authorization": f"Bearer {create_token_customer(cub.id)}"},
+    )
+    assert rb.status_code == 200
+    assert rb.json() == []
+
+    rd = await client.get(
+        f"/api/portal/contracts/{ct.id}",
+        headers={"Authorization": f"Bearer {create_token_customer(cub.id)}"},
+    )
+    assert rd.status_code == 404

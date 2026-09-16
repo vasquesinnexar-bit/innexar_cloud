@@ -45,6 +45,10 @@ export const API_PATHS = {
     PAYMENTS: (id: string | number) => `/api/portal/invoices/${id}/payments`,
     SUMMARY: "/api/portal/billing/summary",
   },
+  CONTRACTS: {
+    LIST: "/api/portal/contracts",
+    DETAIL: (id: string | number) => `/api/portal/contracts/${id}`,
+  },
   TICKETS: {
     LIST: "/api/portal/tickets",
     DETAIL: (id: string | number) => `/api/portal/tickets/${id}`,

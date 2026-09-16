@@ -111,7 +111,8 @@
       "profile": "Profile",
       "logout": "Logout",
       "myServices": "My services",
-      "hireServices": "Add services"
+      "hireServices": "Add services",
+      "contracts": "Contracts"
     },
     "forgotPassword": {
       "title": "Reset Password",
@@ -983,5 +984,19 @@
     "ready": "Your email is ready!",
     "openWebmail": "Open webmail",
     "finishHint": "Complete the steps above. We will notify you when ready."
+  },
+  "contractsPage": {
+    "title": "Contracts",
+    "subtitle": "Your agreements and line items.",
+    "loading": "Loading contracts",
+    "loadError": "We couldn't load the contracts.",
+    "retry": "Try again",
+    "empty": "No contracts yet.",
+    "browse": "Browse services",
+    "contract": "Contract",
+    "items": "Items",
+    "noItems": "No items.",
+    "back": "Back",
+    "notFound": "Contract not found."
   }
 }

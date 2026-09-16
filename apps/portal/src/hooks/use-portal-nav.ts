@@ -7,6 +7,7 @@ import {
   MessageSquare,
   PlusCircle,
   Receipt,
+  FileText,
   User,
   Bell,
   CircleHelp,
@@ -89,6 +90,12 @@ export function usePortalNav() {
       },
       { key: "faq", label: t("faq"), icon: CircleHelp, href: `/${locale}/faq` },
       { key: "billing", label: t("billing"), icon: Receipt, href: `/${locale}/billing` },
+      {
+        key: "contracts",
+        label: t("contracts"),
+        icon: FileText,
+        href: `/${locale}/contracts`,
+      },
       { key: "hosting", label: t("hosting"), icon: Server, href: `/${locale}/services/hosting` },
       { key: "email", label: t("email"), icon: Mail, href: `/${locale}/services/email` },
       {
@@ -107,6 +114,7 @@ export function usePortalNav() {
       if (item.key === "projects") return features.projects !== false;
       if (item.key === "support") return features.tickets !== false;
       if (item.key === "billing") return features.invoices !== false;
+      if (item.key === "contracts") return features.invoices !== false;
       if (item.key === "hosting") return features.hosting !== false;
       return true;
     });
