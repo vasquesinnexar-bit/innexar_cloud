@@ -9,7 +9,6 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.audit import log_audit
 from app.core.auth_customer import get_current_customer
 from app.core.database import get_db
 from app.models.customer import Customer
@@ -99,9 +98,7 @@ async def my_services(
     items = await marketplace.list_my_purchases(db, cust)
     return {
         "items": items,
-        "email_domains": [
-            {"domain": d.domain, "status": d.status} for d in domains
-        ],
+        "email_domains": [{"domain": d.domain, "status": d.status} for d in domains],
         "hosting_services": [],
         "projects": [],
     }

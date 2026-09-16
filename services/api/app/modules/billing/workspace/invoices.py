@@ -305,7 +305,9 @@ async def invoice_pay_bricks(
                     db, sub.id, org_id=invoice_org
                 )
         await db.flush()
-        background_tasks.add_task(_run_provisioning_after_payment, inv.id, source="workspace")
+        background_tasks.add_task(
+            _run_provisioning_after_payment, inv.id, source="workspace"
+        )
         if cust_with_users and cust_with_users.users:
             for cu in cust_with_users.users:
                 await create_notification_and_maybe_send_email(
@@ -378,7 +380,9 @@ async def invoice_mark_paid(
             status_code=400,
             detail="Invoice not found or already paid",
         )
-    background_tasks.add_task(_run_provisioning_after_payment, paid_id, source="workspace")
+    background_tasks.add_task(
+        _run_provisioning_after_payment, paid_id, source="workspace"
+    )
     return MarkPaidResponse(ok=True, invoice_id=paid_id)
 
 

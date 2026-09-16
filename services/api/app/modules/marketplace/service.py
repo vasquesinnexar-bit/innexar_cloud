@@ -51,23 +51,25 @@ async def list_catalog(db: AsyncSession, customer: Customer) -> list[dict]:
     """Produtos portal_sellable + ativos + da org + planos na moeda do cliente."""
     currency = customer_currency(customer)
     products = (
-        await db.execute(
-            select(Product)
-            .options(selectinload(Product.price_plans))
-            .where(
-                Product.org_id == customer.org_id,
-                Product.is_active.is_(True),
-                Product.portal_sellable.is_(True),
+        (
+            await db.execute(
+                select(Product)
+                .options(selectinload(Product.price_plans))
+                .where(
+                    Product.org_id == customer.org_id,
+                    Product.is_active.is_(True),
+                    Product.portal_sellable.is_(True),
+                )
+                .order_by(Product.name)
             )
-            .order_by(Product.name)
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     out = []
     for p in products:
         plans = [
-            pl
-            for pl in (p.price_plans or [])
-            if (pl.currency or "USD") == currency
+            pl for pl in (p.price_plans or []) if (pl.currency or "USD") == currency
         ]
         if not plans:
             continue
@@ -102,15 +104,19 @@ async def _find_compatible_contract(
 ) -> Contract | None:
     """Reusa contrato ACTIVE/PENDING com mesma moeda + mesmo provider (NULL-safe)."""
     rows = (
-        await db.execute(
-            select(Contract)
-            .where(
-                Contract.customer_id == customer.id,
-                Contract.status.in_(["active", "pending"]),
+        (
+            await db.execute(
+                select(Contract)
+                .where(
+                    Contract.customer_id == customer.id,
+                    Contract.status.in_(["active", "pending"]),
+                )
+                .order_by(Contract.id)
             )
-            .order_by(Contract.id)
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     for c in rows:
         c_currency = c.currency or customer.currency or "USD"
         if c_currency != currency:
@@ -146,16 +152,20 @@ async def purchase(
         ).scalar_one_or_none()
         if existing:
             item = (
-                await db.execute(
-                    select(ContractItem).where(
-                        ContractItem.contract_id.in_(
-                            select(Contract.id).where(
-                                Contract.customer_id == customer.id
+                (
+                    await db.execute(
+                        select(ContractItem).where(
+                            ContractItem.contract_id.in_(
+                                select(Contract.id).where(
+                                    Contract.customer_id == customer.id
+                                )
                             )
                         )
                     )
                 )
-            ).scalars().first()
+                .scalars()
+                .first()
+            )
             return {
                 "contract_id": None,
                 "contract_item_id": item.id if item else None,
@@ -190,7 +200,6 @@ async def purchase(
     provider = plan.provider or customer.billing_provider or None
     contract = await _find_compatible_contract(db, customer, currency, provider)
     if contract is None:
-        from app.core.datetime_utils import utc_now
 
         contract = Contract(
             customer_id=customer.id,
@@ -261,13 +270,12 @@ async def _invoice_for_item(
     actor_id: str | None,
 ):
     """Fatura de um único item via helper compartilhado (sem duplicar cálculo)."""
-    from app.modules.billing.contract_invoicing import (
-        ContractBillingError,
-        create_invoice_from_contract,
-    )
     from datetime import timedelta
 
     from app.core.datetime_utils import utc_now
+    from app.modules.billing.contract_invoicing import (
+        ContractBillingError,
+    )
 
     try:
         return await create_invoice_from_contract(
@@ -297,17 +305,25 @@ async def list_my_purchases(db: AsyncSession, customer: Customer) -> list[dict]:
         )
     ).all()
     invoices = (
-        await db.execute(
-            select(Invoice)
-            .where(Invoice.customer_id == customer.id)
-            .order_by(Invoice.id.desc())
+        (
+            await db.execute(
+                select(Invoice)
+                .where(Invoice.customer_id == customer.id)
+                .order_by(Invoice.id.desc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     fulfillments = (
-        await db.execute(
-            select(Fulfillment).where(Fulfillment.customer_id == customer.id)
+        (
+            await db.execute(
+                select(Fulfillment).where(Fulfillment.customer_id == customer.id)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     by_item = {}
     for x in invoices:
         for iid in _invoice_item_ids(x):
@@ -316,7 +332,7 @@ async def list_my_purchases(db: AsyncSession, customer: Customer) -> list[dict]:
     for fl in fulfillments:
         by_item_f.setdefault(fl.contract_item_id, fl)
     out = []
-    for item, contract, product in items:
+    for item, _contract, product in items:
         inv_match = by_item.get(item.id)
         f = by_item_f.get(item.id)
         out.append(
@@ -331,9 +347,7 @@ async def list_my_purchases(db: AsyncSession, customer: Customer) -> list[dict]:
                 "source": item.source,
                 "invoice_id": inv_match.id if inv_match else None,
                 "invoice_status": inv_match.status if inv_match else None,
-                "invoice_total": (
-                    float(inv_match.total) if inv_match else None
-                ),
+                "invoice_total": (float(inv_match.total) if inv_match else None),
                 "fulfillment_status": f.status if f else None,
                 "fulfillment_step": f.current_step if f else None,
             }

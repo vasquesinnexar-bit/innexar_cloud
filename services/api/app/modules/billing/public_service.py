@@ -233,6 +233,6 @@ class BillingPublicService:
             inv.id,
         )
         background_tasks.add_task(
-                _fulfillment_after_payment, paid_invoice_id, source="website"
-            )
+            _fulfillment_after_payment, paid_invoice_id, source="website"
+        )
         background_tasks.add_task(_run_create_project_and_notify, paid_invoice_id)

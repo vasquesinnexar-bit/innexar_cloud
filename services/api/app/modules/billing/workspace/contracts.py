@@ -368,6 +368,8 @@ async def create_invoice_from_contract(
     """Fatura a partir dos itens do contrato (preço = qty × unit_amount)."""
     from app.modules.billing.contract_invoicing import (
         ContractBillingError,
+    )
+    from app.modules.billing.contract_invoicing import (
         create_invoice_from_contract as _invoice_from_contract,
     )
 

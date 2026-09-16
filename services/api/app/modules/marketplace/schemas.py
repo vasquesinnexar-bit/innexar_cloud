@@ -1,7 +1,5 @@
 """Marketplace schemas (P1.2): catálogo e compra pelo Portal."""
 
-from datetime import datetime
-
 from pydantic import BaseModel, ConfigDict, field_validator
 
 

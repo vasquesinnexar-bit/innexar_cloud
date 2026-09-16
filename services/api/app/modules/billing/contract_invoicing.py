@@ -59,9 +59,7 @@ async def create_invoice_from_contract(
         raise ContractBillingError("empty_contract", "Contrato sem itens")
     missing = [i.id for i in items if i.unit_amount is None]
     if missing:
-        raise ContractBillingError(
-            "item_without_price", f"Itens sem preço: {missing}"
-        )
+        raise ContractBillingError("item_without_price", f"Itens sem preço: {missing}")
     lines: list[dict] = []
     total = 0.0
     for i in items:
