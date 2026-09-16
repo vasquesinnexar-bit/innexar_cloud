@@ -63,6 +63,13 @@ class Product(Base):
     portal_sellable: Mapped[bool] = mapped_column(
         Boolean, default=False, nullable=False, index=True
     )
+    # P1.4A — canais de venda (backfill preserva visibilidade atual).
+    website_sellable: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False, index=True
+    )
+    admin_assignable: Mapped[bool] = mapped_column(
+        Boolean, default=True, nullable=False, index=True
+    )
 
     price_plans: Mapped[list["PricePlan"]] = relationship(
         "PricePlan", back_populates="product", cascade="all, delete-orphan"

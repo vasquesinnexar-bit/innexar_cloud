@@ -17,7 +17,8 @@ from app.core.router_org import router_org_list_filter, router_org_write
 from app.models.customer import Customer
 from app.models.user import User
 from app.modules.billing.dependencies import require_billing_enabled
-from app.modules.billing.models import Contract, ContractItem
+from app.modules.billing.models import Contract, ContractItem, PricePlan, Product
+from app.modules.billing.product_validation import validate_product_for_sale
 from app.modules.billing.schemas import InvoiceResponse
 from app.modules.billing.schemas_contracts import (
     ContractCreate,
@@ -30,6 +31,39 @@ from app.modules.billing.schemas_contracts import (
 from app.modules.fulfillment.models import Fulfillment
 
 router = APIRouter()
+
+
+async def _validate_admin_item(
+    db: AsyncSession, product_id: int | None, price_plan_id: int | None
+) -> None:
+    """P1.4A — staff só atribui produto admin_assignable + plano válido.
+
+    Item avulso (sem product_id) é decisão manual do staff: sem validação.
+    """
+    if product_id is None:
+        return
+    product = await db.get(Product, product_id) if product_id else None
+    plan = await db.get(PricePlan, price_plan_id) if price_plan_id else None
+    if price_plan_id and plan is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Plano não encontrado")
+    issues = validate_product_for_sale(product, plan, channel="admin")
+    if issues:
+        code = issues[0]["code"]
+        raise HTTPException(
+            status_code=(
+                status.HTTP_404_NOT_FOUND
+                if code
+                in (
+                    "no_product",
+                    "inactive",
+                    "channel_closed",
+                    "unknown_handler",
+                    "plan_mismatch",
+                )
+                else status.HTTP_422_UNPROCESSABLE_ENTITY
+            ),
+            detail=issues[0]["message"],
+        )
 
 
 def _to_response(c: Contract) -> ContractResponse:
@@ -127,6 +161,7 @@ async def create_contract(
     db.add(contract)
     await db.flush()
     for item in body.items:
+        await _validate_admin_item(db, item.product_id, item.price_plan_id)
         db.add(
             ContractItem(
                 contract_id=contract.id,
@@ -232,6 +267,7 @@ async def add_contract_item(
     c = (await db.execute(q)).scalar_one_or_none()
     if not c:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Contract não encontrado")
+    await _validate_admin_item(db, body.product_id, body.price_plan_id)
     db.add(
         ContractItem(
             contract_id=c.id,

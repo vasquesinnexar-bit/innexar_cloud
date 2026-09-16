@@ -53,6 +53,7 @@ class BillingRepository:
         org_id: str = "innexar",
         is_active: bool | None = True,
         order_by_id: bool = True,
+        website_sellable: bool | None = None,
     ) -> list[Product]:
         """List products with price_plans relation loaded."""
         q = (
@@ -62,6 +63,8 @@ class BillingRepository:
         )
         if is_active is not None:
             q = q.where(Product.is_active.is_(is_active))
+        if website_sellable is not None:
+            q = q.where(Product.website_sellable.is_(website_sellable))
         if order_by_id:
             q = q.order_by(Product.id)
         r = await self._db.execute(q)
@@ -73,6 +76,7 @@ class BillingRepository:
         product_names: tuple[str, ...] | None = None,
         plan_interval: str | None = "month",
         plan_currency: str | None = None,
+        website_sellable: bool | None = None,
     ) -> list[tuple[Product, PricePlan]]:
         """List Product+PricePlan rows (join). Filter by product names, plan interval/currency."""
         q = (
@@ -83,6 +87,8 @@ class BillingRepository:
         )
         if product_names:
             q = q.where(Product.name.in_(product_names))
+        if website_sellable is not None:
+            q = q.where(Product.website_sellable.is_(website_sellable))
         if plan_interval is not None:
             q = q.where(PricePlan.interval == plan_interval)
         if plan_currency is not None:

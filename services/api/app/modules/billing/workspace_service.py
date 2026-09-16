@@ -86,6 +86,8 @@ class BillingWorkspaceService:
             category=body.category,
             slug=body.slug.strip().lower() if body.slug else None,
             portal_sellable=body.portal_sellable,
+            website_sellable=body.website_sellable,
+            admin_assignable=body.admin_assignable,
         )
         self._repo.add_product(p)
         await self._db.flush()
@@ -114,6 +116,10 @@ class BillingWorkspaceService:
             p.slug = body.slug.strip().lower() or None
         if body.portal_sellable is not None:
             p.portal_sellable = body.portal_sellable
+        if body.website_sellable is not None:
+            p.website_sellable = body.website_sellable
+        if body.admin_assignable is not None:
+            p.admin_assignable = body.admin_assignable
         await self._repo.update_product(p)
         return p
 

@@ -54,11 +54,34 @@ class CheckoutService:
         product_id, price_plan_id, product, pp = await self._resolve_product_plan(
             body, org_id
         )
-        provisioning_type = (product.provisioning_type or "").lower()
-        if provisioning_type == "hestia_hosting" and not (body.domain or "").strip():
+        # P1.4A — validação central (canal website). Pré-cheque sem cliente
+        # antes de criar qualquer registro; cheque completo após resolver cliente.
+        from app.modules.billing.product_validation import (
+            validate_product_for_sale,
+        )
+        from app.modules.fulfillment.registry import handler_spec, resolve_handler
+
+        _strategy, _handler = resolve_handler(product)
+        _spec = handler_spec(_handler) or {}
+        _pre = validate_product_for_sale(
+            product, pp, channel="website", domain=body.domain
+        )
+        if _pre:
+            _code = _pre[0]["code"]
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Domain is required for hosting products",
+                status_code=(
+                    status.HTTP_404_NOT_FOUND
+                    if _code
+                    in (
+                        "no_product",
+                        "inactive",
+                        "channel_closed",
+                        "unknown_handler",
+                        "plan_mismatch",
+                    )
+                    else status.HTTP_400_BAD_REQUEST
+                ),
+                detail=_pre[0]["message"],
             )
 
         customer_id, customer_user_id, cust, existing_customer = (
@@ -102,7 +125,7 @@ class CheckoutService:
                 "preferred_locale": preferred_locale,
             }
         ]
-        if body.domain and provisioning_type == "hestia_hosting":
+        if body.domain and _spec.get("requires_domain_at_checkout"):
             line_items[0]["domain"] = body.domain.strip()
         if body.fidelity_12_months_accepted is True:
             line_items[0]["fidelity_12_months_accepted"] = True

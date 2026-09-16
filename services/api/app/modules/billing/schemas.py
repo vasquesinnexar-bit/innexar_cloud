@@ -18,6 +18,8 @@ class ProductBase(BaseModel):
     category: str | None = None  # website|hosting|email|domain|maintenance…
     slug: str | None = None  # stable catalog key, e.g. "professional-email"
     portal_sellable: bool = False  # P1.2: vendável no Portal (decisão explícita)
+    website_sellable: bool = False  # P1.4A: vendável nos sites
+    admin_assignable: bool = True  # P1.4A: atribuível pelo staff
 
 
 class ProductCreate(ProductBase):
@@ -33,6 +35,8 @@ class ProductUpdate(BaseModel):
     category: str | None = None
     slug: str | None = None
     portal_sellable: bool | None = None
+    website_sellable: bool | None = None
+    admin_assignable: bool | None = None
 
 
 class ProductResponse(ProductBase):

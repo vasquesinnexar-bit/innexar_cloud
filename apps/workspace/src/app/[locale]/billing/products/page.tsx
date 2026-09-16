@@ -47,6 +47,8 @@ interface Product {
   is_active: boolean;
   provisioning_type: string | null;
   portal_sellable: boolean;
+  website_sellable: boolean;
+  admin_assignable: boolean;
   hestia_package: string | null;
   created_at: string;
   price_plans?: PricePlan[];
@@ -63,6 +65,8 @@ export default function WorkspaceBillingProductsPage() {
   const [formDescription, setFormDescription] = useState('');
   const [formIsActive, setFormIsActive] = useState(true);
   const [formPortalSellable, setFormPortalSellable] = useState(false);
+  const [formWebsiteSellable, setFormWebsiteSellable] = useState(false);
+  const [formAdminAssignable, setFormAdminAssignable] = useState(true);
   const [formProvisioningType, setFormProvisioningType] = useState('');
   const [formHestiaPackage, setFormHestiaPackage] = useState('');
   const [saving, setSaving] = useState(false);
@@ -136,6 +140,8 @@ export default function WorkspaceBillingProductsPage() {
     setFormDescription('');
     setFormIsActive(true);
     setFormPortalSellable(false);
+    setFormWebsiteSellable(false);
+    setFormAdminAssignable(true);
     setFormProvisioningType('');
     setFormHestiaPackage('');
     setFormPlanName('');
@@ -152,6 +158,8 @@ export default function WorkspaceBillingProductsPage() {
     setFormDescription(p.description ?? '');
     setFormIsActive(p.is_active);
     setFormPortalSellable(p.portal_sellable ?? false);
+    setFormWebsiteSellable(p.website_sellable ?? false);
+    setFormAdminAssignable(p.admin_assignable ?? true);
     setFormProvisioningType(p.provisioning_type ?? '');
     setFormHestiaPackage(p.hestia_package ?? '');
     setFormPlanName('');
@@ -187,6 +195,8 @@ export default function WorkspaceBillingProductsPage() {
       description: formDescription || null,
       is_active: formIsActive,
       portal_sellable: formPortalSellable,
+      website_sellable: formWebsiteSellable,
+      admin_assignable: formAdminAssignable,
       provisioning_type: formProvisioningType || null,
       hestia_package: formHestiaPackage || null,
     };
@@ -420,6 +430,16 @@ export default function WorkspaceBillingProductsPage() {
                   Portal
                 </span>
               )}
+              {p.website_sellable && (
+                <span className="mt-2 ml-1 inline-block px-3 py-1 rounded-lg text-sm bg-emerald-500/20 text-emerald-300">
+                  Site
+                </span>
+              )}
+              {!p.admin_assignable && (
+                <span className="mt-2 ml-1 inline-block px-3 py-1 rounded-lg text-sm bg-amber-500/20 text-amber-300">
+                  Sem atribuição manual
+                </span>
+              )}
             </motion.div>
           ))}
         </div>
@@ -484,6 +504,28 @@ export default function WorkspaceBillingProductsPage() {
                     className="rounded bg-white/5 border-white/10 text-blue-600 focus:ring-blue-500"
                   />
                   <span className="text-sm font-medium text-slate-300">Vendável no Portal (marketplace do cliente)</span>
+                </label>
+              </div>
+              <div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formWebsiteSellable}
+                    onChange={(e) => setFormWebsiteSellable(e.target.checked)}
+                    className="rounded bg-white/5 border-white/10 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-slate-300">Vendável nos sites (checkout público)</span>
+                </label>
+              </div>
+              <div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formAdminAssignable}
+                    onChange={(e) => setFormAdminAssignable(e.target.checked)}
+                    className="rounded bg-white/5 border-white/10 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-slate-300">Atribuível manualmente (staff pode incluir em contratos)</span>
                 </label>
               </div>
               <div>

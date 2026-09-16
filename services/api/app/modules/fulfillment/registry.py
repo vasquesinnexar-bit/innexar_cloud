@@ -112,6 +112,47 @@ def resolve_handler(product) -> tuple[str, str]:
 _REGISTRY: dict[str, type] = {}
 
 
+HANDLER_SPECS: dict[str, dict] = {
+    # Especificação tipada por handler (P1.4A): dependências, onboarding,
+    # critérios de ativação. Substitui ifs espalhados por produto.
+    FulfillmentHandler.MAIL.value: {
+        "requires_domain": True,  # via onboarding (não no checkout)
+        "requires_domain_at_checkout": False,
+        "requires_briefing": False,
+        "onboarding": "professional_email",
+        "activation": "domínio verificado + DNS válido + ≥1 mailbox ativa + provider",
+    },
+    FulfillmentHandler.HESTIA.value: {
+        "requires_domain": True,
+        "requires_domain_at_checkout": True,
+        "requires_briefing": False,
+        "onboarding": "manual",
+        "activation": "user + domínio + mail criados no painel",
+    },
+    FulfillmentHandler.PROJECT.value: {
+        "requires_domain": False,
+        "requires_domain_at_checkout": False,
+        "requires_briefing": True,
+        "onboarding": "website_project",
+        "activation": "projeto criado; ACTIVE só após produção manual",
+    },
+    FulfillmentHandler.MANUAL.value: {
+        "requires_domain": False,
+        "requires_domain_at_checkout": False,
+        "requires_briefing": False,
+        "onboarding": "manual",
+        "activation": "acompanhamento manual (MANUAL_REVIEW)",
+    },
+}
+
+
+def handler_spec(handler_key: str | None) -> dict | None:
+    """Spec do handler ou None se desconhecido (venda bloqueada)."""
+    if not handler_key:
+        return None
+    return HANDLER_SPECS.get(handler_key)
+
+
 def register(key: str, cls: type) -> None:
     _REGISTRY[key] = cls
 

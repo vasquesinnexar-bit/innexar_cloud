@@ -40,6 +40,7 @@ async def test_checkout_start_400_domain_required_for_hestia_hosting(
         org_id="innexar",
         name="Starter Website",
         is_active=True,
+        website_sellable=True,
         provisioning_type="hestia_hosting",
     )
     override_get_db.add(product)
@@ -66,7 +67,7 @@ async def test_checkout_start_400_domain_required_for_hestia_hosting(
     )
     assert r.status_code == 400
     data = r.json()
-    assert "domain" in data.get("detail", "").lower()
+    assert "domínio obrigatório" in data.get("detail", "").lower()
 
 
 @pytest.mark.asyncio
@@ -79,6 +80,7 @@ async def test_checkout_start_200_redirect_with_mock(
         org_id="innexar",
         name="Starter Website",
         is_active=True,
+        website_sellable=True,
         provisioning_type="",  # not hestia_hosting so no domain required
     )
     override_get_db.add(product)
@@ -152,6 +154,7 @@ async def test_checkout_start_404_product_or_plan_by_id(
         org_id="innexar",
         name="Other Product",
         is_active=True,
+        website_sellable=True,
     )
     override_get_db.add(product)
     await override_get_db.flush()
@@ -190,6 +193,7 @@ async def test_checkout_start_200_with_product_id_and_mock(
         org_id="innexar",
         name="Some Product",
         is_active=True,
+        website_sellable=True,
     )
     override_get_db.add(product)
     await override_get_db.flush()
@@ -240,6 +244,7 @@ async def _make_brl_product_and_plan(
         org_id="innexar",
         name="Produto BRL",
         is_active=True,
+        website_sellable=True,
         provisioning_type="",
     )
     override_get_db.add(product)
@@ -409,6 +414,7 @@ async def test_checkout_bricks_400_when_provider_not_mp(
         org_id="innexar",
         name="USD Product",
         is_active=True,
+        website_sellable=True,
     )
     override_get_db.add(product)
     await override_get_db.flush()

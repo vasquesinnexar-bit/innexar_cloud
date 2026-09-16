@@ -32,6 +32,7 @@ class ProductPublicService:
             product_names=WaaS_PRODUCT_NAMES,
             plan_interval="month",
             plan_currency="USD",
+            website_sellable=True,
         )
         result: list[WaaSPlanOut] = []
         for product, price_plan in rows:
@@ -59,6 +60,7 @@ class ProductPublicService:
             product_names=PAID_TRAFFIC_PRODUCT_NAMES,
             plan_interval="month",
             plan_currency="USD",
+            website_sellable=True,
         )
         result: list[PaidTrafficPlanOut] = []
         for product, price_plan in rows:
@@ -84,7 +86,7 @@ class ProductPublicService:
     ) -> list[ProductCatalogOut]:
         """Return active products with price plans. interval: all, month, one_time."""
         products = await self._repo.list_products_with_plans(
-            org_id=org_id, is_active=True
+            org_id=org_id, is_active=True, website_sellable=True
         )
         result: list[ProductCatalogOut] = []
         for p in products:
@@ -119,6 +121,7 @@ class ProductPublicService:
             org_id=org_id,
             product_names=SITE_PRODUCT_NAMES,
             plan_interval="month",
+            website_sellable=True,
         )
         result: list[ProductSiteOut] = []
         for product, price_plan in rows:

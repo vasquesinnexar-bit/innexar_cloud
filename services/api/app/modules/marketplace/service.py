@@ -167,25 +167,38 @@ async def purchase(
                 "reused": True,
             }
     product = await db.get(Product, product_id)
-    if (
-        not product
-        or not product.is_active
-        or not product.portal_sellable
-        or product.org_id != customer.org_id
-    ):
+    plan = await db.get(PricePlan, price_plan_id)
+    # P1.4A — validação central (canal portal). Substitui ifs locais.
+    from app.modules.billing.product_validation import validate_product_for_sale
+
+    _issues = validate_product_for_sale(
+        product, plan, channel="portal", customer=customer
+    )
+    if _issues:
+        _code = _issues[0]["code"]
+        if _code in (
+            "no_product",
+            "inactive",
+            "channel_closed",
+            "unknown_handler",
+            "plan_mismatch",
+        ):
+            raise MarketplaceError(
+                "product_unavailable",
+                "Produto indisponível para contratação",
+                status=404,
+            )
+        if _code in ("no_price", "no_currency", "currency_mismatch"):
+            raise MarketplaceError(
+                "plan_unavailable", "Plano indisponível para este produto/moeda"
+            )
+        raise MarketplaceError(_code, _issues[0]["message"])
+    assert product is not None and plan is not None  # garantido pelo validador
+    if product.org_id != customer.org_id:
         raise MarketplaceError(
             "product_unavailable",
             "Produto indisponível para contratação",
             status=404,
-        )
-    plan = await db.get(PricePlan, price_plan_id)
-    if (
-        not plan
-        or plan.product_id != product.id
-        or (plan.currency or "USD") != customer_currency(customer)
-    ):
-        raise MarketplaceError(
-            "plan_unavailable", "Plano indisponível para este produto/moeda"
         )
     currency = plan.currency or "USD"
     provider = plan.provider or customer.billing_provider or None
