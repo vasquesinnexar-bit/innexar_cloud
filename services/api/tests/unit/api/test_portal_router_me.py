@@ -358,3 +358,37 @@ async def test_portal_me_dashboard_contract_services(
     assert r.status_code == 200
     kinds = {s["kind"] for s in r.json().get("services", [])}
     assert {"email", "hosting"} <= kinds
+
+
+@pytest.mark.asyncio
+async def test_portal_me_dashboard_pending_actions(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    customer_and_user: tuple[Customer, CustomerUser],
+) -> None:
+    """Dashboard lista fatura pendente em pending_actions com deep link."""
+    from datetime import UTC, datetime
+
+    from app.modules.billing.models import Invoice
+
+    customer, customer_user = customer_and_user
+    db_session.add(
+        Invoice(
+            customer_id=customer.id,
+            status="pending",
+            due_date=datetime.now(UTC),
+            total=100.0,
+            currency="BRL",
+        )
+    )
+    await db_session.flush()
+    r = await client.get(
+        "/api/portal/me/dashboard", headers=_auth_headers(customer_user)
+    )
+    assert r.status_code == 200
+    actions = r.json().get("pending_actions", [])
+    inv_actions = [a for a in actions if a["kind"] == "invoice"]
+    assert len(inv_actions) == 1
+    assert inv_actions[0]["total"] == 100.0
+    assert inv_actions[0]["currency"] == "BRL"
+    assert inv_actions[0]["href"].startswith("/billing?pay=")

@@ -54,6 +54,9 @@ type DashboardCardsProps = {
     couponPlaceholder: string;
     services: string;
     noServices: string;
+    attention: string;
+    pendingInvoice: string;
+    continueSetup: string;
   };
   onPayInvoice: (id: number, couponCode?: string) => void;
 };
@@ -230,6 +233,43 @@ export function DashboardCards({
                     {s.status}
                     {s.detail ? ` · ${s.detail}` : ""}
                   </p>
+                </Link>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {(data?.pending_actions?.length ?? 0) > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.24 }}
+            className="bg-[var(--card-bg)] backdrop-blur-xl border border-amber-500/30 rounded-2xl p-6 shadow-md transition-all duration-200"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-theme-secondary text-sm">{labels.attention}</span>
+              <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                <Bell className="w-5 h-5 text-amber-400" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              {data!.pending_actions!.map((a, i) => (
+                <Link
+                  key={`${a.kind}-${i}`}
+                  href={a.href ? `/${locale}${a.href}` : `/${locale}/billing`}
+                  className={`block rounded-xl ${FOCUS_RING}`}
+                >
+                  <p className="text-theme-primary font-medium text-sm">
+                    {a.kind === "invoice" ? labels.pendingInvoice : labels.continueSetup}
+                    {a.total !== null && a.total !== undefined
+                      ? ` — ${Number(a.total).toLocaleString(getIntlLocale(locale), {
+                          style: "currency",
+                          currency: a.currency || "USD",
+                          minimumFractionDigits: 2,
+                        })}`
+                      : ""}
+                  </p>
+                  {a.detail && <p className="text-theme-secondary text-xs mt-0.5">{a.detail}</p>}
                 </Link>
               ))}
             </div>

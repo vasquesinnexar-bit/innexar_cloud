@@ -86,7 +86,15 @@ export default function EmailServicePage() {
     );
   }
 
-  const ent = overview.entitlement;
+  // Guarda anti-crash: resposta parcial nunca pode deixar a página em branco.
+  const ent = overview.entitlement ?? {
+    contracted: 0,
+    used: 0,
+    available: 0,
+    currency: "BRL",
+    unit_price: null,
+  };
+  const boxes = overview.mailboxes ?? [];
   const full = ent.available <= 0;
   const monthly = ent.unit_price !== null ? ent.unit_price * ent.contracted : null;
 
@@ -253,7 +261,7 @@ export default function EmailServicePage() {
         </div>
       )}
 
-      {overview.mailboxes.length === 0 && !wizard && (
+      {boxes.length === 0 && !wizard && (
         <button onClick={startWizard} className="btn flex items-center gap-2">
           <Mail className="w-4 h-4" /> Configurar E-mail
         </button>
@@ -406,7 +414,7 @@ export default function EmailServicePage() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {overview.mailboxes.map((m) => (
+        {boxes.map((m) => (
           <div key={m.id} className="card-base rounded-2xl p-5 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 min-w-0">
@@ -557,7 +565,7 @@ export default function EmailServicePage() {
 
       <EmailConnectGuide
         domain={domain}
-        exampleAddress={overview.mailboxes[0]?.address ?? null}
+        exampleAddress={boxes[0]?.address ?? null}
         webmailUrl={WEBMAIL_URL}
       />
     </div>

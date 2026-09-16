@@ -132,6 +132,9 @@ export default function PortalDashboardWorkspace() {
           couponPlaceholder: t("couponPlaceholder"),
           services: t("services"),
           noServices: t("noServices"),
+          attention: t("attention"),
+          pendingInvoice: t("pendingInvoice"),
+          continueSetup: t("continueSetup"),
         }}
       />
     </div>

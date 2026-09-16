@@ -262,7 +262,10 @@
     "services": "Servicios contratados",
     "noServices": "Aún no hay servicios contratados.",
     "loadError": "No pudimos cargar el panel.",
-    "retry": "Reintentar"
+    "retry": "Reintentar",
+    "attention": "Requiere atención",
+    "pendingInvoice": "Factura pendiente",
+    "continueSetup": "Continuar configuración"
   },
   "projectDetails": {
     "backToProjects": "Volver a Proyectos",
@@ -740,7 +743,10 @@
     "passwordSaved": "¡Contraseña guardada con éxito!",
     "redirecting": "Redirigiendo",
     "errorPasswordLength": "La contraseña debe tener al menos 6 caracteres.",
-    "errorGeneric": "Ocurrió un error. Inténtelo de nuevo."
+    "errorGeneric": "Ocurrió un error. Inténtelo de nuevo.",
+    "pageError": "Algo salió mal en esta página.",
+    "pageErrorSub": "Inténtelo de nuevo. Si persiste, contacte soporte.",
+    "retry": "Reintentar"
   },
   "emailPage": {
     "pageTitle": "Correo Profesional",
@@ -923,7 +929,7 @@
     "customQuoteCta": "Solicita un Nuevo Proyecto",
     "loadError": "No pudimos cargar tus servicios.",
     "retry": "Reintentar",
-    "setupPending": "Configuración inicial: $ {amount} pendiente.",
+    "setupPending": "Configuración inicial: {amount} pendiente.",
     "hostingTitle": "Alojamiento gestionado"
   },
   "onboarding": {

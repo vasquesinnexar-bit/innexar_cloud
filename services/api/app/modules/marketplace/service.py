@@ -372,6 +372,11 @@ async def list_my_purchases(db: AsyncSession, customer: Customer) -> list[dict]:
                 "fulfillment_status": f.status if f else None,
                 "fulfillment_step": f.current_step if f else None,
                 "is_setup": ((plan.billing_type or "") if plan else "") == "one_time",
+                "currency": (
+                    _contract.currency
+                    or ((plan.currency or "") if plan else "")
+                    or None
+                ),
             }
         )
     return out

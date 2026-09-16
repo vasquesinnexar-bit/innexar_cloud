@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { Package, ArrowRight, Server, Globe } from "lucide-react";
 import { useMarketplace, type MyServiceItem, type ServicesOverview } from "@/hooks/use-marketplace";
 import { SkeletonCard } from "@/components/ui/Skeleton";
+import { getIntlLocale } from "@/lib/intl-locale";
 
 function statusBadge(s: MyServiceItem) {
   if (s.fulfillment_status === "active") return { cls: "badge ok" };
@@ -37,8 +38,19 @@ function groupServices(items: MyServiceItem[]): ServiceGroup[] {
 
 export default function MyServicesPage() {
   const t = useTranslations("marketplace");
+  const locale = useLocale();
+  const intlLocale = getIntlLocale(locale);
   const { loading, error, getServicesOverview } = useMarketplace();
   const [overview, setOverview] = useState<ServicesOverview | null>(null);
+
+  const money = (amount: number | null, currency: string | null) =>
+    amount === null
+      ? "—"
+      : amount.toLocaleString(intlLocale, {
+          style: "currency",
+          currency: currency || "BRL",
+          minimumFractionDigits: 2,
+        });
 
   const load = useCallback(() => {
     getServicesOverview().then(setOverview);
@@ -120,9 +132,9 @@ export default function MyServicesPage() {
                 {g.setups
                   .filter((u) => u.invoice_status && u.invoice_status !== "paid")
                   .map((u) => (
-                    <p key={u.id} className="text-sm text-amber-300">
+                    <p key={u.id} className="text-sm text-amber-700 dark:text-amber-300">
                       {t("setupPending", {
-                        amount: (u.unit_amount ?? 0).toFixed(2),
+                        amount: money(u.unit_amount, u.currency ?? s.currency ?? null),
                       })}{" "}
                       {u.invoice_id && (
                         <Link

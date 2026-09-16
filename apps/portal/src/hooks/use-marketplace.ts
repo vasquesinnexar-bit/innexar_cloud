@@ -48,6 +48,7 @@ export interface MyServiceItem {
   fulfillment_status: string | null;
   fulfillment_step: string | null;
   is_setup?: boolean;
+  currency?: string | null;
 }
 
 export interface OverviewHostingItem {

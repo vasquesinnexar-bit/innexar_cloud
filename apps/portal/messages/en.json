@@ -262,7 +262,10 @@
     "services": "Contracted services",
     "noServices": "No services contracted yet.",
     "loadError": "We couldn't load the dashboard.",
-    "retry": "Try again"
+    "retry": "Try again",
+    "attention": "Needs attention",
+    "pendingInvoice": "Pending invoice",
+    "continueSetup": "Continue setup"
   },
   "projectDetails": {
     "backToProjects": "Back to Projects",
@@ -740,7 +743,10 @@
     "passwordSaved": "Password saved successfully!",
     "redirecting": "Redirecting",
     "errorPasswordLength": "Password must be at least 6 characters.",
-    "errorGeneric": "An error occurred. Please try again."
+    "errorGeneric": "An error occurred. Please try again.",
+    "pageError": "Something went wrong on this page.",
+    "pageErrorSub": "Try again. If it persists, contact support.",
+    "retry": "Try again"
   },
   "emailPage": {
     "pageTitle": "Professional Email",
@@ -923,7 +929,7 @@
     "customQuoteCta": "Request a New Project",
     "loadError": "We couldn't load your services.",
     "retry": "Try again",
-    "setupPending": "Initial setup: $ {amount} pending.",
+    "setupPending": "Initial setup: {amount} pending.",
     "hostingTitle": "Managed Hosting"
   },
   "onboarding": {

@@ -11,6 +11,7 @@ from app.repositories.project_repository import ProjectRepository
 from app.repositories.support_repository import SupportRepository
 
 from .schemas import (
+    MeDashboardActionItem,
     MeDashboardDiagnosticItem,
     MeDashboardFlagsResponse,
     MeDashboardInvoiceItem,
@@ -251,7 +252,72 @@ class PortalDashboardService:
             requires_password_change=current.requires_password_change,
             diagnostic=diagnostic,
             services=await self._contract_services(customer_id),
+            pending_actions=await self._pending_actions(customer_id),
         )
+
+    async def _pending_actions(self, customer_id: int) -> list[MeDashboardActionItem]:
+        """Faturas em aberto + onboardings pendentes, com deep link."""
+        from sqlalchemy import select
+
+        from app.modules.billing.models import Invoice
+        from app.modules.fulfillment.models import Fulfillment
+        from app.modules.onboarding.service import next_action_for_fulfillment
+
+        out: list[MeDashboardActionItem] = []
+        try:
+            db = self._billing._db
+            invs = (
+                (
+                    await db.execute(
+                        select(Invoice)
+                        .where(
+                            Invoice.customer_id == customer_id,
+                            Invoice.status.in_(["pending", "past_due", "failed"]),
+                        )
+                        .order_by(Invoice.due_date)
+                    )
+                )
+                .scalars()
+                .all()
+            )
+            for inv in invs:
+                out.append(
+                    MeDashboardActionItem(
+                        kind="invoice",
+                        label="pending_invoice",
+                        detail=f"Venc. {inv.due_date.date().isoformat()}",
+                        href=f"/billing?pay={inv.id}",
+                        total=float(inv.total),
+                        currency=inv.currency,
+                        due_date=inv.due_date.isoformat(),
+                    )
+                )
+            fuls = (
+                (
+                    await db.execute(
+                        select(Fulfillment).where(
+                            Fulfillment.customer_id == customer_id,
+                            Fulfillment.status != "active",
+                        )
+                    )
+                )
+                .scalars()
+                .all()
+            )
+            for fl in fuls:
+                na = await next_action_for_fulfillment(db, fl)
+                if na and na.get("href"):
+                    out.append(
+                        MeDashboardActionItem(
+                            kind=str(na.get("type") or "onboarding"),
+                            label="Continuar configuração",
+                            detail=str(na.get("step") or ""),
+                            href=str(na["href"]),
+                        )
+                    )
+        except Exception:  # noqa: BLE001 (dashboard nunca quebra por agregado)
+            return []
+        return out
 
     async def _contract_services(
         self, customer_id: int

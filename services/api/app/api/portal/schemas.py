@@ -167,6 +167,18 @@ class MeDashboardServiceItem(BaseModel):
     detail: str | None = None
 
 
+class MeDashboardActionItem(BaseModel):
+    """Dashboard: pending action with deep link (backend decides)."""
+
+    kind: str  # invoice | onboarding | briefing
+    label: str
+    detail: str | None = None
+    href: str | None = None
+    total: float | None = None
+    currency: str | None = None
+    due_date: str | None = None
+
+
 class MeDashboardDiagnosticItem(BaseModel):
     """Dashboard: optional diagnostic (no plan found)."""
 
@@ -196,6 +208,8 @@ class MeDashboardResponse(BaseModel):
     diagnostic: MeDashboardDiagnosticItem | None = None
     # Serviços técnicos contratados (contract-driven; independe de subscription).
     services: list[MeDashboardServiceItem] = []
+    # Ações pendentes com deep link (faturas em aberto, onboardings).
+    pending_actions: list[MeDashboardActionItem] = []
 
 
 class FileUploadResponse(BaseModel):

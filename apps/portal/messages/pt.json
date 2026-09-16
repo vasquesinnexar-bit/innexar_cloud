@@ -262,7 +262,10 @@
     "services": "Serviços contratados",
     "noServices": "Nenhum serviço contratado ainda.",
     "loadError": "Não conseguimos carregar o painel.",
-    "retry": "Tentar novamente"
+    "retry": "Tentar novamente",
+    "attention": "Atenção necessária",
+    "pendingInvoice": "Fatura pendente",
+    "continueSetup": "Continuar configuração"
   },
   "projectDetails": {
     "backToProjects": "Voltar para Projetos",
@@ -740,7 +743,10 @@
     "passwordSaved": "Senha salva com sucesso!",
     "redirecting": "Redirecionando",
     "errorPasswordLength": "A senha deve ter no mínimo 6 caracteres.",
-    "errorGeneric": "Aconteceu um erro. Tente novamente."
+    "errorGeneric": "Aconteceu um erro. Tente novamente.",
+    "pageError": "Algo deu errado nesta página.",
+    "pageErrorSub": "Tente novamente. Se persistir, fale com o suporte.",
+    "retry": "Tentar novamente"
   },
   "emailPage": {
     "pageTitle": "E-mail Profissional",
@@ -923,7 +929,7 @@
     "customQuoteCta": "Solicite um Novo Projeto",
     "loadError": "Não conseguimos carregar seus serviços.",
     "retry": "Tentar novamente",
-    "setupPending": "Configuração inicial: R$ {amount} pendente.",
+    "setupPending": "Configuração inicial: {amount} pendente.",
     "hostingTitle": "Hospedagem Gerenciada"
   },
   "onboarding": {
