@@ -15,6 +15,7 @@ const services = [
   { href: "/prospector-ai", icon: BrainCircuit, label: "ProspectorAI" },
   { href: "/blockchain", icon: Link2, label: "Blockchain" },
   { href: "/integracao-de-sistemas", icon: Code2, label: "Integração de sistemas" },
+  { href: "/services/infra", icon: Globe, label: "Infraestrutura & Cloud" },
 ];
 
 const company = [
@@ -22,6 +23,7 @@ const company = [
   { href: "/contact", label: "Contato" },
   { href: "/criar-site", label: "Criar meu site" },
   { href: "/projetos", label: "Projetos" },
+  { href: "/atendimento/sao-paulo", label: "Atendimento em São Paulo" },
   { href: "/privacy-policy", label: "Privacidade" },
   { href: "/terms-of-service", label: "Termos de uso" },
 ];
