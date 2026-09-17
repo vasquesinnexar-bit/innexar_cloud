@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { CheckoutFormCard } from "@/components/checkout/CheckoutFormCard";
 
@@ -43,6 +44,7 @@ const PLAN_LABELS: Record<string, string> = {
 export default function CheckoutPage() {
   const params = useParams();
   const planId = String(params.planId || "");
+  const knownPlan = planId in PLAN_LABELS;
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -103,6 +105,25 @@ export default function CheckoutPage() {
       setError(err instanceof Error ? err.message : "Erro ao iniciar checkout.");
       setLoading(false);
     }
+  }
+
+  if (!knownPlan) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-teal-900 to-slate-900 px-6 py-20">
+        <div className="mx-auto max-w-xl text-center space-y-4">
+          <h1 className="text-2xl font-bold text-white">Plano não encontrado</h1>
+          <p className="text-white/60">
+            Este link de contratação é inválido. Veja os planos disponíveis.
+          </p>
+          <Link
+            href="/planos"
+            className="inline-flex items-center justify-center rounded-xl bg-teal-500 px-6 py-3 text-sm font-bold text-white"
+          >
+            Ver planos
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (

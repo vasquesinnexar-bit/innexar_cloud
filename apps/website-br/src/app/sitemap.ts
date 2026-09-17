@@ -35,18 +35,17 @@ const pages = [
   "marketing-digital",
   "projetos",
   "atendimento/sao-paulo",
-  "services/web",
-  "services/apps",
-  "services/marketing",
   "services/infra",
   "privacy-policy",
   "terms-of-service",
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  // lastmod = data do build (= conteúdo publicado; sem datas falsas por página).
+  const builtAt = new Date();
   return pages.map((page) => ({
     url: `${SITE_URL}${page ? `/${page}` : ""}`,
-    lastModified: new Date("2026-09-13"),
+    lastModified: builtAt,
     changeFrequency: page === "" ? "daily" : "weekly" as const,
     priority: page === "" ? 1.0 : highPriority.has(page) ? 0.9 : 0.8,
   }));

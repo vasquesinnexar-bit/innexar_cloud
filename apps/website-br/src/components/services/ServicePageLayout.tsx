@@ -34,6 +34,7 @@ type ServicePageLayoutProps = {
   accentColor?: string;
   features: FeatureItem[];
   plans: PlanItem[];
+  headingLevel?: "h1" | "h2";
 };
 
 /* ── 3D tilt feature card ── */
@@ -168,7 +169,9 @@ export function ServicePageLayout({
   description,
   features,
   plans,
+  headingLevel = "h1",
 }: ServicePageLayoutProps) {
+  const Heading = headingLevel;
   const whatsappUrl = `https://wa.me/5513991821557?text=${encodeURIComponent("Olá! Gostaria de saber mais sobre " + badge + ".")}`;
 
   return (
@@ -193,12 +196,12 @@ export function ServicePageLayout({
               {badge}
             </span>
 
-            <h1 className="mb-6 text-4xl font-black leading-[1.1] text-white md:text-5xl lg:text-6xl">
+            <Heading className="mb-6 text-4xl font-black leading-[1.1] text-white md:text-5xl lg:text-6xl">
               {title}{" "}
               <span className="bg-gradient-to-r from-teal-400 via-teal-300 to-orange-400 bg-clip-text text-transparent">
                 {subtitle}
               </span>
-            </h1>
+            </Heading>
 
             <p className="mx-auto max-w-2xl text-lg leading-relaxed text-white/60 md:text-xl">
               {description}

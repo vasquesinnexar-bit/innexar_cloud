@@ -80,6 +80,7 @@ export function SaasServiceClient() {
     <>
       <SaasHero />
       <ServicePageLayout
+        headingLevel="h2"
         badge="Site por Assinatura"
         icon={CreditCard}
         title="Planos mensais"

@@ -190,10 +190,6 @@ const plans: Plan[] = [
 ];
 
 /* ─────────────────────────────── Helpers ─────────────────────────────── */
-function annualPrice(monthly: number) {
-  return Math.round(monthly * 0.8);
-}
-
 function fmt(n: number) {
   return `R$ ${n.toLocaleString("pt-BR")}`;
 }
@@ -220,15 +216,9 @@ function BadgePill({
   );
 }
 
-function PlanCard({
-  plan,
-  billing,
-}: {
-  plan: Plan;
-  billing: "monthly" | "annual";
-}) {
-  const price   = billing === "annual" ? annualPrice(plan.monthlyPrice) : plan.monthlyPrice;
-  const savings = plan.monthlyPrice - annualPrice(plan.monthlyPrice);
+function PlanCard({ plan }: { plan: Plan }) {
+  // Cobrança sempre mensal pelo valor cheio (sem ciclo anual contratado).
+  const price = plan.monthlyPrice;
 
   return (
     <motion.div
@@ -257,7 +247,7 @@ function PlanCard({
       <div className="mb-2 flex items-end gap-1">
         <AnimatePresence mode="wait">
           <motion.span
-            key={`${plan.id}-${billing}`}
+            key={`${plan.id}`}
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
@@ -270,17 +260,6 @@ function PlanCard({
         <span className="mb-1 text-sm text-white/40">/mês</span>
       </div>
 
-      {/* Annual savings */}
-      {billing === "annual" && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="mb-4 inline-flex w-fit items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400"
-        >
-          <Star size={11} />
-          Economize {fmt(savings * 12)}/ano
-        </motion.div>
-      )}
 
       <div className="mb-5 mt-3 border-t border-white/[0.08]" />
 
@@ -326,7 +305,6 @@ function PlanCard({
 
 /* ─────────────────────────────── Page ─────────────────────────────── */
 export default function PlansPage() {
-  const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const [tab, setTab] = useState<"sites" | "marketing">("sites");
   const [catalogMap, setCatalogMap] = useState<
     Record<string, { monthlyPrice: number; name: string; description: string }>
@@ -455,37 +433,7 @@ export default function PlansPage() {
               ))}
             </div>
 
-            {/* Billing toggle */}
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setBilling("monthly")}
-                className={`text-sm font-semibold transition-colors ${billing === "monthly" ? "text-white" : "text-white/35 hover:text-white/60"}`}
-              >
-                Mensal
-              </button>
 
-              <button
-                onClick={() => setBilling(billing === "monthly" ? "annual" : "monthly")}
-                className="relative h-6 w-12 rounded-full border border-white/20 bg-white/10 transition-colors"
-                aria-label="Toggle billing period"
-              >
-                <motion.div
-                  className="absolute top-0.5 h-5 w-5 rounded-full bg-teal-500 shadow"
-                  animate={{ left: billing === "annual" ? "calc(100% - 22px)" : "2px" }}
-                  transition={{ type: "spring", stiffness: 480, damping: 36 }}
-                />
-              </button>
-
-              <button
-                onClick={() => setBilling("annual")}
-                className={`flex items-center gap-1.5 text-sm font-semibold transition-colors ${billing === "annual" ? "text-white" : "text-white/35 hover:text-white/60"}`}
-              >
-                Anual
-                <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
-                  −20%
-                </span>
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -502,7 +450,7 @@ export default function PlansPage() {
             className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
           >
             {filteredPlans.map((plan) => (
-              <PlanCard key={plan.id} plan={plan} billing={billing} />
+              <PlanCard key={plan.id} plan={plan} />
             ))}
           </motion.div>
         </AnimatePresence>

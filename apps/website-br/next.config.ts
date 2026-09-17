@@ -28,6 +28,13 @@ const nextConfig: NextConfig = {
       { source: "/services/web", destination: "/criacao-de-sites", permanent: true },
       { source: "/services/apps", destination: "/desenvolvimento-de-sistemas", permanent: true },
       { source: "/services/marketing", destination: "/marketing-digital", permanent: true },
+      // Canônico sem www (evita conteúdo duplicado apex × www).
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.innexar.com.br" }],
+        destination: "https://innexar.com.br/:path*",
+        permanent: true,
+      },
     ];
   },
   async headers() {
